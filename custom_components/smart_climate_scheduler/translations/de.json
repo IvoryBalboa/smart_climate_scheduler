@@ -170,23 +170,15 @@
   "services": {
     "set_override": {
       "name": "Override setzen",
-      "description": "Aktiviert einen temporären Slot-Override mit einem bestimmten Preset.",
+      "description": "Aktiviert einen temporären Slot-Override mit einem bestimmten Preset für einen Zeitraum oder eine Dauer.",
       "fields": {
-        "entity_id": {
-          "name": "Entität",
-          "description": "Der Scheduler-Sensor (z. B. sensor.thermostat_schedule)."
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
         },
         "override_id": {
           "name": "Override ID",
-          "description": "Eindeutige ID für den Override (z. B. gaeste oder party)."
-        },
-        "start": {
-          "name": "Startzeit",
-          "description": "Startzeitpunkt des Overrides (HH:MM:SS oder HH:MM)."
-        },
-        "end": {
-          "name": "Endzeit",
-          "description": "Endzeitpunkt des Overrides (HH:MM:SS oder HH:MM)."
+          "description": "Eindeutige ID für den Override (z. B. gaeste oder party). Optional."
         },
         "preset": {
           "name": "Preset",
@@ -194,7 +186,15 @@
         },
         "duration": {
           "name": "Dauer",
-          "description": "Dauer des Overrides (z. B. 60 Minuten oder 2 Stunden). Startet sofort, wenn keine Startzeit angegeben ist."
+          "description": "Dauer des Overrides (z. B. 1 Stunde, 30 Minuten). Wenn keine Startzeit angegeben ist, startet der Override sofort ab jetzt."
+        },
+        "start": {
+          "name": "Startzeit",
+          "description": "Startzeitpunkt des Overrides (z. B. 14:00 oder ISO-Zeitstempel). Optional bei Angabe einer Dauer."
+        },
+        "end": {
+          "name": "Endzeit",
+          "description": "Endzeitpunkt des Overrides (z. B. 16:00 oder ISO-Zeitstempel). Optional bei Angabe einer Dauer."
         }
       }
     },
@@ -202,19 +202,23 @@
       "name": "Override entfernen",
       "description": "Hebt einen aktiven temporären Slot-Override vorzeitig auf.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "override_id": {
           "name": "Override ID",
-          "description": "Die ID des zu entfernenden Overrides."
+          "description": "Die ID des zu entfernenden Overrides (z. B. gaeste oder party)."
         }
       }
     },
     "reset_heating_rates": {
       "name": "Aufheizraten zurücksetzen",
-      "description": "Löscht alle gelernten Aufheizraten und setzt sie auf den Standardwert zurück.",
+      "description": "Löscht alle gelernten Aufheizraten (Außentemperatur-Matrix & Gesamt-Durchschnitt) und setzt sie auf den konfigurierten Standardwert zurück.",
       "fields": {
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Aufheizrate manuell setzen",
       "description": "Setzt den Gesamt-Durchschnitt der Aufheizrate (in K/h) manuell für diesen Raum.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "rate": {
           "name": "Aufheizrate (K/h)",
-          "description": "Erwartete Aufheizrate in Kelvin/Stunde (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
+          "description": "Erwartete Aufheizrate in Kelvin/Stunde (°C/h). Z. B. 1.2 für einen schnell heizenden Raum oder 0.7 für Fußbodenheizung."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Matrix-Aufheizrate bearbeiten oder hinzufügen",
       "description": "Fügt einen gezielten Wert für eine Außentemperatur zur Aufheizraten-Matrix hinzu oder überschreibt diesen direkt.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "temperature": {
           "name": "Außentemperatur (°C)",
           "description": "Die Außentemperatur für diesen Tabellen-Eintrag (z. B. -5, 0, 5, 12) oder 'default'."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Aufheizrate (K/h)",
           "description": "Aufheizrate in Kelvin pro Stunde (°C/h) für diese Außentemperatur."
-        },
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Matrix-Aufheizrate löschen",
       "description": "Entfernt einen einzelnen Temperaturwert aus der gelernten Außentemperatur-Matrix.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "temperature": {
           "name": "Außentemperatur (°C)",
           "description": "Die Außentemperatur des zu entfernenden Eintrags (z. B. 5, -2) oder 'default'."
-        },
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Matrix-Abkühlrate bearbeiten oder hinzufügen",
       "description": "Fügt einen gezielten Wert für eine Außentemperatur zur Abkühlraten-Matrix hinzu oder überschreibt diesen direkt.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "temperature": {
           "name": "Außentemperatur (°C)",
           "description": "Die Außentemperatur für diesen Tabellen-Eintrag (z. B. -5, 0, 5, 12) oder 'default'."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Abkühlrate (K/h)",
           "description": "Abkühlrate in Kelvin pro Stunde (°C/h) für diese Außentemperatur."
-        },
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Matrix-Abkühlrate löschen",
       "description": "Entfernt einen einzelnen Temperaturwert aus der gelernten Abkühlraten-Matrix.",
       "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
         "temperature": {
           "name": "Außentemperatur (°C)",
           "description": "Die Außentemperatur des zu entfernenden Eintrags (z. B. 5, -2) oder 'default'."
-        },
-        "entity_id": {
-          "name": "Entität",
-          "description": "Scheduler-Sensor oder Aufheizraten-Sensor (optional bei nur einem Thermostat)."
         }
       }
     }

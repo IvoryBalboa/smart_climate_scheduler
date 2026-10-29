@@ -170,23 +170,15 @@
   "services": {
     "set_override": {
       "name": "Set Override",
-      "description": "Activates a temporary slot override with a specific preset.",
+      "description": "Activates a temporary slot override with a specific preset for a period or duration.",
       "fields": {
-        "entity_id": {
-          "name": "Entity",
-          "description": "The scheduler sensor (e.g. sensor.thermostat_schedule)."
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
         },
         "override_id": {
           "name": "Override ID",
-          "description": "Unique ID for the override (e.g. guests or party)."
-        },
-        "start": {
-          "name": "Start Time",
-          "description": "Start time of the override (HH:MM:SS or HH:MM)."
-        },
-        "end": {
-          "name": "End Time",
-          "description": "End time of the override (HH:MM:SS or HH:MM)."
+          "description": "Unique ID for the override (e.g. guests or party). Optional."
         },
         "preset": {
           "name": "Preset",
@@ -194,7 +186,15 @@
         },
         "duration": {
           "name": "Duration",
-          "description": "Duration of the override (e.g. 60 minutes or 2 hours). Starts immediately if no start time is specified."
+          "description": "Duration of the override (e.g. 1 hour, 30 minutes). Starts immediately if no start time is specified."
+        },
+        "start": {
+          "name": "Start Time",
+          "description": "Start time of the override (e.g. 14:00 or ISO timestamp). Optional when duration is set."
+        },
+        "end": {
+          "name": "End Time",
+          "description": "End time of the override (e.g. 16:00 or ISO timestamp). Optional when duration is set."
         }
       }
     },
@@ -202,19 +202,23 @@
       "name": "Remove Override",
       "description": "Prematurely cancels an active temporary slot override.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "override_id": {
           "name": "Override ID",
-          "description": "The ID of the override to remove."
+          "description": "The ID of the override to remove (e.g. guests or party)."
         }
       }
     },
     "reset_heating_rates": {
       "name": "Reset Heating Rates",
-      "description": "Deletes all learned heating rates and resets to default values.",
+      "description": "Deletes all learned heating rates (matrix & overall average) and resets to default values.",
       "fields": {
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Set Manual Heating Rate",
       "description": "Manually sets the overall average heating rate (in K/h) for this room.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "rate": {
           "name": "Heating Rate (K/h)",
-          "description": "Expected heating rate in Kelvin/hour (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+          "description": "Expected heating rate in Kelvin/hour (°C/h). E.g. 1.2 for fast heating or 0.7 for underfloor heating."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Set/Add Matrix Heating Rate",
       "description": "Adds or updates an outdoor temperature heating rate bucket in the matrix.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "temperature": {
           "name": "Outdoor Temperature (°C)",
           "description": "The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or 'default'."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Heating Rate (K/h)",
           "description": "Heating rate in Kelvin per hour (°C/h) for this outdoor temperature."
-        },
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Delete Matrix Heating Rate",
       "description": "Deletes an outdoor temperature heating rate entry from the matrix.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "temperature": {
           "name": "Outdoor Temperature (°C)",
           "description": "The outdoor temperature of the entry to delete (e.g. 5, -2) or 'default'."
-        },
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Set/Add Matrix Cooling Rate",
       "description": "Adds or updates an outdoor temperature cooling rate bucket in the matrix.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "temperature": {
           "name": "Outdoor Temperature (°C)",
           "description": "The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or 'default'."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Cooling Rate (K/h)",
           "description": "Cooling rate in Kelvin per hour (°C/h) for this outdoor temperature."
-        },
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Delete Matrix Cooling Rate",
       "description": "Deletes an outdoor temperature cooling rate entry from the matrix.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
         "temperature": {
           "name": "Outdoor Temperature (°C)",
           "description": "The outdoor temperature of the entry to delete (e.g. 5, -2) or 'default'."
-        },
-        "entity_id": {
-          "name": "Entity",
-          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
         }
       }
     }
