@@ -107,38 +107,102 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    def _resolve_entry_ids(target_entity_id: str | None) -> list[str]:
+    def _resolve_entry_ids(call_or_data: ServiceCall | dict | str | None) -> list[str]:
         if not hass.data.get(DOMAIN):
             return []
-        if not target_entity_id:
-            return list(hass.data[DOMAIN].keys())
 
-        # 1. Über Entity Registry auflösen (unterstützt Sensoren, Switches und alle gebundenen Entitäten)
-        try:
-            from homeassistant.helpers import entity_registry as er
-            ent_reg = er.async_get(hass)
-            reg_entry = ent_reg.async_get(target_entity_id)
-            if reg_entry and reg_entry.config_entry_id and reg_entry.config_entry_id in hass.data[DOMAIN]:
-                return [reg_entry.config_entry_id]
-        except Exception:
-            pass
+        resolved: set[str] = set()
 
-        # 2. Über registrierte Sensoren
-        for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
-            if getattr(sensor, "entity_id", None) == target_entity_id:
-                if getattr(sensor, "config_entry", None):
-                    return [sensor.config_entry.entry_id]
+        data: dict = {}
+        if isinstance(call_or_data, ServiceCall):
+            data = call_or_data.data or {}
+        elif isinstance(call_or_data, dict):
+            data = call_or_data
+        elif isinstance(call_or_data, str):
+            data = {"entity_id": call_or_data}
 
-        # 3. Über die zugeordnete Climate-Entität (in options oder data)
-        for ent_id, store in hass.data[DOMAIN].items():
-            entry_obj = hass.config_entries.async_get_entry(ent_id)
-            if entry_obj:
-                c_entity = entry_obj.options.get(CONF_CLIMATE_ENTITY) or entry_obj.data.get(CONF_CLIMATE_ENTITY)
-                if c_entity == target_entity_id:
-                    return [ent_id]
-            data = store.get("data", {})
-            if data.get(CONF_CLIMATE_ENTITY) == target_entity_id:
-                return [ent_id]
+        # 1. Direkte config_entry_id / config_entry
+        raw_entries = data.get("config_entry_id") or data.get("config_entry")
+        if raw_entries:
+            if isinstance(raw_entries, str):
+                raw_entries = [raw_entries]
+            for ce_id in raw_entries:
+                if ce_id in hass.data[DOMAIN]:
+                    resolved.add(ce_id)
+
+        # 2. device_id aus target oder call data
+        raw_device_ids = data.get("device_id")
+        if raw_device_ids:
+            if isinstance(raw_device_ids, str):
+                raw_device_ids = [raw_device_ids]
+            try:
+                from homeassistant.helpers import device_registry as dr
+                dev_reg = dr.async_get(hass)
+                for dev_id in raw_device_ids:
+                    device = dev_reg.async_get(dev_id)
+                    if device:
+                        for identifier in device.identifiers:
+                            if len(identifier) == 2 and identifier[0] == DOMAIN:
+                                if identifier[1] in hass.data[DOMAIN]:
+                                    resolved.add(identifier[1])
+                        for ce_id in device.config_entries:
+                            if ce_id in hass.data[DOMAIN]:
+                                resolved.add(ce_id)
+            except Exception as err:
+                _LOGGER.debug("Fehler beim Auflösen der device_id: %s", err)
+
+        # 3. area_id aus target oder call data
+        raw_area_ids = data.get("area_id")
+        if raw_area_ids:
+            if isinstance(raw_area_ids, str):
+                raw_area_ids = [raw_area_ids]
+            try:
+                from homeassistant.helpers import device_registry as dr
+                dev_reg = dr.async_get(hass)
+                for area_id in raw_area_ids:
+                    for device in dev_reg.devices.get_devices_for_area_id(area_id):
+                        for identifier in device.identifiers:
+                            if len(identifier) == 2 and identifier[0] == DOMAIN:
+                                if identifier[1] in hass.data[DOMAIN]:
+                                    resolved.add(identifier[1])
+                        for ce_id in device.config_entries:
+                            if ce_id in hass.data[DOMAIN]:
+                                resolved.add(ce_id)
+            except Exception as err:
+                _LOGGER.debug("Fehler beim Auflösen der area_id: %s", err)
+
+        # 4. Rückwärtskompatibilität: entity_id (falls in YAML noch angegeben)
+        raw_entity_ids = data.get("entity_id")
+        if raw_entity_ids:
+            if isinstance(raw_entity_ids, str):
+                raw_entity_ids = [raw_entity_ids]
+            for ent_id in raw_entity_ids:
+                try:
+                    from homeassistant.helpers import entity_registry as er
+                    ent_reg = er.async_get(hass)
+                    reg_entry = ent_reg.async_get(ent_id)
+                    if reg_entry and reg_entry.config_entry_id and reg_entry.config_entry_id in hass.data[DOMAIN]:
+                        resolved.add(reg_entry.config_entry_id)
+                except Exception:
+                    pass
+
+                for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
+                    if getattr(sensor, "entity_id", None) == ent_id:
+                        if getattr(sensor, "config_entry", None):
+                            resolved.add(sensor.config_entry.entry_id)
+
+                for eid, store in hass.data[DOMAIN].items():
+                    entry_obj = hass.config_entries.async_get_entry(eid)
+                    if entry_obj:
+                        c_entity = entry_obj.options.get(CONF_CLIMATE_ENTITY) or entry_obj.data.get(CONF_CLIMATE_ENTITY)
+                        if c_entity == ent_id:
+                            resolved.add(eid)
+                    store_data = store.get("data", {})
+                    if store_data.get(CONF_CLIMATE_ENTITY) == ent_id:
+                        resolved.add(eid)
+
+        if resolved:
+            return list(resolved)
 
         if len(hass.data[DOMAIN]) == 1:
             return list(hass.data[DOMAIN].keys())
@@ -146,7 +210,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_set_override(call: ServiceCall) -> None:
         """Service zum Setzen eines temporären Overrides (mit Start/Endzeit oder Dauer)."""
-        entity_id = call.data.get("entity_id")
         override_id = call.data.get("override_id")
         start_val = call.data.get("start")
         end_val = call.data.get("end")
@@ -206,9 +269,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             start_str = str(start_val) if start_val else now.strftime("%H:%M")
             end_str = str(end_val) if end_val else (now + timedelta(hours=1)).strftime("%H:%M")
 
-        entry_ids = _resolve_entry_ids(entity_id)
+        entry_ids = _resolve_entry_ids(call)
         if not entry_ids:
-            _LOGGER.warning("Override '%s' fehlgeschlagen: Kein passender Eintrag für '%s' gefunden.", override_id, entity_id)
+            _LOGGER.warning("Override '%s' fehlgeschlagen: Kein passender Smart Climate Scheduler Eintrag gefunden.", override_id)
             return
 
         for target_entry_id in entry_ids:
@@ -217,23 +280,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "end": end_str,
                 "preset": preset,
             }
-            _LOGGER.info("Override '%s' gesetzt: %s bis %s -> Preset: %s", override_id, start_str, end_str, preset)
+            _LOGGER.info("Override '%s' gesetzt: %s bis %s -> Preset: %s (Raum: %s)", override_id, start_str, end_str, preset, target_entry_id)
             await _async_update_sensors(hass, target_entry_id)
 
     async def handle_remove_override(call: ServiceCall) -> None:
         """Service zum Löschen eines Overrides."""
         override_id = call.data.get("override_id")
+        entry_ids = _resolve_entry_ids(call)
+        target_stores = [hass.data[DOMAIN][eid] for eid in entry_ids if eid in hass.data[DOMAIN]] if entry_ids else list(hass.data[DOMAIN].values())
 
-        for target_entry_id, store in hass.data[DOMAIN].items():
-            if override_id in store["overrides"]:
-                store["overrides"].pop(override_id)
-                _LOGGER.info("Override '%s' entfernt.", override_id)
-                await _async_update_sensors(hass, target_entry_id)
+        for store in target_stores:
+            if override_id:
+                if override_id in store["overrides"]:
+                    store["overrides"].pop(override_id)
+                    _LOGGER.info("Override '%s' entfernt.", override_id)
+            else:
+                store["overrides"].clear()
+                _LOGGER.info("Alle Overrides entfernt.")
+
+        for eid in (entry_ids or list(hass.data[DOMAIN].keys())):
+            await _async_update_sensors(hass, eid)
 
     async def handle_reset_heating_rates(call: ServiceCall) -> None:
         """Service zum Zurücksetzen aller gelernten Aufheizraten."""
-        entity_id = call.data.get("entity_id")
-        entry_ids = _resolve_entry_ids(entity_id)
+        entry_ids = _resolve_entry_ids(call)
 
         for eid in entry_ids:
             store = hass.data[DOMAIN].get(eid)
@@ -267,10 +337,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_set_manual_heating_rate(call: ServiceCall) -> None:
         """Service zum manuellen Überschreiben/Setzen der Aufheizrate (K/h)."""
-        entity_id = call.data.get("entity_id")
         raw_rate = call.data.get("rate", 1.0)
         clamped_rate = round(max(0.05, min(5.0, _safe_float(raw_rate, 1.0))), 3)
-        entry_ids = _resolve_entry_ids(entity_id)
+        entry_ids = _resolve_entry_ids(call)
 
         for eid in entry_ids:
             store = hass.data[DOMAIN].get(eid)
@@ -301,12 +370,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return def_val
 
     async def _handle_matrix_set(call: ServiceCall, is_cooling: bool = False) -> None:
-        entity_id = call.data.get("entity_id")
         raw_temp = call.data.get("temperature")
         raw_rate = call.data.get("rate", 0.2 if is_cooling else 1.0)
         label = "Abkühl-Matrix" if is_cooling else "Matrix"
 
-        for eid in _resolve_entry_ids(entity_id):
+        for eid in _resolve_entry_ids(call):
             store = hass.data[DOMAIN].get(eid)
             if not store:
                 continue
@@ -325,11 +393,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await _async_update_sensors(hass, eid)
 
     async def _handle_matrix_delete(call: ServiceCall, is_cooling: bool = False) -> None:
-        entity_id = call.data.get("entity_id")
         raw_temp = call.data.get("temperature")
         label = "Abkühl-Matrix" if is_cooling else "Matrix"
 
-        for eid in _resolve_entry_ids(entity_id):
+        for eid in _resolve_entry_ids(call):
             store = hass.data[DOMAIN].get(eid)
             if not store:
                 continue
