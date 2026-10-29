@@ -129,15 +129,14 @@ Die Integration erzeugt für jeden konfigurierten Raum ein sauberes Set an echte
 
 ## 🎛️ Verfügbare Dienste (Services)
 
-Die Dienste nutzen ein übersichtliches **Geräte-Targeting** (`target: device`), sodass im Home Assistant Aktions-Picker direkt der jeweilige Raum ausgewählt werden kann:
+Die Dienste nutzen ein übersichtliches, verpflichtendes **Geräte-Feld** (`device_id`), sodass im Home Assistant Aktions-Picker direkt der jeweilige Raum als Pflichtfeld ausgewählt wird (ohne Checkbox und ohne Entitäten-Picker):
 
 ### 1. `smart_climate_scheduler.set_override`
 Aktiviert einen temporären Override für ein Zimmer:
 ```yaml
 action: smart_climate_scheduler.set_override
-target:
-  device_id: <DEVICE_ID_DES_RAUMS>
 data:
+  device_id: <DEVICE_ID_DES_RAUMS>
   preset: boost
   duration:
     hours: 2
@@ -147,9 +146,8 @@ data:
 Beendet einen laufenden Override vorzeitig:
 ```yaml
 action: smart_climate_scheduler.remove_override
-target:
-  device_id: <DEVICE_ID_DES_RAUMS>
 data:
+  device_id: <DEVICE_ID_DES_RAUMS>
   override_id: party_mode
 ```
 
@@ -157,9 +155,8 @@ data:
 Setzt die Basis-Aufheizrate für gut gedämmte oder träge Räume (z. B. Fußbodenheizung):
 ```yaml
 action: smart_climate_scheduler.set_manual_heating_rate
-target:
-  device_id: <DEVICE_ID_DES_RAUMS>
 data:
+  device_id: <DEVICE_ID_DES_RAUMS>
   rate: 0.8
 ```
 
@@ -167,7 +164,7 @@ data:
 Setzt den Lernspeicher des Raumes zurück auf die Standardwerte:
 ```yaml
 action: smart_climate_scheduler.reset_heating_rates
-target:
+data:
   device_id: <DEVICE_ID_DES_RAUMS>
 ```
 
