@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Climate Scheduler 2.0 - Configurazione iniziale",
+        "description": "Configura il termostato, la sorgente della temperatura esterna (il sensore ha la precedenza sul meteo), il sensore di riscaldamento attivo, l'autoapprendimento e i tassi predefiniti.",
+        "data": {
+          "name": "Nome della stanza",
+          "climate_entity": "Termostato / Entità Climate",
+          "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
+          "outside_weather_entity": "Entità meteo",
+          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
+          "enable_self_learning": "Abilita autoapprendimento",
+          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
+          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
+          "zone_home_entity": "Zona presenza a casa",
+          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
+          "near_distance": "Soglia di distanza zona vicina (km)",
+          "default_preset": "Modalità predefinita per fasce vuote",
+          "preheat_enabled": "Abilita preriscaldamento predittivo",
+          "max_minutes_preheat": "Tempo massimo di preriscaldamento (minuti)",
+          "cooldown_enabled": "Abilita raffreddamento anticipato",
+          "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
+          "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
+          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Il nome della stanza è obbligatorio."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Menu principale",
+        "description": "Seleziona l'azione desiderata:",
+        "data": {
+          "main_action": "Seleziona azione"
+        }
+      },
+      "settings": {
+        "title": "Impostazioni generali e parametri termici",
+        "description": "Regola la sorgente di temperatura esterna, l'apprendimento e i tassi di riscaldamento e raffreddamento:",
+        "data": {
+          "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
+          "outside_weather_entity": "Entità meteo per temperatura esterna",
+          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
+          "enable_self_learning": "Abilita autoapprendimento",
+          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
+          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
+          "zone_home_entity": "Zona presenza a casa",
+          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
+          "near_distance": "Soglia di distanza zona vicina (km)",
+          "default_preset": "Modalità predefinita per fasce vuote",
+          "preheat_enabled": "Abilita preriscaldamento predittivo",
+          "max_minutes_preheat": "Tempo massimo di preriscaldamento (minuti)",
+          "cooldown_enabled": "Abilita raffreddamento anticipato",
+          "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
+          "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
+          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)"
+        }
+      },
+      "schedule_menu": {
+        "title": "Gestione orari",
+        "description": "Seleziona un'azione e il giorno della settimana:",
+        "data": {
+          "aktion": "Seleziona azione",
+          "tag": "Giorno della settimana"
+        }
+      },
+      "slot_overview": {
+        "title": "Gestione fasce orarie ({slots_count})",
+        "description": "Fasce attualmente configurate per il giorno selezionato ({slots_count}):{slots_list}",
+        "data": {
+          "slot_aktion": "Seleziona o gestisci fasce"
+        }
+      },
+      "select_slot_to_edit": {
+        "title": "Seleziona fascia",
+        "description": "Scegli la fascia oraria da modificare:",
+        "data": {
+          "selected_slot": "Seleziona fascia"
+        }
+      },
+      "copy_slots": {
+        "title": "Copia fasce",
+        "description": "Seleziona i giorni di destinazione:",
+        "data": {
+          "target_days": "Giorni di destinazione"
+        }
+      },
+      "add_slot": {
+        "title": "Aggiungi nuova fascia",
+        "description": "Inserisci orari e modalità preset:",
+        "data": {
+          "startzeit": "Ora di inizio",
+          "endzeit": "Ora di fine",
+          "preset": "Modalità preset"
+        }
+      },
+      "edit_slot": {
+        "title": "Modifica fascia",
+        "description": "Aggiorna o elimina la fascia selezionata:",
+        "data": {
+          "aktion": "Seleziona azione",
+          "startzeit": "Ora di inizio",
+          "endzeit": "Ora di fine",
+          "preset": "Modalità preset"
+        }
+      }
+    },
+    "error": {
+      "invalid_time_range": "L'ora di fine deve essere successiva all'ora di inizio."
+    }
+  },
+  "selector": {
+    "day": {
+      "options": {
+        "monday": "Lunedì",
+        "tuesday": "Martedì",
+        "wednesday": "Mercoledì",
+        "thursday": "Giovedì",
+        "friday": "Venerdì",
+        "saturday": "Sabato",
+        "sunday": "Domenica"
+      }
+    },
+    "preset": {
+      "options": {
+        "none": "Nessuno / Spento",
+        "home": "In casa",
+        "away": "Fuori casa",
+        "comfort": "Comfort",
+        "eco": "Eco",
+        "sleep": "Notte",
+        "boost": "Boost",
+        "activity": "Attività"
+      }
+    },
+    "init_action": {
+      "options": {
+        "schedules": "📅 Gestisci orari",
+        "settings": "⚙️ Impostazioni (Sensori, Apprendimento e Tassi)",
+        "save": "💾 Salva ed esci"
+      }
+    },
+    "schedule_action": {
+      "options": {
+        "edit": "Modifica giorno / Visualizza fasce",
+        "back": "← Torna al menu principale"
+      }
+    },
+    "edit_action": {
+      "options": {
+        "save": "Salva modifiche",
+        "delete": "Elimina questa fascia"
+      }
+    },
+    "slot_action": {
+      "options": {
+        "add": "Aggiungi nuova fascia",
+        "edit": "Modifica fascia esistente",
+        "copy": "Copia fasce su altri giorni",
+        "clear": "Cancella tutte le fasce di questo giorno",
+        "back": "← Torna alla selezione del giorno"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Imposta override temporaneo",
+      "description": "Attiva un preset temporaneo (es. boost o fuori casa) per un intervallo di tempo.",
+      "fields": {
+        "override_id": {
+          "name": "ID override",
+          "description": "Identificatore univoco."
+        },
+        "start": {
+          "name": "Ora di inizio",
+          "description": "Ora di inizio in formato HH:MM o HH:MM:SS."
+        },
+        "end": {
+          "name": "Ora di fine",
+          "description": "Ora di fine in formato HH:MM o HH:MM:SS."
+        },
+        "preset": {
+          "name": "Preset",
+          "description": "Nome del preset."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore orario o riscaldamento."
+        },
+        "duration": {
+          "name": "Durata",
+          "description": "Durata dell'override (es. 60 minuti o 2 ore). Inizia immediatamente se non viene specificata l'ora di inizio."
+        }
+      }
+    },
+    "remove_override": {
+      "name": "Rimuovi override",
+      "description": "Elimina un override temporaneo attivo tramite ID.",
+      "fields": {
+        "override_id": {
+          "name": "ID override",
+          "description": "Identificatore dell'override da rimuovere."
+        }
+      }
+    },
+    "reset_heating_rates": {
+      "name": "Ripristina tassi di riscaldamento",
+      "description": "Cancella tutti i tassi appresi e ripristina i valori predefiniti.",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore orario o tasso di riscaldamento."
+        }
+      }
+    },
+    "set_manual_heating_rate": {
+      "name": "Imposta manualmente tasso di riscaldamento",
+      "description": "Imposta manualmente la media del tasso di riscaldamento per la stanza.",
+      "fields": {
+        "rate": {
+          "name": "Tasso di riscaldamento (K/h)",
+          "description": "Tasso atteso in Kelvin/ora (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore di controllo."
+        }
+      }
+    },
+    "set_matrix_heating_rate": {
+      "name": "Imposta tasso di riscaldamento matrice",
+      "description": "Aggiunge o aggiorna un valore nella matrice di riscaldamento.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura esterna (°C)",
+          "description": "Temperatura esterna o default."
+        },
+        "rate": {
+          "name": "Tasso di riscaldamento (K/h)",
+          "description": "Tasso in Kelvin/ora (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore di controllo."
+        }
+      }
+    },
+    "delete_matrix_heating_rate": {
+      "name": "Elimina tasso di riscaldamento matrice",
+      "description": "Rimuove una temperatura dalla matrice di riscaldamento.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura esterna (°C)",
+          "description": "Temperatura da eliminare."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore di controllo."
+        }
+      }
+    },
+    "set_matrix_cooling_rate": {
+      "name": "Imposta tasso di raffreddamento matrice",
+      "description": "Aggiunge o aggiorna un valore nella matrice di raffreddamento.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura esterna (°C)",
+          "description": "Temperatura esterna o default."
+        },
+        "rate": {
+          "name": "Tasso di raffreddamento (K/h)",
+          "description": "Tasso in Kelvin/ora (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore di controllo."
+        }
+      }
+    },
+    "delete_matrix_cooling_rate": {
+      "name": "Elimina tasso di raffreddamento matrice",
+      "description": "Rimuove una temperatura dalla matrice di raffreddamento.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura esterna (°C)",
+          "description": "Temperatura da eliminare."
+        },
+        "entity_id": {
+          "name": "Entità",
+          "description": "Sensore di controllo."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "preheat": {
+        "name": "Preriscaldamento",
+        "state_attributes": {
+          "start_time": {
+            "name": "Ora di inizio"
+          },
+          "duration_minutes": {
+            "name": "Durata preriscaldamento"
+          },
+          "effective_rate_k_h": {
+            "name": "Tasso effettivo di riscaldamento"
+          }
+        }
+      },
+      "cooldown": {
+        "name": "Raffreddamento anticipato",
+        "state_attributes": {
+          "start_time": {
+            "name": "Ora di inizio"
+          },
+          "duration_minutes": {
+            "name": "Durata raffreddamento"
+          },
+          "effective_loss_rate_k_h": {
+            "name": "Tasso effettivo di raffreddamento"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "schedule": {
+        "name": "Orario",
+        "state_attributes": {
+          "active_slot": {
+            "name": "Fascia attiva"
+          },
+          "next_slot": {
+            "name": "Prossima fascia"
+          }
+        }
+      },
+      "next_action": {
+        "name": "Prossima azione",
+        "state_attributes": {
+          "time": {
+            "name": "Ora"
+          }
+        }
+      },
+      "heating_rate": {
+        "name": "Tasso di riscaldamento",
+        "state_attributes": {
+          "active_session": {
+            "name": "Sessione riscaldamento attiva"
+          },
+          "averages": {
+            "name": "Tassi appresi per temperatura esterna"
+          },
+          "average": {
+            "name": "Tasso medio di riscaldamento"
+          }
+        }
+      },
+      "cooling_rate": {
+        "name": "Tasso di raffreddamento",
+        "state_attributes": {
+          "active_session": {
+            "name": "Sessione raffreddamento attiva"
+          },
+          "averages": {
+            "name": "Tassi appresi per temperatura esterna"
+          },
+          "average": {
+            "name": "Tasso medio di raffreddamento"
+          }
+        }
+      },
+      "debug": {
+        "name": "Debug",
+        "state_attributes": {
+          "preset": {
+            "name": "Preset attivo"
+          },
+          "active_slot": {
+            "name": "Fascia attiva"
+          },
+          "next_slot": {
+            "name": "Prossima fascia"
+          },
+          "next_action": {
+            "name": "Prossima azione"
+          },
+          "preheat": {
+            "name": "Dettagli preriscaldamento"
+          },
+          "cooldown": {
+            "name": "Dettagli raffreddamento"
+          },
+          "timestamp": {
+            "name": "Timestamp"
+          },
+          "zones": {
+            "name": "Zone e Presenza"
+          },
+          "temperatures": {
+            "name": "Temperature"
+          },
+          "thermal_parameters": {
+            "name": "Parametri termici"
+          },
+          "settings": {
+            "name": "Impostazioni"
+          },
+          "evaluation": {
+            "name": "Valutazione e Calcoli"
+          }
+        }
+      }
+    },
+    "switch": {
+      "automatic": {
+        "name": "Automatico"
+      }
+    }
+  }
+}

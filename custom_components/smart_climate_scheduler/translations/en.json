@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Climate Scheduler 2.0 - Initial Setup",
+        "description": "Configure the thermostat, outdoor temperature source (sensor takes precedence over weather entity), burner entity, self-learning toggle, and default rates.",
+        "data": {
+          "name": "Room Name",
+          "climate_entity": "Thermostat / Climate Entity",
+          "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
+          "outside_weather_entity": "Weather Entity",
+          "heating_active_sensor": "Burner / Heating Active Entity",
+          "enable_self_learning": "Enable Learning",
+          "fallback_heating_rate": "Default Heating Rate (K/h)",
+          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
+          "zone_home_entity": "Presence Zone",
+          "zone_away_near_entity": "Near Away Zone (Optional)",
+          "near_distance": "Near Zone Distance Threshold (km)",
+          "default_preset": "Default Preset for Empty Slots",
+          "preheat_enabled": "Enable Predictive Preheating",
+          "max_minutes_preheat": "Max Preheat Time (Minutes)",
+          "cooldown_enabled": "Enable Early Cooldown",
+          "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
+          "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
+          "fallback_tolerance": "Re-activation tolerance fallback (K)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Room name is required."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Main Menu",
+        "description": "Select the desired action:",
+        "data": {
+          "main_action": "Select Action"
+        }
+      },
+      "settings": {
+        "title": "General Settings & Thermal Parameters",
+        "description": "Adjust outdoor temperature source, learning toggle, and default heating and cooling rates:",
+        "data": {
+          "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
+          "outside_weather_entity": "Weather Entity for Outdoor Temperature",
+          "heating_active_sensor": "Burner / Heating Active Entity",
+          "enable_self_learning": "Enable Learning",
+          "fallback_heating_rate": "Default Heating Rate (K/h)",
+          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
+          "zone_home_entity": "Presence Zone",
+          "zone_away_near_entity": "Near Away Zone (Optional)",
+          "near_distance": "Near Zone Distance Threshold (km)",
+          "default_preset": "Default Preset for Empty Slots",
+          "preheat_enabled": "Enable Predictive Preheating",
+          "max_minutes_preheat": "Max Preheat Time (Minutes)",
+          "cooldown_enabled": "Enable Early Cooldown",
+          "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
+          "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
+          "fallback_tolerance": "Re-activation tolerance fallback (K)"
+        }
+      },
+      "schedule_menu": {
+        "title": "Manage Schedules",
+        "description": "Select an action and the weekday:",
+        "data": {
+          "aktion": "Select Action",
+          "tag": "Weekday"
+        }
+      },
+      "slot_overview": {
+        "title": "Manage Slots ({slots_count})",
+        "description": "Currently configured slots for the selected day ({slots_count}):{slots_list}",
+        "data": {
+          "slot_aktion": "Select or manage slots"
+        }
+      },
+      "select_slot_to_edit": {
+        "title": "Select Slot",
+        "description": "Choose the slot you want to edit:",
+        "data": {
+          "selected_slot": "Select Slot"
+        }
+      },
+      "copy_slots": {
+        "title": "Copy Slots",
+        "description": "Select destination weekdays:",
+        "data": {
+          "target_days": "Target Days"
+        }
+      },
+      "add_slot": {
+        "title": "Add New Slot",
+        "description": "Enter times and target preset mode:",
+        "data": {
+          "startzeit": "Start Time",
+          "endzeit": "End Time",
+          "preset": "Preset Mode"
+        }
+      },
+      "edit_slot": {
+        "title": "Edit Slot",
+        "description": "Update or delete the selected slot:",
+        "data": {
+          "aktion": "Select Action",
+          "startzeit": "Start Time",
+          "endzeit": "End Time",
+          "preset": "Preset Mode"
+        }
+      }
+    },
+    "error": {
+      "invalid_time_range": "End time must be after start time."
+    }
+  },
+  "selector": {
+    "day": {
+      "options": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      }
+    },
+    "preset": {
+      "options": {
+        "none": "None / Off",
+        "home": "Home",
+        "away": "Away",
+        "comfort": "Comfort",
+        "eco": "Eco",
+        "sleep": "Sleep",
+        "boost": "Boost",
+        "activity": "Activity"
+      }
+    },
+    "init_action": {
+      "options": {
+        "schedules": "📅 Manage Schedules",
+        "settings": "⚙️ Settings (Sensors, Learning & Rates)",
+        "save": "💾 Save & Exit"
+      }
+    },
+    "schedule_action": {
+      "options": {
+        "edit": "Edit Day / View Slots",
+        "back": "← Back to Main Menu"
+      }
+    },
+    "edit_action": {
+      "options": {
+        "update": "Save Changes",
+        "delete": "Delete This Slot"
+      }
+    },
+    "slot_action": {
+      "options": {
+        "add": "➕ Add New Slot",
+        "edit": "✏️ Edit Slot",
+        "copy": "📋 Copy Slots to Other Days",
+        "clear": "🗑 Clear All Slots for Day",
+        "back": "◀️ Back to Day Selection"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Set Override",
+      "description": "Activates a temporary slot override with a specific preset.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "The scheduler sensor (e.g. sensor.thermostat_schedule)."
+        },
+        "override_id": {
+          "name": "Override ID",
+          "description": "Unique ID for the override (e.g. guests or party)."
+        },
+        "start": {
+          "name": "Start Time",
+          "description": "Start time of the override (HH:MM:SS or HH:MM)."
+        },
+        "end": {
+          "name": "End Time",
+          "description": "End time of the override (HH:MM:SS or HH:MM)."
+        },
+        "preset": {
+          "name": "Preset",
+          "description": "The preset to activate (e.g. comfort, boost, eco)."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Duration of the override (e.g. 60 minutes or 2 hours). Starts immediately if no start time is specified."
+        }
+      }
+    },
+    "remove_override": {
+      "name": "Remove Override",
+      "description": "Prematurely cancels an active temporary slot override.",
+      "fields": {
+        "override_id": {
+          "name": "Override ID",
+          "description": "The ID of the override to remove."
+        }
+      }
+    },
+    "reset_heating_rates": {
+      "name": "Reset Heating Rates",
+      "description": "Deletes all learned heating rates and resets to default values.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    },
+    "set_manual_heating_rate": {
+      "name": "Set Manual Heating Rate",
+      "description": "Manually sets the overall average heating rate (in K/h) for this room.",
+      "fields": {
+        "rate": {
+          "name": "Heating Rate (K/h)",
+          "description": "Expected heating rate in Kelvin/hour (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    },
+    "set_matrix_heating_rate": {
+      "name": "Set/Add Matrix Heating Rate",
+      "description": "Adds or updates an outdoor temperature heating rate bucket in the matrix.",
+      "fields": {
+        "temperature": {
+          "name": "Outdoor Temperature (°C)",
+          "description": "The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or 'default'."
+        },
+        "rate": {
+          "name": "Heating Rate (K/h)",
+          "description": "Heating rate in Kelvin per hour (°C/h) for this outdoor temperature."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    },
+    "delete_matrix_heating_rate": {
+      "name": "Delete Matrix Heating Rate",
+      "description": "Deletes an outdoor temperature heating rate entry from the matrix.",
+      "fields": {
+        "temperature": {
+          "name": "Outdoor Temperature (°C)",
+          "description": "The outdoor temperature of the entry to delete (e.g. 5, -2) or 'default'."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    },
+    "set_matrix_cooling_rate": {
+      "name": "Set/Add Matrix Cooling Rate",
+      "description": "Adds or updates an outdoor temperature cooling rate bucket in the matrix.",
+      "fields": {
+        "temperature": {
+          "name": "Outdoor Temperature (°C)",
+          "description": "The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or 'default'."
+        },
+        "rate": {
+          "name": "Cooling Rate (K/h)",
+          "description": "Cooling rate in Kelvin per hour (°C/h) for this outdoor temperature."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    },
+    "delete_matrix_cooling_rate": {
+      "name": "Delete Matrix Cooling Rate",
+      "description": "Deletes an outdoor temperature cooling rate entry from the matrix.",
+      "fields": {
+        "temperature": {
+          "name": "Outdoor Temperature (°C)",
+          "description": "The outdoor temperature of the entry to delete (e.g. 5, -2) or 'default'."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Scheduler sensor or heating rate sensor (optional when only one thermostat exists)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "preheat": {
+        "name": "Preheat",
+        "state_attributes": {
+          "start_time": {
+            "name": "Start Time"
+          },
+          "duration_minutes": {
+            "name": "Duration"
+          },
+          "effective_rate_k_h": {
+            "name": "Effective Heating Rate"
+          }
+        }
+      },
+      "cooldown": {
+        "name": "Cooldown",
+        "state_attributes": {
+          "start_time": {
+            "name": "Start Time"
+          },
+          "duration_minutes": {
+            "name": "Duration"
+          },
+          "effective_loss_rate_k_h": {
+            "name": "Effective Cooling Rate"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "schedule": {
+        "name": "Schedule",
+        "state_attributes": {
+          "active_slot": {
+            "name": "Active Slot"
+          },
+          "next_slot": {
+            "name": "Next Slot"
+          }
+        }
+      },
+      "next_action": {
+        "name": "Next Action",
+        "state_attributes": {
+          "time": {
+            "name": "Time"
+          }
+        }
+      },
+      "heating_rate": {
+        "name": "Heating Rate",
+        "state_attributes": {
+          "active_session": {
+            "name": "Active Heating Session"
+          },
+          "averages": {
+            "name": "Learned Rates by Outdoor Temperature"
+          },
+          "average": {
+            "name": "Average Heating Rate"
+          }
+        }
+      },
+      "cooling_rate": {
+        "name": "Cooling Rate",
+        "state_attributes": {
+          "active_session": {
+            "name": "Active Cooling Session"
+          },
+          "averages": {
+            "name": "Learned Rates by Outdoor Temperature"
+          },
+          "average": {
+            "name": "Average Cooling Rate"
+          }
+        }
+      },
+      "debug": {
+        "name": "Debug",
+        "state_attributes": {
+          "preset": {
+            "name": "Active Preset"
+          },
+          "active_slot": {
+            "name": "Active Slot"
+          },
+          "next_slot": {
+            "name": "Next Slot"
+          },
+          "next_action": {
+            "name": "Next Action"
+          },
+          "preheat": {
+            "name": "Preheat Details"
+          },
+          "cooldown": {
+            "name": "Cooldown Details"
+          },
+          "timestamp": {
+            "name": "Timestamp"
+          },
+          "zones": {
+            "name": "Zones & Presence"
+          },
+          "temperatures": {
+            "name": "Temperatures"
+          },
+          "thermal_parameters": {
+            "name": "Thermal Parameters"
+          },
+          "settings": {
+            "name": "Settings"
+          },
+          "evaluation": {
+            "name": "Evaluation & Calculations"
+          }
+        }
+      }
+    },
+    "switch": {
+      "automatic": {
+        "name": "Automatic"
+      }
+    }
+  }
+}

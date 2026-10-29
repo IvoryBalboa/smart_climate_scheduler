@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Climate Scheduler 2.0 - Eerste installatie",
+        "description": "Configureer de thermostaat, buitentemperatuurbron (sensor heeft voorrang op weer-entiteit), brander/verwarmingsentiteit, zelflerende functie en standaardsnelheden.",
+        "data": {
+          "name": "Kamernaam",
+          "climate_entity": "Thermostaat / Climate-entiteit",
+          "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer-entiteit)",
+          "outside_weather_entity": "Weer-entiteit",
+          "heating_active_sensor": "Brander- / verwarming actief sensor",
+          "enable_self_learning": "Zelflerend inschakelen",
+          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
+          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
+          "zone_home_entity": "Aanwezigheidszone",
+          "zone_away_near_entity": "Nabije zone / naderingszone (optioneel)",
+          "near_distance": "Afstandsdrempel nabije zone (km)",
+          "default_preset": "Standaard preset voor lege tijdvakken",
+          "preheat_enabled": "Voorspellend voorverwarmen inschakelen",
+          "max_minutes_preheat": "Max. voorverwarmtijd (minuten)",
+          "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
+          "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
+          "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
+          "fallback_tolerance": "Herinschakeltolerantie fallback (K)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Kamernaam is verplicht."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hoofdmenu",
+        "description": "Selecteer de gewenste actie:",
+        "data": {
+          "main_action": "Selecteer actie"
+        }
+      },
+      "settings": {
+        "title": "Algemene instellingen & thermische parameters",
+        "description": "Pas buitentemperatuurbron, leren en standaard opwarm- en afkoelsnelheden aan:",
+        "data": {
+          "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer)",
+          "outside_weather_entity": "Weer-entiteit voor buitentemperatuur",
+          "heating_active_sensor": "Brander- / verwarming actief sensor",
+          "enable_self_learning": "Zelflerend inschakelen",
+          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
+          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
+          "zone_home_entity": "Aanwezigheidszone",
+          "zone_away_near_entity": "Nabije zone / nadering (optioneel)",
+          "near_distance": "Afstandsdrempel nabije zone (km)",
+          "default_preset": "Standaard preset voor lege tijdvakken",
+          "preheat_enabled": "Voorspellend voorverwarmen inschakelen",
+          "max_minutes_preheat": "Max. voorverwarmtijd (minuten)",
+          "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
+          "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
+          "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
+          "fallback_tolerance": "Herinschakeltolerantie fallback (K)"
+        }
+      },
+      "schedule_menu": {
+        "title": "Schema's beheren",
+        "description": "Selecteer een actie en de weekdag:",
+        "data": {
+          "aktion": "Selecteer actie",
+          "tag": "Weekdag"
+        }
+      },
+      "slot_overview": {
+        "title": "Tijdvakken beheren ({slots_count})",
+        "description": "Momenteel geconfigureerde tijdvakken voor de geselecteerde dag ({slots_count}):{slots_list}",
+        "data": {
+          "slot_aktion": "Selecteer of beheer tijdvakken"
+        }
+      },
+      "select_slot_to_edit": {
+        "title": "Selecteer tijdvak",
+        "description": "Kies het tijdvak dat u wilt bewerken:",
+        "data": {
+          "selected_slot": "Selecteer tijdvak"
+        }
+      },
+      "copy_slots": {
+        "title": "Tijdvakken kopiëren",
+        "description": "Selecteer doeldagen:",
+        "data": {
+          "target_days": "Doeldagen"
+        }
+      },
+      "add_slot": {
+        "title": "Nieuw tijdvak toevoegen",
+        "description": "Voer tijden en doel-preset in:",
+        "data": {
+          "startzeit": "Starttijd",
+          "endzeit": "Eindtijd",
+          "preset": "Preset-modus"
+        }
+      },
+      "edit_slot": {
+        "title": "Tijdvak bewerken",
+        "description": "Werk het geselecteerde tijdvak bij of verwijder het:",
+        "data": {
+          "aktion": "Selecteer actie",
+          "startzeit": "Starttijd",
+          "endzeit": "Eindtijd",
+          "preset": "Preset-modus"
+        }
+      }
+    },
+    "error": {
+      "invalid_time_range": "Eindtijd moet na starttijd liggen."
+    }
+  },
+  "selector": {
+    "day": {
+      "options": {
+        "monday": "Maandag",
+        "tuesday": "Dinsdag",
+        "wednesday": "Woensdag",
+        "thursday": "Donderdag",
+        "friday": "Vrijdag",
+        "saturday": "Zaterdag",
+        "sunday": "Zondag"
+      }
+    },
+    "preset": {
+      "options": {
+        "none": "Geen / Uit",
+        "home": "Thuis",
+        "away": "Weg",
+        "comfort": "Comfort",
+        "eco": "Eco",
+        "sleep": "Slapen",
+        "boost": "Boost",
+        "activity": "Activiteit"
+      }
+    },
+    "init_action": {
+      "options": {
+        "schedules": "📅 Schema's beheren",
+        "settings": "⚙️ Instellingen (Sensoren, Leren & Snelheden)",
+        "save": "💾 Opslaan en sluiten"
+      }
+    },
+    "schedule_action": {
+      "options": {
+        "edit": "Dag bewerken / Tijdvakken bekijken",
+        "back": "← Terug naar hoofdmenu"
+      }
+    },
+    "edit_action": {
+      "options": {
+        "save": "Wijzigingen opslaan",
+        "delete": "Dit tijdvak verwijderen"
+      }
+    },
+    "slot_action": {
+      "options": {
+        "add": "Nieuw tijdvak toevoegen",
+        "edit": "Bestaand tijdvak bewerken",
+        "copy": "Tijdvakken naar andere dagen kopiëren",
+        "clear": "Alle tijdvakken van deze dag wissen",
+        "back": "← Terug naar dagselectie"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Tijdelijke overschrijving instellen",
+      "description": "Schakelt een tijdelijke preset in voor een bepaalde periode.",
+      "fields": {
+        "override_id": {
+          "name": "Overschrijvings-ID",
+          "description": "Unieke identificatiecode."
+        },
+        "start": {
+          "name": "Starttijd",
+          "description": "Starttijd in formaat HH:MM of HH:MM:SS."
+        },
+        "end": {
+          "name": "Eindtijd",
+          "description": "Eindtijd in formaat HH:MM of HH:MM:SS."
+        },
+        "preset": {
+          "name": "Preset",
+          "description": "Preset-naam."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        },
+        "duration": {
+          "name": "Duur",
+          "description": "Duur van de overschrijving (bijv. 60 minuten of 2 uur). Start direct als er geen starttijd is opgegeven."
+        }
+      }
+    },
+    "remove_override": {
+      "name": "Overschrijving verwijderen",
+      "description": "Verwijdert een actieve overschrijving via ID.",
+      "fields": {
+        "override_id": {
+          "name": "Overschrijvings-ID",
+          "description": "ID van te verwijderen overschrijving."
+        }
+      }
+    },
+    "reset_heating_rates": {
+      "name": "Opwarmsnelheden resetten",
+      "description": "Wist alle geleerde snelheden en herstelt de standaardwaarden.",
+      "fields": {
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor of opwarmsensor."
+        }
+      }
+    },
+    "set_manual_heating_rate": {
+      "name": "Handmatige opwarmsnelheid instellen",
+      "description": "Stelt handmatig de gemiddelde opwarmsnelheid (K/h) in voor deze kamer.",
+      "fields": {
+        "rate": {
+          "name": "Opwarmsnelheid (K/h)",
+          "description": "Verwachte snelheid in Kelvin/uur (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        }
+      }
+    },
+    "set_matrix_heating_rate": {
+      "name": "Matrix opwarmsnelheid instellen",
+      "description": "Voegt een waarde toe aan de opwarmmatrix op basis van buitentemperatuur.",
+      "fields": {
+        "temperature": {
+          "name": "Buitentemperatuur (°C)",
+          "description": "Buitentemperatuur of default."
+        },
+        "rate": {
+          "name": "Opwarmsnelheid (K/h)",
+          "description": "Snelheid in Kelvin per uur (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        }
+      }
+    },
+    "delete_matrix_heating_rate": {
+      "name": "Matrix opwarmsnelheid verwijderen",
+      "description": "Verwijdert een buitentemperatuurwaarde uit de opwarmmatrix.",
+      "fields": {
+        "temperature": {
+          "name": "Buitentemperatuur (°C)",
+          "description": "Te verwijderen temperatuur."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        }
+      }
+    },
+    "set_matrix_cooling_rate": {
+      "name": "Matrix afkoelsnelheid instellen",
+      "description": "Voegt een waarde toe aan de afkoelmatrix op basis van buitentemperatuur.",
+      "fields": {
+        "temperature": {
+          "name": "Buitentemperatuur (°C)",
+          "description": "Buitentemperatuur of default."
+        },
+        "rate": {
+          "name": "Afkoelsnelheid (K/h)",
+          "description": "Snelheid in Kelvin per uur (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        }
+      }
+    },
+    "delete_matrix_cooling_rate": {
+      "name": "Matrix afkoelsnelheid verwijderen",
+      "description": "Verwijdert een temperatuurwaarde uit de afkoelmatrix.",
+      "fields": {
+        "temperature": {
+          "name": "Buitentemperatuur (°C)",
+          "description": "Te verwijderen temperatuur."
+        },
+        "entity_id": {
+          "name": "Entiteit",
+          "description": "Scheduler sensor."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "preheat": {
+        "name": "Voorverwarmen",
+        "state_attributes": {
+          "start_time": {
+            "name": "Starttijd"
+          },
+          "duration_minutes": {
+            "name": "Voorverwarmduur"
+          },
+          "effective_rate_k_h": {
+            "name": "Effectieve opwarmsnelheid"
+          }
+        }
+      },
+      "cooldown": {
+        "name": "Vroegtijdig afkoelen",
+        "state_attributes": {
+          "start_time": {
+            "name": "Starttijd"
+          },
+          "duration_minutes": {
+            "name": "Afkoelduur"
+          },
+          "effective_loss_rate_k_h": {
+            "name": "Effectieve afkoelsnelheid"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "schedule": {
+        "name": "Schema",
+        "state_attributes": {
+          "active_slot": {
+            "name": "Actief tijdvak"
+          },
+          "next_slot": {
+            "name": "Volgend tijdvak"
+          }
+        }
+      },
+      "next_action": {
+        "name": "Volgende actie",
+        "state_attributes": {
+          "time": {
+            "name": "Tijd"
+          }
+        }
+      },
+      "heating_rate": {
+        "name": "Opwarmsnelheid",
+        "state_attributes": {
+          "active_session": {
+            "name": "Actieve opwarmsessie"
+          },
+          "averages": {
+            "name": "Geleerde snelheden per buitentemperatuur"
+          },
+          "average": {
+            "name": "Gemiddelde opwarmsnelheid"
+          }
+        }
+      },
+      "cooling_rate": {
+        "name": "Afkoelsnelheid",
+        "state_attributes": {
+          "active_session": {
+            "name": "Actieve afkoelsessie"
+          },
+          "averages": {
+            "name": "Geleerde snelheden per buitentemperatuur"
+          },
+          "average": {
+            "name": "Gemiddelde afkoelsnelheid"
+          }
+        }
+      },
+      "debug": {
+        "name": "Debug",
+        "state_attributes": {
+          "preset": {
+            "name": "Actieve preset"
+          },
+          "active_slot": {
+            "name": "Actief tijdvak"
+          },
+          "next_slot": {
+            "name": "Volgend tijdvak"
+          },
+          "next_action": {
+            "name": "Volgende actie"
+          },
+          "preheat": {
+            "name": "Voorverwarmen details"
+          },
+          "cooldown": {
+            "name": "Afkoelen details"
+          },
+          "timestamp": {
+            "name": "Tijdstempel"
+          },
+          "zones": {
+            "name": "Zones & Aanwezigheid"
+          },
+          "temperatures": {
+            "name": "Temperaturen"
+          },
+          "thermal_parameters": {
+            "name": "Thermische parameters"
+          },
+          "settings": {
+            "name": "Instellingen"
+          },
+          "evaluation": {
+            "name": "Evaluatie & Berekeningen"
+          }
+        }
+      }
+    },
+    "switch": {
+      "automatic": {
+        "name": "Automatisch"
+      }
+    }
+  }
+}

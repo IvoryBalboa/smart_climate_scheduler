@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Climate Scheduler 2.0 - Configuration initiale",
+        "description": "Configurez le thermostat, la source de température extérieure (le capteur a priorité sur la météo), le capteur de chauffage actif, l'apprentissage et les taux par défaut.",
+        "data": {
+          "name": "Nom de la pièce",
+          "climate_entity": "Thermostat / Entité Climate",
+          "outside_temp_sensor": "Capteur de température extérieure (priorité sur la météo)",
+          "outside_weather_entity": "Entité météo",
+          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
+          "enable_self_learning": "Activer l'apprentissage",
+          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
+          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
+          "zone_home_entity": "Zone de présence",
+          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
+          "near_distance": "Seuil de distance zone proche (km)",
+          "default_preset": "Préréglage par défaut pour créneaux vides",
+          "preheat_enabled": "Activer le préchauffage prédictif",
+          "max_minutes_preheat": "Temps max. de préchauffage (minutes)",
+          "cooldown_enabled": "Activer le refroidissement anticipé",
+          "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
+          "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
+          "fallback_tolerance": "Tolérance de réactivation de secours (K)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Le nom de la pièce est requis."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Menu principal",
+        "description": "Sélectionnez l'action souhaitée :",
+        "data": {
+          "main_action": "Sélectionner une action"
+        }
+      },
+      "settings": {
+        "title": "Paramètres généraux & thermiques",
+        "description": "Ajustez la source de température extérieure, l'apprentissage et les taux de chauffe et refroidissement par défaut :",
+        "data": {
+          "outside_temp_sensor": "Capteur de température extérieure (priorité sur météo)",
+          "outside_weather_entity": "Entité météo pour température extérieure",
+          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
+          "enable_self_learning": "Activer l'apprentissage",
+          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
+          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
+          "zone_home_entity": "Zone de présence",
+          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
+          "near_distance": "Seuil de distance zone proche (km)",
+          "default_preset": "Préréglage par défaut pour créneaux vides",
+          "preheat_enabled": "Activer le préchauffage prédictif",
+          "max_minutes_preheat": "Temps max. de préchauffage (minutes)",
+          "cooldown_enabled": "Activer le refroidissement anticipé",
+          "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
+          "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
+          "fallback_tolerance": "Tolérance de réactivation de secours (K)"
+        }
+      },
+      "schedule_menu": {
+        "title": "Gérer les plannings",
+        "description": "Sélectionnez une action et le jour de la semaine :",
+        "data": {
+          "aktion": "Sélectionner une action",
+          "tag": "Jour de la semaine"
+        }
+      },
+      "slot_overview": {
+        "title": "Gérer les créneaux ({slots_count})",
+        "description": "Créneaux actuellement configurés pour le jour sélectionné ({slots_count}) :{slots_list}",
+        "data": {
+          "slot_aktion": "Sélectionner ou gérer les créneaux"
+        }
+      },
+      "select_slot_to_edit": {
+        "title": "Sélectionner un créneau",
+        "description": "Choisissez le créneau que vous souhaitez modifier :",
+        "data": {
+          "selected_slot": "Sélectionner un créneau"
+        }
+      },
+      "copy_slots": {
+        "title": "Copier les créneaux",
+        "description": "Sélectionnez les jours de destination :",
+        "data": {
+          "target_days": "Jours cibles"
+        }
+      },
+      "add_slot": {
+        "title": "Ajouter un créneau",
+        "description": "Saisissez les heures et le mode de préréglage :",
+        "data": {
+          "startzeit": "Heure de début",
+          "endzeit": "Heure de fin",
+          "preset": "Mode de préréglage"
+        }
+      },
+      "edit_slot": {
+        "title": "Modifier le créneau",
+        "description": "Mettre à jour ou supprimer le créneau sélectionné :",
+        "data": {
+          "aktion": "Sélectionner une action",
+          "startzeit": "Heure de début",
+          "endzeit": "Heure de fin",
+          "preset": "Mode de préréglage"
+        }
+      }
+    },
+    "error": {
+      "invalid_time_range": "L'heure de fin doit être postérieure à l'heure de début."
+    }
+  },
+  "selector": {
+    "day": {
+      "options": {
+        "monday": "Lundi",
+        "tuesday": "Mardi",
+        "wednesday": "Mercredi",
+        "thursday": "Jeudi",
+        "friday": "Vendredi",
+        "saturday": "Samedi",
+        "sunday": "Dimanche"
+      }
+    },
+    "preset": {
+      "options": {
+        "none": "Aucun / Arrêt",
+        "home": "Présent",
+        "away": "Absent",
+        "comfort": "Confort",
+        "eco": "Éco",
+        "sleep": "Nuit",
+        "boost": "Boost",
+        "activity": "Activité"
+      }
+    },
+    "init_action": {
+      "options": {
+        "schedules": "📅 Gérer les plannings",
+        "settings": "⚙️ Paramètres (Capteurs, Apprentissage & Taux)",
+        "save": "💾 Enregistrer et quitter"
+      }
+    },
+    "schedule_action": {
+      "options": {
+        "edit": "Modifier le jour / Voir les créneaux",
+        "back": "← Retour au menu principal"
+      }
+    },
+    "edit_action": {
+      "options": {
+        "save": "Enregistrer les modifications",
+        "delete": "Supprimer ce créneau"
+      }
+    },
+    "slot_action": {
+      "options": {
+        "add": "Ajouter un nouveau créneau",
+        "edit": "Modifier un créneau existant",
+        "copy": "Copier les créneaux vers d'autres jours",
+        "clear": "Effacer tous les créneaux de ce jour",
+        "back": "← Retour à la sélection du jour"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Définir une dérogation temporaire",
+      "description": "Active un préréglage temporaire (par ex. boost ou absent) pour une période définie.",
+      "fields": {
+        "override_id": {
+          "name": "ID de dérogation",
+          "description": "Identifiant unique (par ex. boost_soir)."
+        },
+        "start": {
+          "name": "Heure de début",
+          "description": "Heure de début au format HH:MM ou HH:MM:SS."
+        },
+        "end": {
+          "name": "Heure de fin",
+          "description": "Heure de fin au format HH:MM ou HH:MM:SS."
+        },
+        "preset": {
+          "name": "Préréglage",
+          "description": "Nom du préréglage (par ex. home, eco, boost, comfort)."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation (optionnel s'il n'y a qu'un seul thermostat)."
+        },
+        "duration": {
+          "name": "Durée",
+          "description": "Durée de la dérogation (par ex. 60 minutes ou 2 heures). Démarre immédiatement si aucune heure de début n'est spécifiée."
+        }
+      }
+    },
+    "remove_override": {
+      "name": "Supprimer une dérogation",
+      "description": "Supprime une dérogation temporaire active par son identifiant.",
+      "fields": {
+        "override_id": {
+          "name": "ID de dérogation",
+          "description": "Identifiant unique de la dérogation à supprimer."
+        }
+      }
+    },
+    "reset_heating_rates": {
+      "name": "Réinitialiser les taux de chauffe",
+      "description": "Efface tous les taux de chauffe appris et rétablit les valeurs par défaut.",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    },
+    "set_manual_heating_rate": {
+      "name": "Définir manuellement le taux de chauffe",
+      "description": "Définit manuellement le taux moyen de chauffe (en K/h) pour cette pièce.",
+      "fields": {
+        "rate": {
+          "name": "Taux de chauffe (K/h)",
+          "description": "Taux de chauffe attendu en Kelvin/heure (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    },
+    "set_matrix_heating_rate": {
+      "name": "Définir un taux de chauffe dans la matrice",
+      "description": "Ajoute ou met à jour une valeur dans la matrice de taux de chauffe selon la température extérieure.",
+      "fields": {
+        "temperature": {
+          "name": "Température extérieure (°C)",
+          "description": "Température extérieure pour cette entrée (par ex. -5, 0, 5, 12) ou default."
+        },
+        "rate": {
+          "name": "Taux de chauffe (K/h)",
+          "description": "Taux de chauffe en Kelvin par heure (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    },
+    "delete_matrix_heating_rate": {
+      "name": "Supprimer un taux de chauffe de la matrice",
+      "description": "Supprime une entrée de température extérieure de la matrice de taux de chauffe.",
+      "fields": {
+        "temperature": {
+          "name": "Température extérieure (°C)",
+          "description": "Température extérieure de l'entrée à supprimer."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    },
+    "set_matrix_cooling_rate": {
+      "name": "Définir un taux de refroidissement dans la matrice",
+      "description": "Ajoute ou met à jour une valeur dans la matrice de taux de refroidissement selon la température extérieure.",
+      "fields": {
+        "temperature": {
+          "name": "Température extérieure (°C)",
+          "description": "Température extérieure pour cette entrée ou default."
+        },
+        "rate": {
+          "name": "Taux de refroidissement (K/h)",
+          "description": "Taux de refroidissement en Kelvin par heure (°C/h)."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    },
+    "delete_matrix_cooling_rate": {
+      "name": "Supprimer un taux de refroidissement de la matrice",
+      "description": "Supprime une entrée de température de la matrice de refroidissement.",
+      "fields": {
+        "temperature": {
+          "name": "Température extérieure (°C)",
+          "description": "Température extérieure de l'entrée à supprimer."
+        },
+        "entity_id": {
+          "name": "Entité",
+          "description": "Capteur de programmation ou de taux de chauffe."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "preheat": {
+        "name": "Préchauffage",
+        "state_attributes": {
+          "start_time": {
+            "name": "Heure de début"
+          },
+          "duration_minutes": {
+            "name": "Durée de préchauffage"
+          },
+          "effective_rate_k_h": {
+            "name": "Taux de chauffe effectif"
+          }
+        }
+      },
+      "cooldown": {
+        "name": "Refroidissement anticipé",
+        "state_attributes": {
+          "start_time": {
+            "name": "Heure de début"
+          },
+          "duration_minutes": {
+            "name": "Durée de refroidissement"
+          },
+          "effective_loss_rate_k_h": {
+            "name": "Taux de refroidissement effectif"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "schedule": {
+        "name": "Planning",
+        "state_attributes": {
+          "active_slot": {
+            "name": "Créneau actif"
+          },
+          "next_slot": {
+            "name": "Créneau suivant"
+          }
+        }
+      },
+      "next_action": {
+        "name": "Prochaine action",
+        "state_attributes": {
+          "time": {
+            "name": "Heure"
+          }
+        }
+      },
+      "heating_rate": {
+        "name": "Taux de chauffe",
+        "state_attributes": {
+          "active_session": {
+            "name": "Session de chauffe active"
+          },
+          "averages": {
+            "name": "Taux appris par température extérieure"
+          },
+          "average": {
+            "name": "Taux de chauffe moyen"
+          }
+        }
+      },
+      "cooling_rate": {
+        "name": "Taux de refroidissement",
+        "state_attributes": {
+          "active_session": {
+            "name": "Session de refroidissement active"
+          },
+          "averages": {
+            "name": "Taux appris par température extérieure"
+          },
+          "average": {
+            "name": "Taux de refroidissement moyen"
+          }
+        }
+      },
+      "debug": {
+        "name": "Débogage",
+        "state_attributes": {
+          "preset": {
+            "name": "Préréglage actif"
+          },
+          "active_slot": {
+            "name": "Créneau actif"
+          },
+          "next_slot": {
+            "name": "Créneau suivant"
+          },
+          "next_action": {
+            "name": "Prochaine action"
+          },
+          "preheat": {
+            "name": "Détails du préchauffage"
+          },
+          "cooldown": {
+            "name": "Détails du refroidissement"
+          },
+          "timestamp": {
+            "name": "Horodatage"
+          },
+          "zones": {
+            "name": "Zones & Présence"
+          },
+          "temperatures": {
+            "name": "Températures"
+          },
+          "thermal_parameters": {
+            "name": "Paramètres thermiques"
+          },
+          "settings": {
+            "name": "Paramètres"
+          },
+          "evaluation": {
+            "name": "Évaluation & Calculs"
+          }
+        }
+      }
+    },
+    "switch": {
+      "automatic": {
+        "name": "Automatique"
+      }
+    }
+  }
+}

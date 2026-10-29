@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Archive custom component
+        run: |
+          cd "${GITHUB_WORKSPACE}/custom_components/smart_climate_scheduler"
+          zip -r "${GITHUB_WORKSPACE}/smart_climate_scheduler.zip" .
+
+      - name: Upload zip to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: smart_climate_scheduler.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

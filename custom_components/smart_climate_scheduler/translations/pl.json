@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Climate Scheduler 2.0 - Konfiguracja wstępna",
+        "description": "Skonfiguruj termostat, źródło temperatury zewnętrznej (czujnik ma priorytet nad pogodą), czujnik aktywności ogrzewania, samouczenie oraz domyślne wskaźniki.",
+        "data": {
+          "name": "Nazwa pomieszczenia",
+          "climate_entity": "Termostat / Encja Climate",
+          "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
+          "outside_weather_entity": "Encja pogody",
+          "heating_active_sensor": "Czujnik pracy palnika / ogrzewania",
+          "enable_self_learning": "Włącz samouczenie",
+          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
+          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
+          "zone_home_entity": "Strefa obecności w domu",
+          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
+          "near_distance": "Próg odległości strefy zbliżania (km)",
+          "default_preset": "Domyślny tryb dla pustych przedziałów",
+          "preheat_enabled": "Włącz predykcyjne wstępne nagrzewanie",
+          "max_minutes_preheat": "Maks. czas nagrzewania (minuty)",
+          "cooldown_enabled": "Włącz wczesne chłodzenie",
+          "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
+          "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
+          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Nazwa pomieszczenia jest wymagana."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Menu główne",
+        "description": "Wybierz żądaną akcję:",
+        "data": {
+          "main_action": "Wybierz akcję"
+        }
+      },
+      "settings": {
+        "title": "Ustawienia ogólne i parametry cieplne",
+        "description": "Dostosuj źródło temperatury zewnętrznej, samouczenie oraz domyślne prędkości nagrzewania i chłodzenia:",
+        "data": {
+          "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
+          "outside_weather_entity": "Encja pogody dla temperatury zewnętrznej",
+          "heating_active_sensor": "Czujnik pracy ogrzewania / palnika",
+          "enable_self_learning": "Włącz samouczenie",
+          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
+          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
+          "zone_home_entity": "Strefa obecności w domu",
+          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
+          "near_distance": "Próg odległości strefy zbliżania (km)",
+          "default_preset": "Domyślny tryb dla pustych przedziałów",
+          "preheat_enabled": "Włącz predykcyjne wstępne nagrzewanie",
+          "max_minutes_preheat": "Maks. czas nagrzewania (minuty)",
+          "cooldown_enabled": "Włącz wczesne chłodzenie",
+          "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
+          "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
+          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)"
+        }
+      },
+      "schedule_menu": {
+        "title": "Zarządzanie harmonogramami",
+        "description": "Wybierz akcję i dzień tygodnia:",
+        "data": {
+          "aktion": "Wybierz akcję",
+          "tag": "Dzień tygodnia"
+        }
+      },
+      "slot_overview": {
+        "title": "Zarządzaj przedziałami ({slots_count})",
+        "description": "Aktualnie skonfigurowane przedziały dla wybranego dnia ({slots_count}):{slots_list}",
+        "data": {
+          "slot_aktion": "Wybierz lub zarządzaj przedziałami"
+        }
+      },
+      "select_slot_to_edit": {
+        "title": "Wybierz przedział",
+        "description": "Wybierz przedział, który chcesz edytować:",
+        "data": {
+          "selected_slot": "Wybierz przedział"
+        }
+      },
+      "copy_slots": {
+        "title": "Kopiuj przedziały",
+        "description": "Wybierz dni docelowe:",
+        "data": {
+          "target_days": "Dni docelowe"
+        }
+      },
+      "add_slot": {
+        "title": "Dodaj nowy przedział",
+        "description": "Wprowadź godziny i tryb docelowy:",
+        "data": {
+          "startzeit": "Czas rozpoczęcia",
+          "endzeit": "Czas zakończenia",
+          "preset": "Tryb docelowy"
+        }
+      },
+      "edit_slot": {
+        "title": "Edytuj przedział",
+        "description": "Zaktualizuj lub usuń wybrany przedział:",
+        "data": {
+          "aktion": "Wybierz akcję",
+          "startzeit": "Czas rozpoczęcia",
+          "endzeit": "Czas zakończenia",
+          "preset": "Tryb docelowy"
+        }
+      }
+    },
+    "error": {
+      "invalid_time_range": "Czas zakończenia musi być późniejszy niż czas rozpoczęcia."
+    }
+  },
+  "selector": {
+    "day": {
+      "options": {
+        "monday": "Poniedziałek",
+        "tuesday": "Wtorek",
+        "wednesday": "Środa",
+        "thursday": "Czwartek",
+        "friday": "Piątek",
+        "saturday": "Sobota",
+        "sunday": "Niedziela"
+      }
+    },
+    "preset": {
+      "options": {
+        "none": "Brak / Wyłączone",
+        "home": "W domu",
+        "away": "Poza domem",
+        "comfort": "Komfort",
+        "eco": "Eko",
+        "sleep": "Sen",
+        "boost": "Boost",
+        "activity": "Aktywność"
+      }
+    },
+    "init_action": {
+      "options": {
+        "schedules": "📅 Zarządzanie harmonogramami",
+        "settings": "⚙️ Ustawienia (Czujniki, Uczenie i Prędkości)",
+        "save": "💾 Zapisz i zamknij"
+      }
+    },
+    "schedule_action": {
+      "options": {
+        "edit": "Edytuj dzień / Pokaż przedziały",
+        "back": "← Powrót do menu głównego"
+      }
+    },
+    "edit_action": {
+      "options": {
+        "save": "Zapisz zmiany",
+        "delete": "Usuń ten przedział"
+      }
+    },
+    "slot_action": {
+      "options": {
+        "add": "Dodaj nowy przedział",
+        "edit": "Edytuj istniejący przedział",
+        "copy": "Kopiuj przedziały na inne dni",
+        "clear": "Wyczyść wszystkie przedziały tego dnia",
+        "back": "← Powrót do wyboru dnia"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Ustaw tymczasowe nadpisanie",
+      "description": "Włącza tymczasowy tryb (np. boost lub poza domem) na określony czas.",
+      "fields": {
+        "override_id": {
+          "name": "ID nadpisania",
+          "description": "Unikalny identyfikator."
+        },
+        "start": {
+          "name": "Czas rozpoczęcia",
+          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
+        },
+        "end": {
+          "name": "Czas zakończenia",
+          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
+        },
+        "preset": {
+          "name": "Tryb",
+          "description": "Nazwa trybu."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik harmonogramu."
+        },
+        "duration": {
+          "name": "Czas trwania",
+          "description": "Czas trwania nadpisania (np. 60 minut lub 2 godziny). Rozpoczyna się natychmiast, jeśli nie podano czasu rozpoczęcia."
+        }
+      }
+    },
+    "remove_override": {
+      "name": "Usuń nadpisanie",
+      "description": "Usuwa aktywne nadpisanie na podstawie ID.",
+      "fields": {
+        "override_id": {
+          "name": "ID nadpisania",
+          "description": "ID nadpisania do usunięcia."
+        }
+      }
+    },
+    "reset_heating_rates": {
+      "name": "Zresetuj wskaźniki nagrzewania",
+      "description": "Usuwa wszystkie nauczone wskaźniki i przywraca wartości domyślne.",
+      "fields": {
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik harmonogramu lub nagrzewania."
+        }
+      }
+    },
+    "set_manual_heating_rate": {
+      "name": "Ustaw ręczną prędkość nagrzewania",
+      "description": "Ręcznie ustawia średnią prędkość nagrzewania dla pokoju.",
+      "fields": {
+        "rate": {
+          "name": "Prędkość nagrzewania (K/h)",
+          "description": "Prędkość w Kelvinach/godzinę (°C/h)."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik kontrolny."
+        }
+      }
+    },
+    "set_matrix_heating_rate": {
+      "name": "Ustaw prędkość nagrzewania w macierzy",
+      "description": "Dodaje lub aktualizuje wartość w macierzy nagrzewania.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura zewnętrzna (°C)",
+          "description": "Temperatura zewnętrzna lub default."
+        },
+        "rate": {
+          "name": "Prędkość nagrzewania (K/h)",
+          "description": "Prędkość w K/h."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik kontrolny."
+        }
+      }
+    },
+    "delete_matrix_heating_rate": {
+      "name": "Usuń prędkość nagrzewania z macierzy",
+      "description": "Usuwa wpis temperatury z macierzy nagrzewania.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura zewnętrzna (°C)",
+          "description": "Temperatura do usunięcia."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik kontrolny."
+        }
+      }
+    },
+    "set_matrix_cooling_rate": {
+      "name": "Ustaw prędkość chłodzenia w macierzy",
+      "description": "Dodaje lub aktualizuje wartość w macierzy chłodzenia.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura zewnętrzna (°C)",
+          "description": "Temperatura zewnętrzna lub default."
+        },
+        "rate": {
+          "name": "Prędkość chłodzenia (K/h)",
+          "description": "Prędkość w K/h."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik kontrolny."
+        }
+      }
+    },
+    "delete_matrix_cooling_rate": {
+      "name": "Usuń prędkość chłodzenia z macierzy",
+      "description": "Usuwa wpis temperatury z macierzy chłodzenia.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatura zewnętrzna (°C)",
+          "description": "Temperatura do usunięcia."
+        },
+        "entity_id": {
+          "name": "Encja",
+          "description": "Czujnik kontrolny."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "preheat": {
+        "name": "Wstępne nagrzewanie",
+        "state_attributes": {
+          "start_time": {
+            "name": "Czas rozpoczęcia"
+          },
+          "duration_minutes": {
+            "name": "Czas trwania"
+          },
+          "effective_rate_k_h": {
+            "name": "Efektywna prędkość nagrzewania"
+          }
+        }
+      },
+      "cooldown": {
+        "name": "Wczesne chłodzenie",
+        "state_attributes": {
+          "start_time": {
+            "name": "Czas rozpoczęcia"
+          },
+          "duration_minutes": {
+            "name": "Czas chłodzenia"
+          },
+          "effective_loss_rate_k_h": {
+            "name": "Efektywna prędkość chłodzenia"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "schedule": {
+        "name": "Harmonogram",
+        "state_attributes": {
+          "active_slot": {
+            "name": "Aktywny przedział"
+          },
+          "next_slot": {
+            "name": "Następny przedział"
+          }
+        }
+      },
+      "next_action": {
+        "name": "Następna akcja",
+        "state_attributes": {
+          "time": {
+            "name": "Godzina"
+          }
+        }
+      },
+      "heating_rate": {
+        "name": "Prędkość nagrzewania",
+        "state_attributes": {
+          "active_session": {
+            "name": "Aktywna sesja nagrzewania"
+          },
+          "averages": {
+            "name": "Nauczone prędkości wg temperatury zewn."
+          },
+          "average": {
+            "name": "Średnia prędkość nagrzewania"
+          }
+        }
+      },
+      "cooling_rate": {
+        "name": "Prędkość chłodzenia",
+        "state_attributes": {
+          "active_session": {
+            "name": "Aktywna sesja chłodzenia"
+          },
+          "averages": {
+            "name": "Nauczone prędkości wg temperatury zewn."
+          },
+          "average": {
+            "name": "Średnia prędkość chłodzenia"
+          }
+        }
+      },
+      "debug": {
+        "name": "Debug",
+        "state_attributes": {
+          "preset": {
+            "name": "Aktywny tryb"
+          },
+          "active_slot": {
+            "name": "Aktywny przedział"
+          },
+          "next_slot": {
+            "name": "Następny przedział"
+          },
+          "next_action": {
+            "name": "Następna akcja"
+          },
+          "preheat": {
+            "name": "Szczegóły nagrzewania"
+          },
+          "cooldown": {
+            "name": "Szczegóły chłodzenia"
+          },
+          "timestamp": {
+            "name": "Znacznik czasu"
+          },
+          "zones": {
+            "name": "Strefy i Obecność"
+          },
+          "temperatures": {
+            "name": "Temperatury"
+          },
+          "thermal_parameters": {
+            "name": "Parametry cieplne"
+          },
+          "settings": {
+            "name": "Ustawienia"
+          },
+          "evaluation": {
+            "name": "Ocena i Obliczenia"
+          }
+        }
+      }
+    },
+    "switch": {
+      "automatic": {
+        "name": "Automatyka"
+      }
+    }
+  }
+}
