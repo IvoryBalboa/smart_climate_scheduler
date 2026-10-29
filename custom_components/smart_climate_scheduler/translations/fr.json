@@ -172,6 +172,10 @@
       "name": "Définir une dérogation temporaire",
       "description": "Active un préréglage temporaire (par ex. boost ou absent) pour une période définie.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID de dérogation",
           "description": "Identifiant unique (par ex. boost_soir)."
@@ -188,10 +192,6 @@
           "name": "Préréglage",
           "description": "Nom du préréglage (par ex. home, eco, boost, comfort)."
         },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation (optionnel s'il n'y a qu'un seul thermostat)."
-        },
         "duration": {
           "name": "Durée",
           "description": "Durée de la dérogation (par ex. 60 minutes ou 2 heures). Démarre immédiatement si aucune heure de début n'est spécifiée."
@@ -202,6 +202,10 @@
       "name": "Supprimer une dérogation",
       "description": "Supprime une dérogation temporaire active par son identifiant.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID de dérogation",
           "description": "Identifiant unique de la dérogation à supprimer."
@@ -212,9 +216,9 @@
       "name": "Réinitialiser les taux de chauffe",
       "description": "Efface tous les taux de chauffe appris et rétablit les valeurs par défaut.",
       "fields": {
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Définir manuellement le taux de chauffe",
       "description": "Définit manuellement le taux moyen de chauffe (en K/h) pour cette pièce.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "rate": {
           "name": "Taux de chauffe (K/h)",
           "description": "Taux de chauffe attendu en Kelvin/heure (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Définir un taux de chauffe dans la matrice",
       "description": "Ajoute ou met à jour une valeur dans la matrice de taux de chauffe selon la température extérieure.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Température extérieure (°C)",
           "description": "Température extérieure pour cette entrée (par ex. -5, 0, 5, 12) ou default."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Taux de chauffe (K/h)",
           "description": "Taux de chauffe en Kelvin par heure (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Supprimer un taux de chauffe de la matrice",
       "description": "Supprime une entrée de température extérieure de la matrice de taux de chauffe.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Température extérieure (°C)",
           "description": "Température extérieure de l'entrée à supprimer."
-        },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Définir un taux de refroidissement dans la matrice",
       "description": "Ajoute ou met à jour une valeur dans la matrice de taux de refroidissement selon la température extérieure.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Température extérieure (°C)",
           "description": "Température extérieure pour cette entrée ou default."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Taux de refroidissement (K/h)",
           "description": "Taux de refroidissement en Kelvin par heure (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Supprimer un taux de refroidissement de la matrice",
       "description": "Supprime une entrée de température de la matrice de refroidissement.",
       "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Température extérieure (°C)",
           "description": "Température extérieure de l'entrée à supprimer."
-        },
-        "entity_id": {
-          "name": "Entité",
-          "description": "Capteur de programmation ou de taux de chauffe."
         }
       }
     }

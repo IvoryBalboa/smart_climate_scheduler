@@ -172,6 +172,10 @@
       "name": "Establecer anulación temporal",
       "description": "Activa un modo temporal (p. ej. boost o ausente) durante un período definido.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID de anulación",
           "description": "Identificador único (p. ej. boost_noche)."
@@ -188,10 +192,6 @@
           "name": "Modo",
           "description": "Nombre del modo (p. ej. home, eco, boost, comfort)."
         },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación (opcional si solo hay un termostato)."
-        },
         "duration": {
           "name": "Duración",
           "description": "Duración de la anulación (p. ej. 60 minutos o 2 horas). Comienza inmediatamente si no se especifica hora de inicio."
@@ -202,6 +202,10 @@
       "name": "Eliminar anulación temporal",
       "description": "Elimina una anulación temporal activa por su identificador.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID de anulación",
           "description": "Identificador único de la anulación a eliminar."
@@ -212,9 +216,9 @@
       "name": "Restablecer tasas de calentamiento",
       "description": "Borra todas las tasas de calentamiento aprendidas y las restablece al valor por defecto.",
       "fields": {
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Establecer tasa de calentamiento manual",
       "description": "Establece manualmente la tasa media de calentamiento (en K/h) para esta habitación.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "rate": {
           "name": "Tasa de calentamiento (K/h)",
           "description": "Tasa esperada en Kelvin/hora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Establecer tasa de calentamiento en matriz",
       "description": "Añade o actualiza un valor en la matriz de calentamiento según la temperatura exterior.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura exterior (°C)",
           "description": "Temperatura exterior para esta entrada (p. ej. -5, 0, 5, 12) o default."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Tasa de calentamiento (K/h)",
           "description": "Tasa de calentamiento en Kelvin por hora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Eliminar tasa de calentamiento de matriz",
       "description": "Elimina una entrada de temperatura exterior de la matriz de calentamiento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura exterior (°C)",
           "description": "Temperatura exterior de la entrada a eliminar."
-        },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Establecer tasa de enfriamiento en matriz",
       "description": "Añade o actualiza un valor en la matriz de enfriamiento según la temperatura exterior.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura exterior (°C)",
           "description": "Temperatura exterior para esta entrada o default."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Tasa de enfriamiento (K/h)",
           "description": "Tasa de enfriamiento en Kelvin por hora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Eliminar tasa de enfriamiento de matriz",
       "description": "Elimina una entrada de temperatura de la matriz de enfriamiento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Estancia de Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura exterior (°C)",
           "description": "Temperatura exterior de la entrada a eliminar."
-        },
-        "entity_id": {
-          "name": "Entidad",
-          "description": "Sensor de programación o de tasa de calentamiento."
         }
       }
     }

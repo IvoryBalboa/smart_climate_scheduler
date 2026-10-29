@@ -172,6 +172,10 @@
       "name": "Ustaw tymczasowe nadpisanie",
       "description": "Włącza tymczasowy tryb (np. boost lub poza domem) na określony czas.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID nadpisania",
           "description": "Unikalny identyfikator."
@@ -188,10 +192,6 @@
           "name": "Tryb",
           "description": "Nazwa trybu."
         },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik harmonogramu."
-        },
         "duration": {
           "name": "Czas trwania",
           "description": "Czas trwania nadpisania (np. 60 minut lub 2 godziny). Rozpoczyna się natychmiast, jeśli nie podano czasu rozpoczęcia."
@@ -202,6 +202,10 @@
       "name": "Usuń nadpisanie",
       "description": "Usuwa aktywne nadpisanie na podstawie ID.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID nadpisania",
           "description": "ID nadpisania do usunięcia."
@@ -212,9 +216,9 @@
       "name": "Zresetuj wskaźniki nagrzewania",
       "description": "Usuwa wszystkie nauczone wskaźniki i przywraca wartości domyślne.",
       "fields": {
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik harmonogramu lub nagrzewania."
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Ustaw ręczną prędkość nagrzewania",
       "description": "Ręcznie ustawia średnią prędkość nagrzewania dla pokoju.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "rate": {
           "name": "Prędkość nagrzewania (K/h)",
           "description": "Prędkość w Kelvinach/godzinę (°C/h)."
-        },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik kontrolny."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Ustaw prędkość nagrzewania w macierzy",
       "description": "Dodaje lub aktualizuje wartość w macierzy nagrzewania.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura zewnętrzna (°C)",
           "description": "Temperatura zewnętrzna lub default."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Prędkość nagrzewania (K/h)",
           "description": "Prędkość w K/h."
-        },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik kontrolny."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Usuń prędkość nagrzewania z macierzy",
       "description": "Usuwa wpis temperatury z macierzy nagrzewania.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura zewnętrzna (°C)",
           "description": "Temperatura do usunięcia."
-        },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik kontrolny."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Ustaw prędkość chłodzenia w macierzy",
       "description": "Dodaje lub aktualizuje wartość w macierzy chłodzenia.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura zewnętrzna (°C)",
           "description": "Temperatura zewnętrzna lub default."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Prędkość chłodzenia (K/h)",
           "description": "Prędkość w K/h."
-        },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik kontrolny."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Usuń prędkość chłodzenia z macierzy",
       "description": "Usuwa wpis temperatury z macierzy chłodzenia.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura zewnętrzna (°C)",
           "description": "Temperatura do usunięcia."
-        },
-        "entity_id": {
-          "name": "Encja",
-          "description": "Czujnik kontrolny."
         }
       }
     }

@@ -172,6 +172,10 @@
       "name": "Imposta override temporaneo",
       "description": "Attiva un preset temporaneo (es. boost o fuori casa) per un intervallo di tempo.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID override",
           "description": "Identificatore univoco."
@@ -188,10 +192,6 @@
           "name": "Preset",
           "description": "Nome del preset."
         },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore orario o riscaldamento."
-        },
         "duration": {
           "name": "Durata",
           "description": "Durata dell'override (es. 60 minuti o 2 ore). Inizia immediatamente se non viene specificata l'ora di inizio."
@@ -202,6 +202,10 @@
       "name": "Rimuovi override",
       "description": "Elimina un override temporaneo attivo tramite ID.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "override_id": {
           "name": "ID override",
           "description": "Identificatore dell'override da rimuovere."
@@ -212,9 +216,9 @@
       "name": "Ripristina tassi di riscaldamento",
       "description": "Cancella tutti i tassi appresi e ripristina i valori predefiniti.",
       "fields": {
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore orario o tasso di riscaldamento."
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Imposta manualmente tasso di riscaldamento",
       "description": "Imposta manualmente la media del tasso di riscaldamento per la stanza.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "rate": {
           "name": "Tasso di riscaldamento (K/h)",
           "description": "Tasso atteso in Kelvin/ora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore di controllo."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Imposta tasso di riscaldamento matrice",
       "description": "Aggiunge o aggiorna un valore nella matrice di riscaldamento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura esterna (°C)",
           "description": "Temperatura esterna o default."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Tasso di riscaldamento (K/h)",
           "description": "Tasso in Kelvin/ora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore di controllo."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Elimina tasso di riscaldamento matrice",
       "description": "Rimuove una temperatura dalla matrice di riscaldamento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura esterna (°C)",
           "description": "Temperatura da eliminare."
-        },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore di controllo."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Imposta tasso di raffreddamento matrice",
       "description": "Aggiunge o aggiorna un valore nella matrice di raffreddamento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura esterna (°C)",
           "description": "Temperatura esterna o default."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Tasso di raffreddamento (K/h)",
           "description": "Tasso in Kelvin/ora (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore di controllo."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Elimina tasso di raffreddamento matrice",
       "description": "Rimuove una temperatura dalla matrice di raffreddamento.",
       "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
         "temperature": {
           "name": "Temperatura esterna (°C)",
           "description": "Temperatura da eliminare."
-        },
-        "entity_id": {
-          "name": "Entità",
-          "description": "Sensore di controllo."
         }
       }
     }

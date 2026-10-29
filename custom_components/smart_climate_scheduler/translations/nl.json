@@ -172,6 +172,10 @@
       "name": "Tijdelijke overschrijving instellen",
       "description": "Schakelt een tijdelijke preset in voor een bepaalde periode.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "override_id": {
           "name": "Overschrijvings-ID",
           "description": "Unieke identificatiecode."
@@ -188,10 +192,6 @@
           "name": "Preset",
           "description": "Preset-naam."
         },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
-        },
         "duration": {
           "name": "Duur",
           "description": "Duur van de overschrijving (bijv. 60 minuten of 2 uur). Start direct als er geen starttijd is opgegeven."
@@ -202,6 +202,10 @@
       "name": "Overschrijving verwijderen",
       "description": "Verwijdert een actieve overschrijving via ID.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "override_id": {
           "name": "Overschrijvings-ID",
           "description": "ID van te verwijderen overschrijving."
@@ -212,9 +216,9 @@
       "name": "Opwarmsnelheden resetten",
       "description": "Wist alle geleerde snelheden en herstelt de standaardwaarden.",
       "fields": {
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor of opwarmsensor."
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
         }
       }
     },
@@ -222,13 +226,13 @@
       "name": "Handmatige opwarmsnelheid instellen",
       "description": "Stelt handmatig de gemiddelde opwarmsnelheid (K/h) in voor deze kamer.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "rate": {
           "name": "Opwarmsnelheid (K/h)",
           "description": "Verwachte snelheid in Kelvin/uur (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
         }
       }
     },
@@ -236,6 +240,10 @@
       "name": "Matrix opwarmsnelheid instellen",
       "description": "Voegt een waarde toe aan de opwarmmatrix op basis van buitentemperatuur.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "temperature": {
           "name": "Buitentemperatuur (°C)",
           "description": "Buitentemperatuur of default."
@@ -243,10 +251,6 @@
         "rate": {
           "name": "Opwarmsnelheid (K/h)",
           "description": "Snelheid in Kelvin per uur (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
         }
       }
     },
@@ -254,13 +258,13 @@
       "name": "Matrix opwarmsnelheid verwijderen",
       "description": "Verwijdert een buitentemperatuurwaarde uit de opwarmmatrix.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "temperature": {
           "name": "Buitentemperatuur (°C)",
           "description": "Te verwijderen temperatuur."
-        },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
         }
       }
     },
@@ -268,6 +272,10 @@
       "name": "Matrix afkoelsnelheid instellen",
       "description": "Voegt een waarde toe aan de afkoelmatrix op basis van buitentemperatuur.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "temperature": {
           "name": "Buitentemperatuur (°C)",
           "description": "Buitentemperatuur of default."
@@ -275,10 +283,6 @@
         "rate": {
           "name": "Afkoelsnelheid (K/h)",
           "description": "Snelheid in Kelvin per uur (°C/h)."
-        },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
         }
       }
     },
@@ -286,13 +290,13 @@
       "name": "Matrix afkoelsnelheid verwijderen",
       "description": "Verwijdert een temperatuurwaarde uit de afkoelmatrix.",
       "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
         "temperature": {
           "name": "Buitentemperatuur (°C)",
           "description": "Te verwijderen temperatuur."
-        },
-        "entity_id": {
-          "name": "Entiteit",
-          "description": "Scheduler sensor."
         }
       }
     }
