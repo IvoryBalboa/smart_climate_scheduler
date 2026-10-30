@@ -328,6 +328,9 @@
           },
           "effective_loss_rate_k_h": {
             "name": "Tasso effettivo di raffreddamento"
+          },
+          "target_preset": {
+            "name": "Preset di destinazione"
           }
         }
       }

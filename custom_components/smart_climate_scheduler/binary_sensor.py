@@ -126,4 +126,5 @@ class SmartClimateSchedulerCooldownBinarySensor(BinarySensorEntity):
             "start_time": cooldown.get("start_time"),
             "duration_minutes": cooldown.get("duration_minutes", 0),
             "effective_loss_rate_k_h": cooldown.get("effective_loss_rate_k_h"),
+            "target_preset": cooldown.get("target_preset"),
         }

@@ -328,6 +328,9 @@
           },
           "effective_loss_rate_k_h": {
             "name": "Tasa efectiva de enfriamiento"
+          },
+          "target_preset": {
+            "name": "Modo objetivo"
           }
         }
       }

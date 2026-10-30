@@ -328,6 +328,9 @@
           },
           "effective_loss_rate_k_h": {
             "name": "Efektywna prędkość chłodzenia"
+          },
+          "target_preset": {
+            "name": "Tryb docelowy"
           }
         }
       }

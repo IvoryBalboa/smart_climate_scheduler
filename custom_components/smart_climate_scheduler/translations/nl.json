@@ -328,6 +328,9 @@
           },
           "effective_loss_rate_k_h": {
             "name": "Effectieve afkoelsnelheid"
+          },
+          "target_preset": {
+            "name": "Doel-preset"
           }
         }
       }

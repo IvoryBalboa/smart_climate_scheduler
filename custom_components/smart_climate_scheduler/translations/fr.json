@@ -328,6 +328,9 @@
           },
           "effective_loss_rate_k_h": {
             "name": "Taux de refroidissement effectif"
+          },
+          "target_preset": {
+            "name": "Préréglage cible"
           }
         }
       }

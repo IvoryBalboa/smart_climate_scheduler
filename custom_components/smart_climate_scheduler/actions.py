@@ -40,8 +40,9 @@ def calculate_next_action(
         }
 
     if cooldown_duration > 0 and cooldown_start_dt and cooldown_start_dt > now_dt:
+        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else "Eco"
         return {
-            "action": f"(Cooldown) {current_label} -> Eco",
+            "action": f"(Cooldown) {current_label} -> {cooldown_target}",
             "time": cooldown_start_str,
         }
 
@@ -55,6 +56,14 @@ def calculate_next_action(
         }
 
     if is_cooling_down:
+        if next_preset_name and next_preset_name != "none":
+            subsequent_preset = subsequent_slot.get("preset", "home") if subsequent_slot else "home"
+            subsequent_label = _format_preset(subsequent_preset)
+            to_time = next_slot.get("to") if next_slot else None
+            return {
+                "action": f"{target_preset} -> {subsequent_label}",
+                "time": to_time,
+            }
         return {
             "action": f"Eco -> {target_preset}",
             "time": slot_from_time,

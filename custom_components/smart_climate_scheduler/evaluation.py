@@ -201,11 +201,16 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         learning_enabled=self_learning_enabled,
     )
 
+    target_cooldown_preset = (
+        next_preset_name if (next_preset_name and next_preset_name != "none") else "eco"
+    )
+
     cooldown = {
         "is_cooling_down": False,
         "start_time": None,
         "duration_minutes": 0,
         "effective_loss_rate_k_h": round(effective_cooling_rate, 3),
+        "target_preset": target_cooldown_preset,
     }
     is_cooling_down = False
     cooldown_duration = 0
@@ -249,6 +254,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                             "start_time": cooldown_start.strftime("%H:%M"),
                             "duration_minutes": locked_c_dur,
                             "effective_loss_rate_k_h": round(effective_cooling_rate, 3),
+                            "target_preset": target_cooldown_preset,
                         }
                         cooldown_duration = locked_c_dur
                     else:
@@ -265,10 +271,12 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                             "start_time": cooldown_start.strftime("%H:%M"),
                             "duration_minutes": calc_c_dur,
                             "effective_loss_rate_k_h": round(effective_cooling_rate, 3),
+                            "target_preset": target_cooldown_preset,
                         }
                         cooldown_duration = calc_c_dur
                     else:
-                        cooldown = cooldown_result
+                        cooldown = dict(cooldown_result)
+                        cooldown["target_preset"] = target_cooldown_preset
                         is_cooling_down = False
                         cooldown_duration = cooldown.get("duration_minutes", 0)
             except Exception as e:
@@ -395,7 +403,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         if is_preheat_needed and next_preset_name and next_preset_name != "none":
             preset = next_preset_name
         elif is_cooling_down:
-            preset = "eco"
+            preset = target_cooldown_preset
     elif is_away_near:
         if active_slot and active_slot.get("is_fallback"):
             preset = "sleep"
