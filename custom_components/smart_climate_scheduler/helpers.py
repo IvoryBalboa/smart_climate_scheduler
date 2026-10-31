@@ -64,12 +64,23 @@ def safe_float(
         return default
 
 
+def get_config_entry_slug(config_entry) -> str:
+    """Ermittelt den bereinigten Slug des Config Entry Namens für Entity-IDs."""
+    name = config_entry.data.get("name", "thermostat") if hasattr(config_entry, "data") else "thermostat"
+    try:
+        from homeassistant.util import slugify
+        return slugify(name)
+    except Exception:
+        import re
+        return re.sub(r"[^\w]+", "_", str(name).lower().strip()).strip("_") or "thermostat"
+
+
 def get_device_info(config_entry) -> DeviceInfo:
     """Erzeugt eine einheitliche DeviceInfo-Struktur für alle Entitäten eines Config Entrys."""
     name = config_entry.data.get("name", "thermostat")
     return DeviceInfo(
         identifiers={(DOMAIN, config_entry.entry_id)},
-        name=f"Smart Climate Scheduler ({name})",
+        name=name,
         manufacturer="Smart Climate Scheduler",
         model="Version 2.1.0",
     )

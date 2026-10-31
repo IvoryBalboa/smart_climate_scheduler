@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_CLIMATE_ENTITY, DOMAIN
 from .evaluation import evaluate_state
-from .helpers import get_device_info
+from .helpers import get_config_entry_slug, get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +36,8 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         """Initialisiert den Switch."""
         self.hass = hass
         self.config_entry = config_entry
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"switch.{slug}_automatik"
         
         # Zustand aus hass.data laden (wurde beim Start aus dem Storage befüllt)
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(config_entry.entry_id, {})

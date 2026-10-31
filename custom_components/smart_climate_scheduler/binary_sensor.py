@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .evaluation import evaluate_state
-from .helpers import get_device_info
+from .helpers import get_config_entry_slug, get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +44,8 @@ class SmartClimateSchedulerPreheatBinarySensor(BinarySensorEntity):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_preheat"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"binary_sensor.{slug}_vorheizen"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -92,6 +94,8 @@ class SmartClimateSchedulerCooldownBinarySensor(BinarySensorEntity):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_cooldown"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"binary_sensor.{slug}_abkuehlen"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""

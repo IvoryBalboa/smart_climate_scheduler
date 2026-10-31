@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.device_registry import DeviceInfo
 from .evaluation import evaluate_state
-from .helpers import get_device_info
+from .helpers import get_config_entry_slug, get_device_info
 
 
 class SmartClimateSchedulerDebugSensor(SensorEntity):
@@ -23,6 +23,8 @@ class SmartClimateSchedulerDebugSensor(SensorEntity):
         self.config_entry = config_entry
         self.main_sensor = main_sensor
         self._attr_unique_id = f"{config_entry.entry_id}_debug"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"sensor.{slug}_diagnose"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Debug-Sensors."""

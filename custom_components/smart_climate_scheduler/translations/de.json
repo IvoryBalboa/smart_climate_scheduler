@@ -318,7 +318,7 @@
         }
       },
       "cooldown": {
-        "name": "Auskühlen",
+        "name": "Abkühlen",
         "state_attributes": {
           "start_time": {
             "name": "Startzeit"
@@ -384,7 +384,7 @@
         }
       },
       "debug": {
-        "name": "Debug",
+        "name": "Diagnose",
         "state_attributes": {
           "preset": {
             "name": "Aktives Preset"

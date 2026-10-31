@@ -27,6 +27,7 @@ from .helpers import (
     calculate_overall_average,
     calculate_step_cooling_rate,
     calculate_step_heating_rate,
+    get_config_entry_slug,
     get_device_info,
     get_effective_cooling_rate,
     get_effective_heating_rate,
@@ -705,6 +706,8 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
         self.config_entry = config_entry
         self._last_known_state = None
         self._attr_unique_id = f"{config_entry.entry_id}_schedule"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"sensor.{slug}_zeitplan"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -763,6 +766,8 @@ class SmartClimateSchedulerHeatingRateSensor(SensorEntity):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_heating_rate"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"sensor.{slug}_aufheizrate"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -862,6 +867,8 @@ class SmartClimateSchedulerCoolingRateSensor(SensorEntity):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_cooling_rate"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"sensor.{slug}_abkuehlrate"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -959,6 +966,8 @@ class SmartClimateSchedulerNextActionSensor(SensorEntity):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_next_action"
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"sensor.{slug}_naechste_aktion"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
