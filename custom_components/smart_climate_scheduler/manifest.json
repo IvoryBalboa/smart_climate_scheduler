@@ -7,6 +7,8 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/IvoryBalboa/smart_climate_scheduler",
+  "issue_tracker": "https://github.com/IvoryBalboa/smart_climate_scheduler/issues",
+  "integration_type": "hub",
   "iot_class": "local_push",
   "version": "2.1.2"
 }
