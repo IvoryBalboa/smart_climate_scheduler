@@ -376,10 +376,12 @@ async def async_setup_entry(
                     if out_temp is None:
                         out_temp = cooling_session.get("outside_start")
 
-                    if curr_temp > last_step_temp + 0.05:
-                        # Raum erwärmt sich (Sonne/Kochen etc.) -> Referenz nachziehen
+                    if curr_temp > last_step_temp:
+                        # Raum erwärmt sich (Sonne/Kochen etc.) -> Live-Rate sofort auf 0.0 K/h und Referenz nachziehen
+                        cooling_session["live_rate"] = 0.0
                         cooling_session["last_step_temp"] = curr_temp
                         cooling_session["last_step_time"] = now_dt
+                        cooling_rate_sensor.async_write_ha_state()
                     else:
                         step_rate, is_valid_step = calculate_step_cooling_rate(
                             last_time=last_step_time,
