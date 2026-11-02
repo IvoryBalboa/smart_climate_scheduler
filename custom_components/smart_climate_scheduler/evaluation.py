@@ -39,9 +39,9 @@ from .timeline import format_slot, get_current_and_next_slot
 from .actions import calculate_next_action
 from .preheat import calculate_preheat
 from .cooldown import calculate_cooldown
+from .heating_rate import get_effective_heating_rate
+from .cooling_rate import get_effective_cooling_rate
 from .helpers import (
-    get_effective_cooling_rate,
-    get_effective_heating_rate,
     get_preset_temperature,
     get_resolved_outside_info,
     parse_time,

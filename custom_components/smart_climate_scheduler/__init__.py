@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from datetime import datetime, timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -20,31 +19,12 @@ from .helpers import (
 from .evaluation import invalidate_eval_cache
 
 from .const import (
-    DOMAIN,
-    DEFAULT_FALLBACK_HEATING_RATE,
-    DEFAULT_FALLBACK_COOLING_RATE,
-    DEFAULT_ENABLE_SELF_LEARNING,
-    DEFAULT_NEAR_DISTANCE,
-    DEFAULT_PREHEAT_ENABLED,
-    DEFAULT_COOLDOWN_ENABLED,
-    DEFAULT_MAX_MINUTES_PREHEAT,
-    DEFAULT_MAX_MINUTES_COOLDOWN,
-    DEFAULT_FALLBACK_PRESET,
     CONF_CLIMATE_ENTITY,
-    CONF_FALLBACK_HEATING_RATE,
     CONF_FALLBACK_COOLING_RATE,
-    CONF_ENABLE_SELF_LEARNING,
-    CONF_OUTSIDE_TEMP_SENSOR,
-    CONF_OUTSIDE_WEATHER_ENTITY,
-    CONF_HEATING_ACTIVE_SENSOR,
-    CONF_ZONE_HOME_ENTITY,
-    CONF_ZONE_AWAY_NEAR_ENTITY,
-    CONF_NEAR_DISTANCE,
-    CONF_DEFAULT_PRESET,
-    CONF_PREHEAT_ENABLED,
-    CONF_COOLDOWN_ENABLED,
-    CONF_MAX_MINUTES_PREHEAT,
-    CONF_MAX_MINUTES_COOLDOWN,
+    CONF_FALLBACK_HEATING_RATE,
+    DEFAULT_FALLBACK_COOLING_RATE,
+    DEFAULT_FALLBACK_HEATING_RATE,
+    DOMAIN,
 )
 from .storage import ClimateSchedulerStorage
 

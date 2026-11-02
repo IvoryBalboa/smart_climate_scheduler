@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import copy
-import math
 from typing import Any
-from datetime import time
 import voluptuous as vol
 
 from homeassistant import config_entries

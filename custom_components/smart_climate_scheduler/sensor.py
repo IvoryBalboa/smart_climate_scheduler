@@ -18,23 +18,20 @@ from homeassistant.util import dt as dt_util
 
 from .debug import SmartClimateSchedulerDebugSensor
 from .evaluation import evaluate_state, invalidate_eval_cache
-from .helpers import (
+from .cooling_rate import (
     apply_cooling_ema,
-    apply_step_ema,
     async_record_cooling_rate,
-    async_record_live_heating_rate,
-    calculate_live_heating_rate,
-    calculate_overall_average,
     calculate_step_cooling_rate,
+)
+from .heating_rate import (
+    apply_step_ema,
+    async_record_live_heating_rate,
     calculate_step_heating_rate,
+)
+from .helpers import (
     get_config_entry_slug,
     get_device_info,
-    get_effective_cooling_rate,
-    get_effective_heating_rate,
     get_outside_temperature,
-    get_preset_temperature,
-    get_resolved_outside_info,
-    normalize_matrix,
     parse_time,
     safe_float as _safe_float,
 )

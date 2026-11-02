@@ -11,8 +11,7 @@ from .const import (
     DEFAULT_FALLBACK_HEATING_RATE,
     DEFAULT_FALLBACK_COOLING_RATE,
 )
-from .heating_rate import normalize_matrix, calculate_overall_average
-from .cooling_rate import normalize_cooling_matrix, calculate_overall_cooling_average
+from .helpers import calculate_overall_average, normalize_matrix
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,10 +64,10 @@ class ClimateSchedulerStorage:
                 norm_averages, _clean_rate(raw_avg, DEFAULT_FALLBACK_HEATING_RATE)
             )
 
-            norm_cooling = normalize_cooling_matrix(data.get("cooling_averages", {}))
+            norm_cooling = normalize_matrix(data.get("cooling_averages", {}))
             raw_cooling_avg = data.get("cooling_average")
             data["cooling_averages"] = norm_cooling
-            data["cooling_average"] = calculate_overall_cooling_average(
+            data["cooling_average"] = calculate_overall_average(
                 norm_cooling, _clean_rate(raw_cooling_avg, DEFAULT_FALLBACK_COOLING_RATE)
             )
 
@@ -91,7 +90,7 @@ class ClimateSchedulerStorage:
             elif k == "averages" and isinstance(v, dict):
                 cleaned_patch[k] = normalize_matrix(v)
             elif k == "cooling_averages" and isinstance(v, dict):
-                cleaned_patch[k] = normalize_cooling_matrix(v)
+                cleaned_patch[k] = normalize_matrix(v)
             else:
                 cleaned_patch[k] = v
 
