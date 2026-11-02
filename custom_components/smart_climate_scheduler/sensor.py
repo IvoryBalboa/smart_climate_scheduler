@@ -29,9 +29,12 @@ from .heating_rate import (
     calculate_step_heating_rate,
 )
 from .helpers import (
+    calculate_overall_average,
     get_config_entry_slug,
     get_device_info,
     get_outside_temperature,
+    get_preset_temperature,
+    normalize_matrix,
     parse_time,
     safe_float as _safe_float,
 )
