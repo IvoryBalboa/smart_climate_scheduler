@@ -474,29 +474,8 @@ async def async_setup_entry(
             )
         )
 
-        # 2. Standard-Modus (ohne Zweipunkt-Regelung): Thermostat aktivieren falls 'off'
-        if not hvac_off_on_target:
-            if state_obj.state == "off" and target_preset and str(target_preset).lower() not in ("off", "none"):
-                target_mode = get_target_hvac_mode(state_obj)
-                domain_data["is_setting_hvac"] = True
-                _LOGGER.info(
-                    "Automatik [%s]: Thermostat steht auf 'off'. Schalte Modus auf '%s'",
-                    climate_entity,
-                    target_mode,
-                )
-                try:
-                    await hass.services.async_call(
-                        "climate",
-                        "set_hvac_mode",
-                        service_data={"hvac_mode": target_mode},
-                        target={"entity_id": climate_entity},
-                        blocking=False,
-                    )
-                finally:
-                    hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
-
-        # 3. Optionale Zweipunkt-Regelung mit Hysterese prüfen
-        else:
+        # 2. Zwei-Punkt-Regelung: Steuerung von off und heat anhand der Temperatur-Schwellen
+        if hvac_off_on_target:
             current_hvac_mode = state_obj.state
             current_hvac_action = attrs.get("hvac_action")
             real_measured_temp = attrs.get("external_temp_ema")
@@ -519,28 +498,7 @@ async def async_setup_entry(
             )
             tolerance = _safe_float(attrs.get("tolerance"), fallback_tol)
 
-            # Wenn keine Temperaturen vorliegen, aber Thermostat auf 'off' steht -> aktivieren
-            if (current_temp is None or target_temp is None) and current_hvac_mode == "off":
-                if target_preset and str(target_preset).lower() not in ("off", "none"):
-                    target_mode = get_target_hvac_mode(state_obj)
-                    domain_data["is_setting_hvac"] = True
-                    _LOGGER.info(
-                        "Automatik Zweipunkt [%s]: Keine Temperaturwerte, Thermostat steht auf 'off' -> Schalte auf '%s'",
-                        climate_entity,
-                        target_mode,
-                    )
-                    try:
-                        await hass.services.async_call(
-                            "climate",
-                            "set_hvac_mode",
-                            service_data={"hvac_mode": target_mode},
-                            target={"entity_id": climate_entity},
-                            blocking=False,
-                        )
-                    finally:
-                        hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
-
-            elif current_temp is not None and target_temp is not None:
+            if current_temp is not None and target_temp is not None:
                 # Fall 1: Ist >= Soll -> Thermostat ausschalten (NUR wenn hvac_action != "heating")
                 if current_temp >= target_temp:
                     domain_data["two_point_target_reached"] = True
@@ -571,21 +529,19 @@ async def async_setup_entry(
                             finally:
                                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
 
-                # Fall 2: Ist < Soll - Toleranz ODER Thermostat war 'off' ohne dass Ziel erreicht wurde -> Thermostat wieder einschalten
-                elif current_temp < (target_temp - tolerance) or (
-                    current_hvac_mode == "off"
-                    and not domain_data.get("two_point_target_reached", False)
-                    and current_temp < target_temp
-                ):
+                # Fall 2: Ist < Soll - Toleranz -> Thermostat wieder einschalten (hvac_mode: heat)
+                elif current_temp < (target_temp - tolerance):
                     domain_data["two_point_target_reached"] = False
                     if current_hvac_mode == "off":
                         target_mode = get_target_hvac_mode(state_obj)
                         domain_data["is_setting_hvac"] = True
                         _LOGGER.info(
-                            "Automatik Zweipunkt [%s]: Ist (%.1f °C) < Soll (%.1f °C) -> Schalte Thermostat auf '%s'",
+                            "Automatik Zweipunkt [%s]: Ist (%.1f °C) < Schwelle (%.1f - %.2f = %.1f °C) -> Schalte Thermostat auf '%s'",
                             climate_entity,
                             current_temp,
                             target_temp,
+                            tolerance,
+                            target_temp - tolerance,
                             target_mode,
                         )
                         try:

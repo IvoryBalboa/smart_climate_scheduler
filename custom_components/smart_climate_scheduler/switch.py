@@ -9,9 +9,21 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_CLIMATE_ENTITY, DOMAIN
+from .const import (
+    CONF_CLIMATE_ENTITY,
+    CONF_HVAC_OFF_ON_TARGET,
+    DEFAULT_HVAC_OFF_ON_TARGET,
+    DEFAULT_FALLBACK_TOLERANCE,
+    DOMAIN,
+)
 from .evaluation import evaluate_state
-from .helpers import get_config_entry_slug, get_device_info, get_target_hvac_mode
+from .helpers import (
+    get_config_entry_slug,
+    get_device_info,
+    get_preset_temperature,
+    get_target_hvac_mode,
+    safe_float as _safe_float,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +73,8 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = True
+        domain_data["is_setting_preset"] = False
+        domain_data["is_setting_hvac"] = False
         
         # Persistent im Storage speichern (ohne Integration-Reload)
         storage = domain_data.get("storage")
@@ -73,7 +87,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
 
         self.async_write_ha_state()
 
-        # Sofortiges Anwenden des Soll-Presets und Heizmodus beim Einschalten der Automatik
+        # Sofortiges Anwenden des Soll-Presets und der Zwei-Punkt-Regelung
         apply_fn = domain_data.get("async_apply_schedule")
         if callable(apply_fn):
             await apply_fn()
@@ -95,15 +109,46 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                             target={"entity_id": climate_entity},
                             blocking=False,
                         )
-                        if state_obj.state == "off" and str(preset).lower() not in ("off", "none"):
-                            target_mode = get_target_hvac_mode(state_obj)
-                            await self.hass.services.async_call(
-                                "climate",
-                                "set_hvac_mode",
-                                service_data={"hvac_mode": target_mode},
-                                target={"entity_id": climate_entity},
-                                blocking=False,
+                        
+                        # Zwei-Punkt-Regelung anwenden falls aktiviert
+                        hvac_off_on_target = bool(
+                            self.config_entry.options.get(
+                                CONF_HVAC_OFF_ON_TARGET,
+                                self.config_entry.data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET),
                             )
+                        )
+                        if hvac_off_on_target:
+                            attrs = state_obj.attributes or {}
+                            real_temp = attrs.get("external_temp_ema")
+                            if real_temp is None:
+                                real_temp = attrs.get("current_temperature")
+                            try:
+                                cur_t = float(real_temp) if real_temp is not None else None
+                            except (ValueError, TypeError):
+                                cur_t = None
+                            tgt_t = get_preset_temperature(state_obj, preset)
+                            tol = _safe_float(attrs.get("tolerance"), DEFAULT_FALLBACK_TOLERANCE)
+                            
+                            if cur_t is not None and tgt_t is not None:
+                                if cur_t >= tgt_t:
+                                    if state_obj.state != "off" and attrs.get("hvac_action") != "heating":
+                                        await self.hass.services.async_call(
+                                            "climate",
+                                            "set_hvac_mode",
+                                            service_data={"hvac_mode": "off"},
+                                            target={"entity_id": climate_entity},
+                                            blocking=False,
+                                        )
+                                elif cur_t < (tgt_t - tol):
+                                    if state_obj.state == "off":
+                                        target_mode = get_target_hvac_mode(state_obj)
+                                        await self.hass.services.async_call(
+                                            "climate",
+                                            "set_hvac_mode",
+                                            service_data={"hvac_mode": target_mode},
+                                            target={"entity_id": climate_entity},
+                                            blocking=False,
+                                        )
 
     async def async_turn_off(self, **kwargs) -> None:
         """Schaltet die Automatik aus (ohne Reload)."""
