@@ -371,3 +371,18 @@ async def async_delete_matrix_entry(
         })
 
     return temp_key, overall_avg
+
+
+def get_target_hvac_mode(climate_state: Any) -> str:
+    """Ermittelt den passenden Heiz-Modus für ein Climate Entity (heat, auto, etc.)."""
+    if not climate_state:
+        return "heat"
+    attrs = getattr(climate_state, "attributes", None) or {}
+    supported_modes = attrs.get("hvac_modes") or []
+    if "heat" in supported_modes:
+        return "heat"
+    if "auto" in supported_modes:
+        return "auto"
+    if "heat_cool" in supported_modes:
+        return "heat_cool"
+    return "heat"

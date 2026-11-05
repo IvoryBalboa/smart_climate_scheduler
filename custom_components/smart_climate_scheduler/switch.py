@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_CLIMATE_ENTITY, DOMAIN
 from .evaluation import evaluate_state
-from .helpers import get_config_entry_slug, get_device_info
+from .helpers import get_config_entry_slug, get_device_info, get_target_hvac_mode
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,24 +73,37 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
 
         self.async_write_ha_state()
 
-        # Sofortiges Anwenden des Soll-Presets beim Einschalten der Automatik
-        climate_entity = (
-            self.config_entry.options.get(CONF_CLIMATE_ENTITY) 
-            or self.config_entry.data.get(CONF_CLIMATE_ENTITY, "")
-        ).strip()
-        
-        if self.hass and climate_entity:
-            state_obj = self.hass.states.get(climate_entity)
-            if state_obj and state_obj.state not in ("unavailable", "unknown", "None", None):
-                preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
-                if preset and preset not in ("unavailable", "unknown", "None", None):
-                    await self.hass.services.async_call(
-                        "climate",
-                        "set_preset_mode",
-                        service_data={"preset_mode": preset},
-                        target={"entity_id": climate_entity},
-                        blocking=False,
-                    )
+        # Sofortiges Anwenden des Soll-Presets und Heizmodus beim Einschalten der Automatik
+        apply_fn = domain_data.get("async_apply_schedule")
+        if callable(apply_fn):
+            await apply_fn()
+        else:
+            climate_entity = (
+                self.config_entry.options.get(CONF_CLIMATE_ENTITY) 
+                or self.config_entry.data.get(CONF_CLIMATE_ENTITY, "")
+            ).strip()
+            
+            if self.hass and climate_entity:
+                state_obj = self.hass.states.get(climate_entity)
+                if state_obj and state_obj.state not in ("unavailable", "unknown", "None", None):
+                    preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
+                    if preset and preset not in ("unavailable", "unknown", "None", None):
+                        await self.hass.services.async_call(
+                            "climate",
+                            "set_preset_mode",
+                            service_data={"preset_mode": preset},
+                            target={"entity_id": climate_entity},
+                            blocking=False,
+                        )
+                        if state_obj.state == "off" and str(preset).lower() not in ("off", "none"):
+                            target_mode = get_target_hvac_mode(state_obj)
+                            await self.hass.services.async_call(
+                                "climate",
+                                "set_hvac_mode",
+                                service_data={"hvac_mode": target_mode},
+                                target={"entity_id": climate_entity},
+                                blocking=False,
+                            )
 
     async def async_turn_off(self, **kwargs) -> None:
         """Schaltet die Automatik aus (ohne Reload)."""
@@ -98,6 +111,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = False
+        domain_data["two_point_target_reached"] = False
         
         # Persistent im Storage speichern (ohne Reload)
         storage = domain_data.get("storage")
