@@ -31,9 +31,24 @@ def calculate_cooldown(
             "effective_loss_rate_k_h": cooling_rate_k_h,
         }
 
-    next_slot_start = datetime.combine(
-        now_dt.date(), next_from_time, tzinfo=now_dt.tzinfo
-    )
+    slot_date_str = next_slot.get("date") if next_slot else None
+    if slot_date_str:
+        try:
+            next_slot_start = datetime.strptime(slot_date_str, "%Y-%m-%d").replace(
+                hour=next_from_time.hour,
+                minute=next_from_time.minute,
+                second=next_from_time.second,
+                tzinfo=now_dt.tzinfo,
+            )
+        except Exception:
+            next_slot_start = datetime.combine(
+                now_dt.date(), next_from_time, tzinfo=now_dt.tzinfo
+            )
+    else:
+        next_slot_start = datetime.combine(
+            now_dt.date(), next_from_time, tzinfo=now_dt.tzinfo
+        )
+
     if next_slot_start <= now_dt:
         next_slot_start += timedelta(days=1)
 

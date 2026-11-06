@@ -245,7 +245,19 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                     parse_time_func=parse_time,
                 )
 
-                if is_cooldown_latched and locked_c_dur is not None:
+                if current_ref_temp <= (next_temp + tolerance):
+                    is_cooling_down = False
+                    entry_data["cooldown_latched"] = False
+                    entry_data["locked_cooldown_duration"] = None
+                    cooldown = {
+                        "is_cooling_down": False,
+                        "start_time": cooldown_result.get("start_time") if cooldown_result else None,
+                        "duration_minutes": 0,
+                        "effective_loss_rate_k_h": round(effective_cooling_rate, 3),
+                        "target_preset": target_cooldown_preset,
+                    }
+                    cooldown_duration = 0
+                elif is_cooldown_latched and locked_c_dur is not None:
                     cooldown_start = next_slot_start_c - timedelta(minutes=locked_c_dur)
                     if now_dt < next_slot_start_c:
                         is_cooling_down = True
@@ -259,6 +271,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                         cooldown_duration = locked_c_dur
                     else:
                         entry_data["cooldown_latched"] = False
+                        entry_data["locked_cooldown_duration"] = None
                 elif cooldown_result and cooldown_result.get("duration_minutes", 0) > 0 and current_ref_temp > next_temp:
                     calc_c_dur = cooldown_result.get("duration_minutes")
                     if cooldown_result.get("is_cooling_down"):
@@ -328,8 +341,22 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                     parse_time_func=parse_time,
                 )
 
-                if is_latched and locked_dur is not None:
-                    # Sobald Preheat gestartet wurde, bleibt er bis zum Slot-Start aktiv (kein Zurückspringen auf sleep/eco)
+                if current_ref_temp >= next_temp:
+                    # Zieltemperatur für den nächsten Slot ist bereits erreicht!
+                    # Preheat ist nicht erforderlich bzw. erfolgreich beendet.
+                    is_preheat_needed = False
+                    entry_data["preheat_latched"] = False
+                    entry_data["locked_preheat_duration"] = None
+                    preheat = {
+                        "is_preheating": False,
+                        "start_time": preheat_result.get("start_time") if preheat_result else None,
+                        "duration_minutes": 0,
+                        "effective_rate_k_h": round(effective_heating_rate, 3),
+                    }
+                    preheat_duration = 0
+                elif is_latched and locked_dur is not None:
+                    # Sobald Preheat gestartet wurde und Ziel noch nicht erreicht ist:
+                    # bleibt aktiv bis zum Slot-Start oder bis Zieltemperatur erreicht ist
                     preheat_start = next_slot_start - timedelta(minutes=locked_dur)
                     if now_dt < next_slot_start:
                         is_preheat_needed = True
@@ -342,6 +369,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                         preheat_duration = locked_dur
                     else:
                         entry_data["preheat_latched"] = False
+                        entry_data["locked_preheat_duration"] = None
                 elif preheat_result and preheat_result.get("duration_minutes", 0) > 0 and next_temp > current_ref_temp:
                     calc_dur = preheat_result.get("duration_minutes")
 

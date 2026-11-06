@@ -282,33 +282,93 @@ def get_effective_rate(
     matrix_key: str = "averages",
     avg_key: str = "average",
 ) -> float:
-    """Ermittelt die geltende Rate (Matrix-Wert zur Außentemperatur -> 'default' -> Gesamtschnitt -> Fallback)."""
-    safe_fallback = safe_float(fallback_rate, 1.0)
+    """Ermittelt die geltende Rate (Matrix-Wert mit stetiger linearer Interpolation, Ausreißer-Dämpfung und Plausibilitätsgrenzen)."""
+    is_cooling = (matrix_key == "cooling_averages")
+    safe_fallback = safe_float(fallback_rate, 0.2 if is_cooling else 1.0)
     if not learning_enabled:
         return round(safe_fallback, 3)
 
     raw_matrix = entry_data.get(matrix_key, {})
     matrix = raw_matrix if isinstance(raw_matrix, dict) else {}
 
-    if outside_temp is not None:
-        target_key = normalize_temp_key(outside_temp)
-        val = matrix.get(target_key)
-        if isinstance(val, (int, float)) and val > 0:
-            return round(float(val), 3)
-
-    default_val = matrix.get("default")
-    if isinstance(default_val, (int, float)) and default_val > 0:
-        return round(float(default_val), 3)
-
+    # Globaler Referenzwert (Gesamtdurchschnitt oder Fallback)
     stored_avg = entry_data.get(avg_key)
     if isinstance(stored_avg, (int, float)) and stored_avg > 0 and not math.isnan(stored_avg):
-        return round(float(stored_avg), 3)
+        global_avg = float(stored_avg)
+    else:
+        computed_avg = calculate_overall_average(matrix, safe_fallback, already_normalized=True)
+        global_avg = computed_avg if computed_avg > 0 else safe_fallback
 
-    overall_avg = calculate_overall_average(matrix, safe_fallback, already_normalized=True)
-    if overall_avg > 0:
-        return round(float(overall_avg), 3)
+    # Numerische Buckets für stetige Interpolation aufbereiten
+    numeric_buckets: dict[int, float] = {}
+    for k, v in matrix.items():
+        try:
+            if isinstance(v, (int, float)) and v > 0 and not math.isnan(v):
+                numeric_buckets[int(round(float(k)))] = float(v)
+        except (ValueError, TypeError):
+            continue
 
-    return round(safe_fallback, 3)
+    local_rate: float | None = None
+
+    if outside_temp is not None and numeric_buckets:
+        try:
+            t_out = float(outside_temp)
+            t_low = int(math.floor(t_out))
+            t_high = int(math.ceil(t_out))
+
+            if t_low == t_high:
+                if t_low in numeric_buckets:
+                    local_rate = numeric_buckets[t_low]
+            elif t_low in numeric_buckets and t_high in numeric_buckets:
+                # Stetige lineare Interpolation zwischen benachbarten Temperaturstufen
+                weight = t_out - t_low
+                local_rate = (1.0 - weight) * numeric_buckets[t_low] + weight * numeric_buckets[t_high]
+            elif t_low in numeric_buckets:
+                local_rate = numeric_buckets[t_low]
+            elif t_high in numeric_buckets:
+                local_rate = numeric_buckets[t_high]
+            else:
+                # Nächstliegenden Bucket prüfen (innerhalb von max. 3°C Distanz)
+                closest_k = min(numeric_buckets.keys(), key=lambda k: abs(k - t_out))
+                if abs(closest_k - t_out) <= 3.0:
+                    local_rate = numeric_buckets[closest_k]
+        except (ValueError, TypeError):
+            pass
+
+    # Falls Außentemperatur nicht zuordenbar, 'default' oder Gesamtmittelwert nutzen
+    if local_rate is None or local_rate <= 0:
+        default_val = matrix.get("default")
+        if isinstance(default_val, (int, float)) and default_val > 0:
+            local_rate = float(default_val)
+        else:
+            local_rate = global_avg
+
+    # Ausreißer-Schutz und Glättung:
+    # Weicht ein einzelner Bucket drastisch (>40%) nach unten vom Gesamt-Durchschnitt ab,
+    # wird er mit dem Gesamtschnitt stabilisiert, damit ein einzelner fehlerhafter Messschritt
+    # (z. B. offenes Fenster oder kalter Heizkörperstart) nicht zu stundenlangen Vorheizzeiten führt.
+    if global_avg > 0:
+        if not is_cooling:
+            if local_rate < 0.6 * global_avg:
+                local_rate = 0.5 * local_rate + 0.5 * global_avg
+            elif local_rate > 2.5 * global_avg:
+                local_rate = 0.6 * local_rate + 0.4 * global_avg
+        else:
+            if local_rate < 0.5 * global_avg:
+                local_rate = 0.5 * local_rate + 0.5 * global_avg
+            elif local_rate > 2.5 * global_avg:
+                local_rate = 0.6 * local_rate + 0.4 * global_avg
+
+    # Physikalische Plausibilitätsgrenzen
+    if is_cooling:
+        min_floor = max(0.02, 0.2 * safe_fallback)
+        max_cap = 2.5
+    else:
+        min_floor = max(0.4, 0.4 * safe_fallback)
+        max_cap = 5.0
+
+    clamped_rate = max(min_floor, min(max_cap, local_rate))
+    return round(clamped_rate, 3)
 
 
 async def async_set_matrix_entry(
