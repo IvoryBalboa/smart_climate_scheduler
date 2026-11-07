@@ -94,8 +94,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         resolved: set[str] = set()
 
         data: dict = {}
-        if isinstance(call_or_data, ServiceCall):
-            data = call_or_data.data or {}
+        if hasattr(call_or_data, "data"):
+            data = getattr(call_or_data, "data", {}) or {}
         elif isinstance(call_or_data, dict):
             data = call_or_data
         elif isinstance(call_or_data, str):
@@ -125,9 +125,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             if len(identifier) == 2 and identifier[0] == DOMAIN:
                                 if identifier[1] in hass.data[DOMAIN]:
                                     resolved.add(identifier[1])
-                        for ce_id in device.config_entries:
+                        ce_id = getattr(device, "config_entry_id", None)
+                        if ce_id:
                             if ce_id in hass.data[DOMAIN]:
                                 resolved.add(ce_id)
+                        else:
+                            for old_ce_id in getattr(device, "config_entries", ()):
+                                if old_ce_id in hass.data[DOMAIN]:
+                                    resolved.add(old_ce_id)
             except Exception as err:
                 _LOGGER.debug("Fehler beim Auflösen der device_id: %s", err)
 
@@ -145,9 +150,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             if len(identifier) == 2 and identifier[0] == DOMAIN:
                                 if identifier[1] in hass.data[DOMAIN]:
                                     resolved.add(identifier[1])
-                        for ce_id in device.config_entries:
+                        ce_id = getattr(device, "config_entry_id", None)
+                        if ce_id:
                             if ce_id in hass.data[DOMAIN]:
                                 resolved.add(ce_id)
+                        else:
+                            for old_ce_id in getattr(device, "config_entries", ()):
+                                if old_ce_id in hass.data[DOMAIN]:
+                                    resolved.add(old_ce_id)
             except Exception as err:
                 _LOGGER.debug("Fehler beim Auflösen der area_id: %s", err)
 
