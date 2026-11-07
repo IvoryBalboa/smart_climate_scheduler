@@ -22,7 +22,8 @@
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
-          "fallback_tolerance": "Re-activation tolerance fallback (K)"
+          "fallback_tolerance": "Re-activation tolerance fallback (K)",
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
-          "fallback_tolerance": "Re-activation tolerance fallback (K)"
+          "fallback_tolerance": "Re-activation tolerance fallback (K)",
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
         }
       },
       "schedule_menu": {

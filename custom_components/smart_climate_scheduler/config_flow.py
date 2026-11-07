@@ -39,6 +39,7 @@ from .const import (
     CONF_FALLBACK_COOLING_RATE,
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
+    CONF_OPPORTUNISTIC_HEATING,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_FALLBACK_PRESET,
@@ -51,6 +52,7 @@ from .const import (
     DEFAULT_FALLBACK_COOLING_RATE,
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
+    DEFAULT_OPPORTUNISTIC_HEATING,
     DOMAIN,
 )
 from .helpers import parse_time, safe_float as _safe_float
@@ -130,6 +132,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 user_input[CONF_ENABLE_SELF_LEARNING] = bool(
                     user_input.get(CONF_ENABLE_SELF_LEARNING, DEFAULT_ENABLE_SELF_LEARNING)
+                )
+                user_input[CONF_OPPORTUNISTIC_HEATING] = bool(
+                    user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
                 )
 
                 default_schedule = {day: [] for day in DAYS}
@@ -216,6 +221,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         min=0.05, max=2.0, step=0.05, unit_of_measurement="K", mode=NumberSelectorMode.BOX
                     )
                 ),
+                vol.Optional(
+                    CONF_OPPORTUNISTIC_HEATING, default=DEFAULT_OPPORTUNISTIC_HEATING
+                ): BooleanSelector(),
             }
         )
 
@@ -340,6 +348,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     DEFAULT_FALLBACK_TOLERANCE,
                 ),
+                CONF_OPPORTUNISTIC_HEATING: bool(
+                    options.get(
+                        CONF_OPPORTUNISTIC_HEATING,
+                        data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
+                    )
+                ),
             }
 
     def _get_supported_presets(self) -> list[str]:
@@ -430,6 +444,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_FALLBACK_TOLERANCE] = _safe_float(
                 user_input.get(CONF_FALLBACK_TOLERANCE), DEFAULT_FALLBACK_TOLERANCE
             )
+            self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
+                user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
+            )
             return await self.async_step_init()
 
         supported_presets = self._get_supported_presets()
@@ -491,6 +508,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         min=0.05, max=2.0, step=0.05, unit_of_measurement="K", mode=NumberSelectorMode.BOX
                     )
                 ),
+                vol.Optional(CONF_OPPORTUNISTIC_HEATING): BooleanSelector(),
             }
         )
 

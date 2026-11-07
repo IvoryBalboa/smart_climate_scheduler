@@ -22,7 +22,8 @@
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
-          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)"
+          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
-          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)"
+          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
         }
       },
       "schedule_menu": {

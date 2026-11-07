@@ -22,7 +22,8 @@
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
-          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)"
+          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
-          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)"
+          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
         }
       },
       "schedule_menu": {

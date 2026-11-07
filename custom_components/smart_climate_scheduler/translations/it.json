@@ -22,7 +22,8 @@
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
-          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)"
+          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
-          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)"
+          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
         }
       },
       "schedule_menu": {

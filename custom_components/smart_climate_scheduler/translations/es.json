@@ -22,7 +22,8 @@
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
           "hvac_off_on_target": "Activar control por histeresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)"
+          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)",
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
           "hvac_off_on_target": "Activar control por histeresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)"
+          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)",
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
         }
       },
       "schedule_menu": {

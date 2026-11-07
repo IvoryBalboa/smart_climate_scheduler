@@ -24,6 +24,7 @@ from .const import (
     CONF_FALLBACK_COOLING_RATE,
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
+    CONF_OPPORTUNISTIC_HEATING,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -32,6 +33,7 @@ from .const import (
     DEFAULT_FALLBACK_COOLING_RATE,
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
+    DEFAULT_OPPORTUNISTIC_HEATING,
     DOMAIN,
 )
 from .zones import evaluate_zones
@@ -504,6 +506,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "near_distance": near_distance,
             "hvac_off_on_target": bool(options.get(CONF_HVAC_OFF_ON_TARGET, data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET))),
             "fallback_tolerance": fallback_tolerance,
+            "opportunistic_heating": bool(options.get(CONF_OPPORTUNISTIC_HEATING, data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING))),
         },
         "evaluation": {
             "calculated_preheat_duration": preheat.get("duration_minutes", 0) if preheat else 0,

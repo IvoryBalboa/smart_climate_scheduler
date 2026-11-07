@@ -22,7 +22,8 @@
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
-          "fallback_tolerance": "Herinschakeltolerantie fallback (K)"
+          "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
-          "fallback_tolerance": "Herinschakeltolerantie fallback (K)"
+          "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
         }
       },
       "schedule_menu": {

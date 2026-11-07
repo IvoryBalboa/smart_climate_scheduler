@@ -12,8 +12,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_HVAC_OFF_ON_TARGET,
+    CONF_HEATING_ACTIVE_SENSOR,
+    CONF_OPPORTUNISTIC_HEATING,
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
+    DEFAULT_OPPORTUNISTIC_HEATING,
     DOMAIN,
 )
 from .evaluation import evaluate_state
@@ -117,6 +120,22 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                                 self.config_entry.data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET),
                             )
                         )
+                        opportunistic_heating = bool(
+                            self.config_entry.options.get(
+                                CONF_OPPORTUNISTIC_HEATING,
+                                self.config_entry.data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
+                            )
+                        )
+                        heating_active_sensor = self.config_entry.options.get(
+                            CONF_HEATING_ACTIVE_SENSOR,
+                            self.config_entry.data.get(CONF_HEATING_ACTIVE_SENSOR),
+                        )
+                        is_heating_active = False
+                        if heating_active_sensor and self.hass:
+                            st = self.hass.states.get(heating_active_sensor)
+                            if st and st.state and st.state.lower() in ("on", "true", "active", "heat", "heating"):
+                                is_heating_active = True
+
                         if hvac_off_on_target:
                             attrs = state_obj.attributes or {}
                             real_temp = attrs.get("external_temp_ema")
@@ -139,7 +158,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                                             target={"entity_id": climate_entity},
                                             blocking=False,
                                         )
-                                elif cur_t < (tgt_t - tol):
+                                elif cur_t < (tgt_t - tol) or (opportunistic_heating and is_heating_active and cur_t < tgt_t):
                                     if state_obj.state == "off":
                                         target_mode = get_target_hvac_mode(state_obj)
                                         await self.hass.services.async_call(

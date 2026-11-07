@@ -22,7 +22,8 @@
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
-          "fallback_tolerance": "Tolérance de réactivation de secours (K)"
+          "fallback_tolerance": "Tolérance de réactivation de secours (K)",
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
         }
       }
     },
@@ -58,7 +59,8 @@
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
-          "fallback_tolerance": "Tolérance de réactivation de secours (K)"
+          "fallback_tolerance": "Tolérance de réactivation de secours (K)",
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
         }
       },
       "schedule_menu": {
