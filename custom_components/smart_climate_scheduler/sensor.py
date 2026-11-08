@@ -204,9 +204,9 @@ async def async_setup_entry(
         cl_state = hass.states.get(climate_entity)
         if not cl_state:
             return 20.0
-        temp = cl_state.attributes.get("external_temp_ema")
+        temp = cl_state.attributes.get("current_temperature")
         if temp is None:
-            temp = cl_state.attributes.get("current_temperature", 20.0)
+            temp = cl_state.attributes.get("external_temp_ema", 20.0)
         try:
             f = float(temp)
             return 20.0 if math.isnan(f) or math.isinf(f) else f
@@ -520,9 +520,9 @@ async def async_setup_entry(
         if hvac_off_on_target:
             current_hvac_mode = state_obj.state
             current_hvac_action = attrs.get("hvac_action")
-            real_measured_temp = attrs.get("external_temp_ema")
+            real_measured_temp = attrs.get("current_temperature")
             if real_measured_temp is None:
-                real_measured_temp = attrs.get("current_temperature")
+                real_measured_temp = attrs.get("external_temp_ema")
 
             try:
                 current_temp = float(real_measured_temp) if real_measured_temp is not None else None

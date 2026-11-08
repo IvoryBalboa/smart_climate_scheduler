@@ -133,9 +133,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     climate_state = hass.states.get(climate_entity) if climate_entity and hass else None
     attrs = climate_state.attributes if climate_state else {}
 
-    real_measured_temp = attrs.get("external_temp_ema")
+    real_measured_temp = attrs.get("current_temperature")
     if real_measured_temp is None:
-        real_measured_temp = attrs.get("current_temperature", 20.0)
+        real_measured_temp = attrs.get("external_temp_ema", 20.0)
 
     try:
         real_measured_temp = float(real_measured_temp)

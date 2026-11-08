@@ -138,9 +138,9 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
 
                         if hvac_off_on_target:
                             attrs = state_obj.attributes or {}
-                            real_temp = attrs.get("external_temp_ema")
+                            real_temp = attrs.get("current_temperature")
                             if real_temp is None:
-                                real_temp = attrs.get("current_temperature")
+                                real_temp = attrs.get("external_temp_ema")
                             try:
                                 cur_t = float(real_temp) if real_temp is not None else None
                             except (ValueError, TypeError):
