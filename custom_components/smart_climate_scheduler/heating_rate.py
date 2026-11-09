@@ -21,9 +21,9 @@ from .helpers import (
 _LOGGER = logging.getLogger(__name__)
 
 # Konfiguration und Schwellwerte für die Aufheizraten-Messung
-HEATING_EMA_ALPHA = 0.35
-MIN_STEP_SECONDS = 120
-MIN_STEP_TEMP_RISE = 0.05
+HEATING_EMA_ALPHA = 0.25
+MIN_STEP_SECONDS = 300
+MIN_STEP_TEMP_RISE = 0.10
 MIN_PLAUSIBLE_RATE = 0.05
 MAX_PLAUSIBLE_RATE = 5.0
 

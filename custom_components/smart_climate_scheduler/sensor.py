@@ -262,7 +262,7 @@ async def async_setup_entry(
             heating_rate_sensor.async_write_ha_state()
 
         elif is_heating and session is not None:
-            # Brenner ist aktiv ('on') -> Differenziellen Schritt bei mindestens 0.05°C Anstieg und 120s prüfen
+            # Brenner ist aktiv ('on') -> Differenziellen Schritt bei mindestens 0.10°C Anstieg und 300s (5 Min) prüfen
             curr_temp = _get_current_temp()
             last_step_time = session.get("last_step_time") or session.get("start_time")
             last_step_temp = session.get("last_step_temp", session.get("start_temp", curr_temp))
@@ -275,8 +275,8 @@ async def async_setup_entry(
                 last_temp=last_step_temp,
                 curr_time=now_dt,
                 curr_temp=curr_temp,
-                min_seconds=120,
-                min_temp_delta=0.05,
+                min_seconds=300,
+                min_temp_delta=0.10,
             )
 
             if is_valid_step and step_rate is not None:
@@ -319,8 +319,8 @@ async def async_setup_entry(
                 last_temp=last_step_temp,
                 curr_time=now_dt,
                 curr_temp=end_temp,
-                min_seconds=60,
-                min_temp_delta=0.05,
+                min_seconds=180,
+                min_temp_delta=0.10,
             )
             if is_valid_step and step_rate is not None:
                 prev_live = session.get("live_rate")
