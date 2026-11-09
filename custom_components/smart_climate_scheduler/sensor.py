@@ -442,8 +442,20 @@ async def async_setup_entry(
             return
 
         state_obj = hass.states.get(climate_entity)
+        entry_name = config_entry.title or config_entry.entry_id
         if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
+            cur_state = state_obj.state if state_obj else "nicht gefunden"
+            last_warn = domain_data.get("_last_unavail_warn_state")
+            if last_warn != cur_state:
+                domain_data["_last_unavail_warn_state"] = cur_state
+                _LOGGER.warning(
+                    "Smart Climate Scheduler [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
+                    entry_name,
+                    climate_entity,
+                    cur_state,
+                )
             return
+        domain_data.pop("_last_unavail_warn_state", None)
 
         current_preset = state_obj.attributes.get("preset_mode")
         target_preset, _, _, _, _, _, _ = evaluate_state(hass, config_entry)
@@ -469,6 +481,14 @@ async def async_setup_entry(
                     target={"entity_id": climate_entity},
                     blocking=False,
                 )
+            except Exception as err:
+                _LOGGER.error(
+                    "Smart Climate Scheduler [%s]: Fehler beim Wiederherstellen von Preset '%s' auf '%s': %s",
+                    entry_name,
+                    target_preset,
+                    climate_entity,
+                    err,
+                )
             finally:
                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_preset": False}))
 
@@ -490,6 +510,14 @@ async def async_setup_entry(
                         service_data={"preset_mode": target_preset},
                         target={"entity_id": climate_entity},
                         blocking=False,
+                    )
+                except Exception as err:
+                    _LOGGER.error(
+                        "Smart Climate Scheduler [%s]: Fehler beim Setzen von Preset '%s' auf '%s': %s",
+                        entry_name,
+                        target_preset,
+                        climate_entity,
+                        err,
                     )
                 finally:
                     hass.loop.call_later(2, lambda: domain_data.update({"is_setting_preset": False}))
@@ -513,8 +541,28 @@ async def async_setup_entry(
         is_heating_active = False
         if heating_active_sensor:
             st = hass.states.get(heating_active_sensor)
-            if st and st.state and st.state.lower() in ("on", "true", "active", "heat", "heating"):
-                is_heating_active = True
+            if not st:
+                if domain_data.get("_last_burner_missing") != heating_active_sensor:
+                    domain_data["_last_burner_missing"] = heating_active_sensor
+                    _LOGGER.warning(
+                        "Smart Climate Scheduler [%s]: Konfigurierter Heizungs-Sensor '%s' existiert nicht in Home Assistant",
+                        entry_name,
+                        heating_active_sensor,
+                    )
+            elif st.state in ("unavailable", "unknown"):
+                if domain_data.get("_last_burner_state") != st.state:
+                    domain_data["_last_burner_state"] = st.state
+                    _LOGGER.warning(
+                        "Smart Climate Scheduler [%s]: Heizungs-Sensor '%s' ist nicht verfügbar (Status: '%s')",
+                        entry_name,
+                        heating_active_sensor,
+                        st.state,
+                    )
+            else:
+                domain_data.pop("_last_burner_state", None)
+                domain_data.pop("_last_burner_missing", None)
+                if st.state.lower() in ("on", "true", "active", "heat", "heating"):
+                    is_heating_active = True
 
         # 2. Zwei-Punkt-Regelung: Steuerung von off und heat anhand der Temperatur-Schwellen
         if hvac_off_on_target:
@@ -569,6 +617,13 @@ async def async_setup_entry(
                                     target={"entity_id": climate_entity},
                                     blocking=False,
                                 )
+                            except Exception as err:
+                                _LOGGER.error(
+                                    "Smart Climate Scheduler [%s]: Fehler beim Ausschalten ('off') von '%s': %s",
+                                    entry_name,
+                                    climate_entity,
+                                    err,
+                                )
                             finally:
                                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
 
@@ -618,6 +673,14 @@ async def async_setup_entry(
                                     target={"entity_id": climate_entity},
                                     blocking=False,
                                 )
+                            except Exception as err:
+                                _LOGGER.error(
+                                    "Smart Climate Scheduler [%s]: Fehler beim Kickstart (Temperatur %.1f °C) auf '%s': %s",
+                                    entry_name,
+                                    boosted_temp,
+                                    climate_entity,
+                                    err,
+                                )
                             finally:
                                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
 
@@ -639,6 +702,14 @@ async def async_setup_entry(
                                 service_data={"hvac_mode": target_mode},
                                 target={"entity_id": climate_entity},
                                 blocking=False,
+                            )
+                        except Exception as err:
+                            _LOGGER.error(
+                                "Smart Climate Scheduler [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
+                                entry_name,
+                                target_mode,
+                                climate_entity,
+                                err,
                             )
                         finally:
                             hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))

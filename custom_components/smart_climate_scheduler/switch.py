@@ -102,16 +102,34 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
             
             if self.hass and climate_entity:
                 state_obj = self.hass.states.get(climate_entity)
-                if state_obj and state_obj.state not in ("unavailable", "unknown", "None", None):
+                entry_name = self.config_entry.title or self.config_entry.entry_id
+                if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
+                    cur_state = state_obj.state if state_obj else "nicht gefunden"
+                    _LOGGER.warning(
+                        "Smart Climate Scheduler Switch [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
+                        entry_name,
+                        climate_entity,
+                        cur_state,
+                    )
+                else:
                     preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
                     if preset and preset not in ("unavailable", "unknown", "None", None):
-                        await self.hass.services.async_call(
-                            "climate",
-                            "set_preset_mode",
-                            service_data={"preset_mode": preset},
-                            target={"entity_id": climate_entity},
-                            blocking=False,
-                        )
+                        try:
+                            await self.hass.services.async_call(
+                                "climate",
+                                "set_preset_mode",
+                                service_data={"preset_mode": preset},
+                                target={"entity_id": climate_entity},
+                                blocking=False,
+                            )
+                        except Exception as err:
+                            _LOGGER.error(
+                                "Smart Climate Scheduler Switch [%s]: Fehler beim Setzen von Preset '%s' auf '%s': %s",
+                                entry_name,
+                                preset,
+                                climate_entity,
+                                err,
+                            )
                         
                         # Zwei-Punkt-Regelung anwenden falls aktiviert
                         hvac_off_on_target = bool(
@@ -151,23 +169,40 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                             if cur_t is not None and tgt_t is not None:
                                 if cur_t >= tgt_t:
                                     if state_obj.state != "off" and attrs.get("hvac_action") != "heating":
-                                        await self.hass.services.async_call(
-                                            "climate",
-                                            "set_hvac_mode",
-                                            service_data={"hvac_mode": "off"},
-                                            target={"entity_id": climate_entity},
-                                            blocking=False,
-                                        )
+                                        try:
+                                            await self.hass.services.async_call(
+                                                "climate",
+                                                "set_hvac_mode",
+                                                service_data={"hvac_mode": "off"},
+                                                target={"entity_id": climate_entity},
+                                                blocking=False,
+                                            )
+                                        except Exception as err:
+                                            _LOGGER.error(
+                                                "Smart Climate Scheduler Switch [%s]: Fehler beim Ausschalten ('off') von '%s': %s",
+                                                entry_name,
+                                                climate_entity,
+                                                err,
+                                            )
                                 elif cur_t < (tgt_t - tol) or (opportunistic_heating and is_heating_active and cur_t < tgt_t):
                                     if state_obj.state == "off":
                                         target_mode = get_target_hvac_mode(state_obj)
-                                        await self.hass.services.async_call(
-                                            "climate",
-                                            "set_hvac_mode",
-                                            service_data={"hvac_mode": target_mode},
-                                            target={"entity_id": climate_entity},
-                                            blocking=False,
-                                        )
+                                        try:
+                                            await self.hass.services.async_call(
+                                                "climate",
+                                                "set_hvac_mode",
+                                                service_data={"hvac_mode": target_mode},
+                                                target={"entity_id": climate_entity},
+                                                blocking=False,
+                                            )
+                                        except Exception as err:
+                                            _LOGGER.error(
+                                                "Smart Climate Scheduler Switch [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
+                                                entry_name,
+                                                target_mode,
+                                                climate_entity,
+                                                err,
+                                            )
 
     async def async_turn_off(self, **kwargs) -> None:
         """Schaltet die Automatik aus (ohne Reload)."""
