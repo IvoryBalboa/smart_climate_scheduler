@@ -430,6 +430,21 @@
     "switch": {
       "automatic": {
         "name": "Automatic"
+      },
+      "self_learning": {
+        "name": "Adaptive Learning"
+      },
+      "preheat": {
+        "name": "Predictive Preheating"
+      },
+      "cooldown": {
+        "name": "Early Cooldown"
+      },
+      "hvac_off_on_target": {
+        "name": "Turn off at target temperature"
+      },
+      "opportunistic_heating": {
+        "name": "Opportunistic Heating"
       }
     }
   }

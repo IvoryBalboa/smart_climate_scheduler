@@ -430,6 +430,21 @@
     "switch": {
       "automatic": {
         "name": "Automatico"
+      },
+      "self_learning": {
+        "name": "Apprendimento adattivo"
+      },
+      "preheat": {
+        "name": "Preriscaldamento"
+      },
+      "cooldown": {
+        "name": "Raffreddamento anticipato"
+      },
+      "hvac_off_on_target": {
+        "name": "Spegnere alla temperatura target"
+      },
+      "opportunistic_heating": {
+        "name": "Riscaldamento opportunistico"
       }
     }
   }

@@ -5,21 +5,28 @@ import logging
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONF_CLIMATE_ENTITY,
-    CONF_HVAC_OFF_ON_TARGET,
+    CONF_COOLDOWN_ENABLED,
+    CONF_ENABLE_SELF_LEARNING,
     CONF_HEATING_ACTIVE_SENSOR,
+    CONF_HVAC_OFF_ON_TARGET,
     CONF_OPPORTUNISTIC_HEATING,
-    DEFAULT_HVAC_OFF_ON_TARGET,
+    CONF_PREHEAT_ENABLED,
+    DEFAULT_COOLDOWN_ENABLED,
+    DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_FALLBACK_TOLERANCE,
+    DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_PREHEAT_ENABLED,
     DOMAIN,
 )
-from .evaluation import evaluate_state
+from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
     get_config_entry_slug,
     get_device_info,
@@ -37,7 +44,55 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Richtet die Switch-Plattform über einen Config Entry ein."""
-    async_add_entities([SmartClimateSchedulerSwitch(hass, config_entry)], True)
+    entities: list[SwitchEntity] = [
+        SmartClimateSchedulerSwitch(hass, config_entry),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_ENABLE_SELF_LEARNING,
+            translation_key="self_learning",
+            slug_suffix="adaptives_lernen",
+            default_value=DEFAULT_ENABLE_SELF_LEARNING,
+            icon="mdi:school",
+        ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_PREHEAT_ENABLED,
+            translation_key="preheat",
+            slug_suffix="vorheizen",
+            default_value=DEFAULT_PREHEAT_ENABLED,
+            icon="mdi:fire",
+        ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_COOLDOWN_ENABLED,
+            translation_key="cooldown",
+            slug_suffix="auskuehlen",
+            default_value=DEFAULT_COOLDOWN_ENABLED,
+            icon="mdi:snowflake",
+        ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_HVAC_OFF_ON_TARGET,
+            translation_key="hvac_off_on_target",
+            slug_suffix="abschaltung_bei_zieltemperatur",
+            default_value=DEFAULT_HVAC_OFF_ON_TARGET,
+            icon="mdi:power-standby",
+        ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_OPPORTUNISTIC_HEATING,
+            translation_key="opportunistic_heating",
+            slug_suffix="opportunistisches_mitheizen",
+            default_value=DEFAULT_OPPORTUNISTIC_HEATING,
+            icon="mdi:heat-wave",
+        ),
+    ]
+    async_add_entities(entities, True)
 
 
 class SmartClimateSchedulerSwitch(SwitchEntity):
@@ -222,3 +277,84 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
             self.hass.async_create_task(_save_status(storage, False))
 
         self.async_write_ha_state()
+
+
+class SmartClimateSchedulerOptionSwitch(SwitchEntity):
+    """Schalter für eine einzelne Konfigurations-Option (z. B. Vorheizen, Lernen etc.)."""
+
+    _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: ConfigEntry,
+        option_key: str,
+        translation_key: str,
+        slug_suffix: str,
+        default_value: bool,
+        icon: str,
+    ) -> None:
+        """Initialisiert den Options-Schalter."""
+        self.hass = hass
+        self.config_entry = config_entry
+        self._option_key = option_key
+        self._default_value = default_value
+        self._attr_translation_key = translation_key
+        self._attr_icon = icon
+
+        slug = get_config_entry_slug(config_entry)
+        self.entity_id = f"switch.{slug}_{slug_suffix}"
+        self._attr_unique_id = f"{config_entry.entry_id}_{translation_key}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Ordnet die Entität dem Device des Config Entrys zu."""
+        return get_device_info(self.config_entry)
+
+    @property
+    def is_on(self) -> bool:
+        """Gibt zurück, ob die Option eingeschaltet ist."""
+        return bool(
+            self.config_entry.options.get(
+                self._option_key,
+                self.config_entry.data.get(self._option_key, self._default_value),
+            )
+        )
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Schaltet die Option ein und speichert sie dauerhaft in den Optionen."""
+        await self._async_set_state(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Schaltet die Option aus und speichert sie dauerhaft in den Optionen."""
+        await self._async_set_state(False)
+
+    async def _async_set_state(self, target_state: bool) -> None:
+        """Speichert den neuen Zustand dauerhaft in den Config-Optionen."""
+        domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
+        new_options = dict(self.config_entry.options)
+        new_options[self._option_key] = target_state
+
+        # Markieren, damit der update_listener keinen unnötigen Plattform-Reload ausführt
+        domain_data["_updating_from_switch"] = True
+
+        if hasattr(self.hass, "config_entries") and hasattr(self.hass.config_entries, "async_update_entry"):
+            self.hass.config_entries.async_update_entry(self.config_entry, options=new_options)
+
+        self.async_write_ha_state()
+
+        # Evaluierungs-Cache invalidieren
+        invalidate_eval_cache(domain_data)
+
+        # Alle zugehörigen Sensoren aktualisieren
+        for sensor in self.hass.data.get(f"{DOMAIN}_sensors", []):
+            if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == self.config_entry.entry_id:
+                if getattr(sensor, "hass", None):
+                    sensor.async_write_ha_state()
+
+        # Bei Hysterese / Opportunistischem Mitheizen direkt Zeitplan anwenden falls Automatik aktiv
+        if self._option_key in (CONF_HVAC_OFF_ON_TARGET, CONF_OPPORTUNISTIC_HEATING):
+            apply_fn = domain_data.get("async_apply_schedule")
+            if callable(apply_fn):
+                await apply_fn()

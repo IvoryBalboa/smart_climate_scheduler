@@ -475,4 +475,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener when options change."""
+    domain_data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if domain_data and domain_data.pop("_updating_from_switch", False):
+        # Optionen wurden durch einen Options-Switch geändert:
+        # Kein störender Plattform-Reload nötig, sofortiges Update der Sensoren und Schalter
+        await _async_update_sensors(hass, entry.entry_id)
+        return
     await hass.config_entries.async_reload(entry.entry_id)
