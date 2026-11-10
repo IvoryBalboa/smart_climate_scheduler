@@ -23,9 +23,9 @@ _LOGGER = logging.getLogger(__name__)
 # Konfiguration und Schwellwerte für die Abkühlraten-Messung
 COOLING_EMA_ALPHA = 0.30
 MIN_COOLING_STEP_SECONDS = 900
-MIN_COOLING_TEMP_DROP = 0.05
+MIN_COOLING_TEMP_DROP = 0.01
 MIN_PLAUSIBLE_COOLING_RATE = 0.02
-MAX_PLAUSIBLE_COOLING_RATE = 1.0
+MAX_PLAUSIBLE_COOLING_RATE = 1.5
 
 
 def apply_cooling_ema(new_rate: float, current_ema: float | None, alpha: float = COOLING_EMA_ALPHA) -> float:

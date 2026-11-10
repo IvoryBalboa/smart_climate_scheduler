@@ -12,7 +12,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-MAX_MATRIX_ADJUSTMENT_RATIO = 0.05  # Maximal ±5% Korrektur pro Lernschritt
+MAX_MATRIX_ADJUSTMENT_RATIO = 0.15  # Maximal ±15% Korrektur pro Lernschritt
 
 
 def parse_time(time_str: str | None) -> time | None:
@@ -282,7 +282,7 @@ def get_effective_rate(
     matrix_key: str = "averages",
     avg_key: str = "average",
 ) -> float:
-    """Ermittelt die geltende Rate (Matrix-Wert mit stetiger linearer Interpolation, Ausreißer-Dämpfung und Plausibilitätsgrenzen)."""
+    """Ermittelt die geltende Rate (Matrix-Wert mit stetiger linearer Interpolation, Ausreißer-Dämpfung und festen Plausibilitätsgrenzen)."""
     is_cooling = (matrix_key == "cooling_averages")
     safe_fallback = safe_float(fallback_rate, 0.2 if is_cooling else 1.0)
     if not learning_enabled:
@@ -290,14 +290,6 @@ def get_effective_rate(
 
     raw_matrix = entry_data.get(matrix_key, {})
     matrix = raw_matrix if isinstance(raw_matrix, dict) else {}
-
-    # Globaler Referenzwert (Gesamtdurchschnitt oder Fallback)
-    stored_avg = entry_data.get(avg_key)
-    if isinstance(stored_avg, (int, float)) and stored_avg > 0 and not math.isnan(stored_avg):
-        global_avg = float(stored_avg)
-    else:
-        computed_avg = calculate_overall_average(matrix, safe_fallback, already_normalized=True)
-        global_avg = computed_avg if computed_avg > 0 else safe_fallback
 
     # Numerische Buckets für stetige Interpolation aufbereiten
     numeric_buckets: dict[int, float] = {}
@@ -308,30 +300,40 @@ def get_effective_rate(
         except (ValueError, TypeError):
             continue
 
+    # Wenn die Matrix noch komplett leer ist (Kaltstart vor allererster Messung), Fallback nutzen
+    if not numeric_buckets and not matrix.get("default"):
+        return round(safe_fallback, 3)
+
+    # Globaler Referenzwert rein aus gelernten Daten berechnen (ohne Fallback-Verfälschung)
+    stored_avg = entry_data.get(avg_key)
+    if isinstance(stored_avg, (int, float)) and stored_avg > 0 and not math.isnan(stored_avg):
+        global_avg = float(stored_avg)
+    elif numeric_buckets:
+        global_avg = sum(numeric_buckets.values()) / float(len(numeric_buckets))
+    else:
+        computed_avg = calculate_overall_average(matrix, safe_fallback, already_normalized=True)
+        global_avg = computed_avg if computed_avg > 0 else safe_fallback
+
     local_rate: float | None = None
 
     if outside_temp is not None and numeric_buckets:
         try:
             t_out = float(outside_temp)
-            t_low = int(math.floor(t_out))
-            t_high = int(math.ceil(t_out))
+            sorted_keys = sorted(numeric_buckets.keys())
 
-            if t_low == t_high:
-                if t_low in numeric_buckets:
-                    local_rate = numeric_buckets[t_low]
-            elif t_low in numeric_buckets and t_high in numeric_buckets:
-                # Stetige lineare Interpolation zwischen benachbarten Temperaturstufen
-                weight = t_out - t_low
-                local_rate = (1.0 - weight) * numeric_buckets[t_low] + weight * numeric_buckets[t_high]
-            elif t_low in numeric_buckets:
-                local_rate = numeric_buckets[t_low]
-            elif t_high in numeric_buckets:
-                local_rate = numeric_buckets[t_high]
+            if t_out <= sorted_keys[0]:
+                local_rate = numeric_buckets[sorted_keys[0]]
+            elif t_out >= sorted_keys[-1]:
+                local_rate = numeric_buckets[sorted_keys[-1]]
             else:
-                # Nächstliegenden Bucket prüfen (innerhalb von max. 3°C Distanz)
-                closest_k = min(numeric_buckets.keys(), key=lambda k: abs(k - t_out))
-                if abs(closest_k - t_out) <= 3.0:
-                    local_rate = numeric_buckets[closest_k]
+                # Stetige lineare Interpolation zwischen den zwei nächstliegenden Stützpunkten
+                k_low = max(k for k in sorted_keys if k <= t_out)
+                k_high = min(k for k in sorted_keys if k >= t_out)
+                if k_low == k_high:
+                    local_rate = numeric_buckets[k_low]
+                else:
+                    weight = (t_out - k_low) / float(k_high - k_low)
+                    local_rate = (1.0 - weight) * numeric_buckets[k_low] + weight * numeric_buckets[k_high]
         except (ValueError, TypeError):
             pass
 
@@ -345,8 +347,7 @@ def get_effective_rate(
 
     # Ausreißer-Schutz und Glättung:
     # Weicht ein einzelner Bucket drastisch (>40%) nach unten vom Gesamt-Durchschnitt ab,
-    # wird er mit dem Gesamtschnitt stabilisiert, damit ein einzelner fehlerhafter Messschritt
-    # (z. B. offenes Fenster oder kalter Heizkörperstart) nicht zu stundenlangen Vorheizzeiten führt.
+    # wird er mit dem Gesamtschnitt stabilisiert
     if global_avg > 0:
         if not is_cooling:
             if local_rate < 0.6 * global_avg:
@@ -359,13 +360,13 @@ def get_effective_rate(
             elif local_rate > 2.5 * global_avg:
                 local_rate = 0.6 * local_rate + 0.4 * global_avg
 
-    # Physikalische Plausibilitätsgrenzen
+    # Feste physikalische Plausibilitätsgrenzen (unabhängig von der Fallback-Rate)
     if is_cooling:
-        min_floor = max(0.02, 0.2 * safe_fallback)
-        max_cap = 2.5
+        min_floor = 0.02
+        max_cap = 1.50
     else:
-        min_floor = max(0.4, 0.4 * safe_fallback)
-        max_cap = 5.0
+        min_floor = 0.10
+        max_cap = 3.00
 
     clamped_rate = max(min_floor, min(max_cap, local_rate))
     return round(clamped_rate, 3)

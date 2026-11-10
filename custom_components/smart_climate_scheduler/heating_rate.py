@@ -23,9 +23,9 @@ _LOGGER = logging.getLogger(__name__)
 # Konfiguration und Schwellwerte für die Aufheizraten-Messung
 HEATING_EMA_ALPHA = 0.25
 MIN_STEP_SECONDS = 300
-MIN_STEP_TEMP_RISE = 0.10
-MIN_PLAUSIBLE_RATE = 0.05
-MAX_PLAUSIBLE_RATE = 5.0
+MIN_STEP_TEMP_RISE = 0.01
+MIN_PLAUSIBLE_RATE = 0.10
+MAX_PLAUSIBLE_RATE = 3.0
 
 
 def apply_step_ema(new_rate: float, current_ema: float | None, alpha: float = HEATING_EMA_ALPHA) -> float:

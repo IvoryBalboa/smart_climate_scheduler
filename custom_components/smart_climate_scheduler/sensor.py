@@ -276,7 +276,7 @@ async def async_setup_entry(
                 curr_time=now_dt,
                 curr_temp=curr_temp,
                 min_seconds=300,
-                min_temp_delta=0.10,
+                min_temp_delta=0.01,
             )
 
             if is_valid_step and step_rate is not None:
@@ -320,7 +320,7 @@ async def async_setup_entry(
                 curr_time=now_dt,
                 curr_temp=end_temp,
                 min_seconds=180,
-                min_temp_delta=0.10,
+                min_temp_delta=0.01,
             )
             if is_valid_step and step_rate is not None:
                 prev_live = session.get("live_rate")
@@ -340,9 +340,30 @@ async def async_setup_entry(
                         learning_enabled=learning_enabled,
                     )
 
+            # Bei längeren Heizphasen (>= 30 Min) zusätzlich Gesamtrate der Session auswerten
+            start_t = session.get("start_time")
+            start_val = session.get("start_temp")
+            if start_t and start_val is not None:
+                tot_seconds = (now_dt - start_t).total_seconds()
+                tot_delta = end_temp - start_val
+                if tot_seconds >= 1800 and tot_delta >= 0.05:
+                    overall_session_rate = round(tot_delta / (tot_seconds / 3600.0), 3)
+                    if 0.10 <= overall_session_rate <= 3.0:
+                        await async_record_live_heating_rate(
+                            hass=hass,
+                            entry_id=config_entry.entry_id,
+                            live_rate=overall_session_rate,
+                            outside_temp=out_temp,
+                            entry_data=domain_data,
+                            storage=storage,
+                            fallback_rate=fallback_r,
+                            learning_enabled=learning_enabled,
+                        )
+
             domain_data["active_session"] = None
             domain_data["last_heating_off_time"] = now_dt
             heating_rate_sensor.async_write_ha_state()
+            main_sensor.async_write_ha_state()
             main_sensor.async_write_ha_state()
 
         elif not is_heating and session is None:
@@ -393,8 +414,8 @@ async def async_setup_entry(
                             curr_time=now_dt,
                             curr_temp=curr_temp,
                             min_seconds=900,
-                            min_temp_drop=0.05,
-                            max_plausible_rate=1.0,
+                            min_temp_drop=0.01,
+                            max_plausible_rate=1.5,
                         )
                         if is_valid_step and step_rate is not None:
                             prev_live = cooling_session.get("live_rate")
