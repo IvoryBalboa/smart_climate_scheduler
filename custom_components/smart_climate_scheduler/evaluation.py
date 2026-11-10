@@ -25,6 +25,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -34,6 +35,7 @@ from .const import (
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
 from .zones import evaluate_zones
@@ -44,6 +46,8 @@ from .cooldown import calculate_cooldown
 from .heating_rate import get_effective_heating_rate
 from .cooling_rate import get_effective_cooling_rate
 from .helpers import (
+    get_forecast_temperature_for_window,
+    get_ha_language,
     get_preset_temperature,
     get_resolved_outside_info,
     parse_time,
@@ -297,10 +301,43 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             except Exception as e:
                 _LOGGER.error("Fehler bei Cooldown-Berechnung (V2): %s", e)
 
+    use_weather_forecast = bool(
+        options.get(
+            CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
+            data.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT),
+        )
+    )
+
     # 2. Geltende Aufheizrate (K/h) ermitteln und Preheat berechnen
+    preheat_outside_temp = outside_temp
+    forecast_outside_temp: float | None = None
+    forecast_used = False
+    forecast_window_str: str | None = None
+
+    if preheat_enabled and next_slot and use_weather_forecast and outside_weather:
+        next_from_time_pf = parse_time(next_slot.get("from"))
+        if next_from_time_pf and next_slot.get("date"):
+            try:
+                next_slot_start_pf = datetime.strptime(next_slot.get("date"), "%Y-%m-%d").replace(
+                    hour=next_from_time_pf.hour, minute=next_from_time_pf.minute, second=next_from_time_pf.second, tzinfo=now_dt.tzinfo
+                )
+                if next_slot_start_pf <= now_dt:
+                    next_slot_start_pf += timedelta(days=1)
+
+                window_start = next_slot_start_pf - timedelta(minutes=max_preheat)
+                forecast_cache = entry_data.get("hourly_forecast_cache") if isinstance(entry_data, dict) else None
+                fc_val = get_forecast_temperature_for_window(forecast_cache, window_start, next_slot_start_pf)
+                if fc_val is not None:
+                    forecast_outside_temp = fc_val
+                    preheat_outside_temp = fc_val
+                    forecast_used = True
+                    forecast_window_str = f"{window_start.strftime('%H:%M')} - {next_slot_start_pf.strftime('%H:%M')}"
+            except Exception as e:
+                _LOGGER.debug("Fehler bei Ermittlung der Vorhersage für Vorheizen: %s", e)
+
     effective_heating_rate = get_effective_heating_rate(
         entry_data=entry_data,
-        outside_temp=outside_temp,
+        outside_temp=preheat_outside_temp,
         fallback_rate=fallback_rate,
         learning_enabled=self_learning_enabled,
     )
@@ -310,6 +347,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         "start_time": None,
         "duration_minutes": 0,
         "effective_rate_k_h": round(effective_heating_rate, 3),
+        "forecast_temp": forecast_outside_temp,
+        "forecast_used": forecast_used,
+        "forecast_window": forecast_window_str,
     }
     is_preheat_needed = False
     preheat_duration = 0
@@ -442,6 +482,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     else:
         preset = "away"
 
+    lang = get_ha_language(hass)
     next_action = calculate_next_action(
         preheat_duration=preheat_duration,
         preheat_start_dt=preheat_start_dt,
@@ -454,6 +495,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         subsequent_slot=subsequent_slot,
         base_preset=base_preset,
         now_dt=now_dt,
+        lang=lang,
     )
 
     delta_to_next = (
@@ -481,6 +523,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "delta_to_next": delta_to_next,
             "outside": outside_temp,
             "outside_source": active_outside_source,
+            "forecast_outside": forecast_outside_temp,
+            "forecast_used": forecast_used,
+            "forecast_window": forecast_window_str,
         },
         "thermal_parameters": {
             "effective_rate_k_h": round(effective_heating_rate, 3),
@@ -507,6 +552,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "hvac_off_on_target": bool(options.get(CONF_HVAC_OFF_ON_TARGET, data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET))),
             "fallback_tolerance": fallback_tolerance,
             "opportunistic_heating": bool(options.get(CONF_OPPORTUNISTIC_HEATING, data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING))),
+            "use_weather_forecast_for_preheat": use_weather_forecast,
         },
         "evaluation": {
             "calculated_preheat_duration": preheat.get("duration_minutes", 0) if preheat else 0,

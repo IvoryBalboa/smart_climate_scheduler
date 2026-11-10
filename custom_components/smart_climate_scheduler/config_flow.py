@@ -40,6 +40,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_FALLBACK_PRESET,
@@ -53,6 +54,7 @@ from .const import (
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
 from .helpers import parse_time, safe_float as _safe_float
@@ -135,6 +137,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 user_input[CONF_OPPORTUNISTIC_HEATING] = bool(
                     user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
+                )
+                user_input[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
+                    user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
                 )
 
                 default_schedule = {day: [] for day in DAYS}
@@ -223,6 +228,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Optional(
                     CONF_OPPORTUNISTIC_HEATING, default=DEFAULT_OPPORTUNISTIC_HEATING
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, default=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT
                 ): BooleanSelector(),
             }
         )
@@ -354,6 +362,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
                     )
                 ),
+                CONF_USE_WEATHER_FORECAST_FOR_PREHEAT: bool(
+                    options.get(
+                        CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
+                        data.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT),
+                    )
+                ),
             }
 
     def _get_supported_presets(self) -> list[str]:
@@ -447,6 +461,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
                 user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
             )
+            self.settings_data[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
+                user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
+            )
             return await self.async_step_init()
 
         supported_presets = self._get_supported_presets()
@@ -509,6 +526,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_OPPORTUNISTIC_HEATING): BooleanSelector(),
+                vol.Optional(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT): BooleanSelector(),
             }
         )
 

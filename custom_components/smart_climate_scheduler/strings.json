@@ -23,7 +23,8 @@
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Re-activation tolerance fallback (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)"
         }
       }
     },
@@ -60,7 +61,8 @@
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Re-activation tolerance fallback (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)"
         }
       },
       "schedule_menu": {
@@ -445,6 +447,9 @@
       },
       "opportunistic_heating": {
         "name": "Opportunistic Heating"
+      },
+      "use_weather_forecast_for_preheat": {
+        "name": "Use weather forecast for preheating"
       }
     }
   }

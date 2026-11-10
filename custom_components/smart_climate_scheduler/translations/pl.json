@@ -23,7 +23,8 @@
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
+          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)"
         }
       }
     },
@@ -60,7 +61,8 @@
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
+          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)"
         }
       },
       "schedule_menu": {
@@ -445,6 +447,9 @@
       },
       "opportunistic_heating": {
         "name": "Ogrzewanie oportunistyczne"
+      },
+      "use_weather_forecast_for_preheat": {
+        "name": "Prognoza pogody dla wstępnego nagrzewania"
       }
     }
   }

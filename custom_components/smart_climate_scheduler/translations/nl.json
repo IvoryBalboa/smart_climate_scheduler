@@ -23,7 +23,8 @@
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)"
         }
       }
     },
@@ -60,7 +61,8 @@
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)"
         }
       },
       "schedule_menu": {
@@ -445,6 +447,9 @@
       },
       "opportunistic_heating": {
         "name": "Opportunistisch meeverwarmen"
+      },
+      "use_weather_forecast_for_preheat": {
+        "name": "Weersverwachting voor voorverwarmen"
       }
     }
   }

@@ -1,4 +1,4 @@
-"""Binary-Sensor Plattform für Smart Climate Scheduler (Version 2.1.0)."""
+"""Binary-Sensor Plattform für Smart Climate Scheduler (Version 2.3.2)."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +13,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .evaluation import evaluate_state
-from .helpers import get_config_entry_slug, get_device_info
+from .helpers import (
+    get_config_entry_slug,
+    get_device_info,
+    get_ha_language,
+    get_localized_slug_suffix,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,8 +29,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Richtet die Binary-Sensor Plattform über einen Config Entry ein."""
-    preheat_binary = SmartClimateSchedulerPreheatBinarySensor(config_entry)
-    cooldown_binary = SmartClimateSchedulerCooldownBinarySensor(config_entry)
+    preheat_binary = SmartClimateSchedulerPreheatBinarySensor(config_entry, hass=hass)
+    cooldown_binary = SmartClimateSchedulerCooldownBinarySensor(config_entry, hass=hass)
 
     sensors = hass.data.setdefault(f"{DOMAIN}_sensors", [])
     sensors.extend([preheat_binary, cooldown_binary])
@@ -41,11 +46,13 @@ class SmartClimateSchedulerPreheatBinarySensor(BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "preheat"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_preheat"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"binary_sensor.{slug}_vorheizen"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("binary_vorheizen", lang)
+        self.entity_id = f"binary_sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -91,11 +98,13 @@ class SmartClimateSchedulerCooldownBinarySensor(BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "cooldown"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_cooldown"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"binary_sensor.{slug}_abkuehlen"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("binary_abkuehlen", lang)
+        self.entity_id = f"binary_sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""

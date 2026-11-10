@@ -23,7 +23,8 @@
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)"
         }
       }
     },
@@ -60,7 +61,8 @@
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)"
         }
       },
       "schedule_menu": {
@@ -445,6 +447,9 @@
       },
       "opportunistic_heating": {
         "name": "Opportunistisches Mitheizen"
+      },
+      "use_weather_forecast_for_preheat": {
+        "name": "Wettervorhersage für Vorheizen"
       }
     }
   }

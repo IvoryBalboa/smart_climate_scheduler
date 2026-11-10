@@ -1,4 +1,4 @@
-"""Sensor-Plattform für Smart Climate Scheduler (Version 2.0)."""
+"""Sensor-Plattform für Smart Climate Scheduler (Version 2.3.2)."""
 from __future__ import annotations
 
 import logging
@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_point_in_time,
     async_track_state_change_event,
+    async_track_time_interval,
 )
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
@@ -30,9 +31,12 @@ from .heating_rate import (
     calculate_step_heating_rate,
 )
 from .helpers import (
+    async_get_hourly_forecast,
     calculate_overall_average,
     get_config_entry_slug,
     get_device_info,
+    get_ha_language,
+    get_localized_slug_suffix,
     get_outside_temperature,
     get_preset_temperature,
     get_target_hvac_mode,
@@ -51,12 +55,14 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_FALLBACK_HEATING_RATE,
     DEFAULT_FALLBACK_COOLING_RATE,
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
 from .storage import ClimateSchedulerStorage
@@ -115,11 +121,11 @@ async def async_setup_entry(
     if "last_heating_off_time" not in domain_data:
         domain_data["last_heating_off_time"] = None
 
-    main_sensor = SmartClimateSchedulerSensor(config_entry)
-    heating_rate_sensor = SmartClimateSchedulerHeatingRateSensor(config_entry)
-    cooling_rate_sensor = SmartClimateSchedulerCoolingRateSensor(config_entry)
-    next_action_sensor = SmartClimateSchedulerNextActionSensor(config_entry)
-    debug_sensor = SmartClimateSchedulerDebugSensor(config_entry, main_sensor)
+    main_sensor = SmartClimateSchedulerSensor(config_entry, hass=hass)
+    heating_rate_sensor = SmartClimateSchedulerHeatingRateSensor(config_entry, hass=hass)
+    cooling_rate_sensor = SmartClimateSchedulerCoolingRateSensor(config_entry, hass=hass)
+    next_action_sensor = SmartClimateSchedulerNextActionSensor(config_entry, hass=hass)
+    debug_sensor = SmartClimateSchedulerDebugSensor(config_entry, main_sensor, hass=hass)
 
     sensors = hass.data.setdefault(f"{DOMAIN}_sensors", [])
     sensors.extend([main_sensor, heating_rate_sensor, cooling_rate_sensor, next_action_sensor, debug_sensor])
@@ -217,10 +223,20 @@ async def async_setup_entry(
         """Liest die Außentemperatur (Sensor hat Vorrang vor Wetter-Entität)."""
         return get_outside_temperature(hass, outside_sensor, outside_weather)
 
-    # Live-Berechnung der Aufheizrate & Lernen in die Außentemperatur-Matrix, solange Brenner 'on' ist
+    def _is_preheating_active() -> bool:
+        """Prüft, ob aktuell die Vorheizphase (Preheat) aktiv ist (V2.3.2: Messung ausschließlich beim Vorheizen)."""
+        try:
+            _, preheat, _, _, _, _, _ = evaluate_state(hass, config_entry)
+            return bool(preheat and preheat.get("is_preheating", False))
+        except Exception:
+            return False
+
+    # Live-Berechnung der Aufheizrate & Lernen in die Außentemperatur-Matrix (ausschließlich beim Vorheizen, V2.3.2)
     async def async_check_heating_session(event=None):
         now_dt = dt_util.now()
-        is_heating = _is_burner_active()
+        is_burner_on = _is_burner_active()
+        is_preheating = _is_preheating_active()
+        is_heating = is_burner_on and is_preheating
         session = domain_data.get("active_session")
 
         fallback_r = _safe_float(
@@ -847,8 +863,26 @@ async def async_setup_entry(
 
     config_entry.async_on_unload(_cancel_timer)
 
+    async def async_refresh_forecast(event=None):
+        if outside_weather:
+            try:
+                fc = await async_get_hourly_forecast(hass, outside_weather)
+                if fc:
+                    domain_data["hourly_forecast_cache"] = fc
+                    invalidate_eval_cache(domain_data)
+            except Exception as e:
+                _LOGGER.debug("Fehler beim Abruf der stündlichen Vorhersage: %s", e)
+
+    if outside_weather:
+        hass.async_create_task(async_refresh_forecast())
+        config_entry.async_on_unload(
+            async_track_time_interval(hass, async_refresh_forecast, timedelta(minutes=30))
+        )
+
     # Listener für Climate- und Sensor-Änderungen (mit Re-Scheduling bei Temperaturänderungen)
     async def async_climate_changed(event):
+        if event and hasattr(event, "data") and event.data.get("entity_id") == outside_weather:
+            await async_refresh_forecast(event)
         await async_check_heating_session(event)
         await async_apply_schedule_to_climate(event)
         _async_update_all_entities()
@@ -894,12 +928,14 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "schedule"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._last_known_state = None
         self._attr_unique_id = f"{config_entry.entry_id}_schedule"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"sensor.{slug}_zeitplan"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("zeitplan", lang)
+        self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -955,11 +991,13 @@ class SmartClimateSchedulerHeatingRateSensor(SensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "heating_rate"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_heating_rate"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"sensor.{slug}_aufheizrate"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("aufheizrate", lang)
+        self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -1048,7 +1086,7 @@ class SmartClimateSchedulerHeatingRateSensor(SensorEntity):
 
 
 class SmartClimateSchedulerCoolingRateSensor(SensorEntity):
-    """Live-Sensor für die gemessene und gelernte Abkühlrate in K/h (Version 2.1.0)."""
+    """Live-Sensor für die gemessene und gelernte Abkühlrate in K/h (Version 2.3.2)."""
 
     _attr_icon = "mdi:thermometer-chevron-down"
     _attr_native_unit_of_measurement = "K/h"
@@ -1056,11 +1094,13 @@ class SmartClimateSchedulerCoolingRateSensor(SensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "cooling_rate"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_cooling_rate"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"sensor.{slug}_abkuehlrate"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("abkuehlrate", lang)
+        self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -1149,17 +1189,19 @@ class SmartClimateSchedulerCoolingRateSensor(SensorEntity):
 
 
 class SmartClimateSchedulerNextActionSensor(SensorEntity):
-    """Sensor für die nächste geplante Aktion des Zeitplans (Version 2.1.0)."""
+    """Sensor für die nächste geplante Aktion des Zeitplans (Version 2.3.2)."""
 
     _attr_icon = "mdi:calendar-arrow-right"
     _attr_has_entity_name = True
     _attr_translation_key = "next_action"
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
         self._attr_unique_id = f"{config_entry.entry_id}_next_action"
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"sensor.{slug}_naechste_aktion"
+        lang = get_ha_language(hass or getattr(config_entry, "hass", None))
+        suffix = get_localized_slug_suffix("naechste_aktion", lang)
+        self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""

@@ -4,6 +4,28 @@ from __future__ import annotations
 from datetime import datetime
 
 
+ACTION_PREFIXES: dict[str, dict[str, str]] = {
+    "preheat": {
+        "de": "Vorheizen",
+        "en": "Preheat",
+        "es": "Precalentamiento",
+        "fr": "Préchauffage",
+        "it": "Preriscaldamento",
+        "nl": "Voorverwarmen",
+        "pl": "Wstępne nagrzewanie",
+    },
+    "cooldown": {
+        "de": "Auskühlen",
+        "en": "Cooldown",
+        "es": "Enfriamiento",
+        "fr": "Refroidissement",
+        "it": "Raffreddamento",
+        "nl": "Afkoelen",
+        "pl": "Ochładzanie",
+    },
+}
+
+
 def _format_preset(preset: str | None) -> str:
     """Formatiert einen Preset-Namen für die Anzeige."""
     if not preset:
@@ -23,6 +45,7 @@ def calculate_next_action(
     subsequent_slot: dict | None,
     base_preset: str,
     now_dt: datetime,
+    lang: str = "de",
 ) -> dict[str, str | None]:
     """Ermittelt Aktion und Zeit für die nächste Planänderung."""
     current_label = _format_preset(base_preset)
@@ -33,16 +56,20 @@ def calculate_next_action(
     cooldown_start_str = cooldown_start_dt.strftime("%H:%M") if cooldown_start_dt else (next_slot.get("from") if next_slot else None)
     slot_from_time = next_slot.get("from") if next_slot else None
 
+    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
+    preheat_tag = ACTION_PREFIXES["preheat"].get(clean_lang, ACTION_PREFIXES["preheat"]["de"])
+    cooldown_tag = ACTION_PREFIXES["cooldown"].get(clean_lang, ACTION_PREFIXES["cooldown"]["de"])
+
     if preheat_duration > 0 and preheat_start_dt and preheat_start_dt > now_dt:
         return {
-            "action": f"(Preheat) {current_label} -> {target_preset}",
+            "action": f"({preheat_tag}) {current_label} -> {target_preset}",
             "time": preheat_start_str,
         }
 
     if cooldown_duration > 0 and cooldown_start_dt and cooldown_start_dt > now_dt:
         cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else "Eco"
         return {
-            "action": f"(Cooldown) {current_label} -> {cooldown_target}",
+            "action": f"({cooldown_tag}) {current_label} -> {cooldown_target}",
             "time": cooldown_start_str,
         }
 

@@ -18,18 +18,22 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_OPPORTUNISTIC_HEATING,
     CONF_PREHEAT_ENABLED,
+    CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_PREHEAT_ENABLED,
+    DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
     get_config_entry_slug,
     get_device_info,
+    get_ha_language,
+    get_localized_slug_suffix,
     get_preset_temperature,
     get_target_hvac_mode,
     safe_float as _safe_float,
@@ -91,6 +95,15 @@ async def async_setup_entry(
             default_value=DEFAULT_OPPORTUNISTIC_HEATING,
             icon="mdi:heat-wave",
         ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
+            translation_key="use_weather_forecast_for_preheat",
+            slug_suffix="wettervorhersage_vorheizen",
+            default_value=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
+            icon="mdi:weather-partly-cloudy",
+        ),
     ]
     async_add_entities(entities, True)
 
@@ -107,7 +120,9 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         self.hass = hass
         self.config_entry = config_entry
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"switch.{slug}_automatik"
+        lang = get_ha_language(hass)
+        suffix = get_localized_slug_suffix("automatik", lang)
+        self.entity_id = f"switch.{slug}_{suffix}"
         
         # Zustand aus hass.data laden (wurde beim Start aus dem Storage befüllt)
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(config_entry.entry_id, {})
@@ -304,7 +319,9 @@ class SmartClimateSchedulerOptionSwitch(SwitchEntity):
         self._attr_icon = icon
 
         slug = get_config_entry_slug(config_entry)
-        self.entity_id = f"switch.{slug}_{slug_suffix}"
+        lang = get_ha_language(hass)
+        suffix = get_localized_slug_suffix(slug_suffix, lang)
+        self.entity_id = f"switch.{slug}_{suffix}"
         self._attr_unique_id = f"{config_entry.entry_id}_{translation_key}"
 
     @property

@@ -23,7 +23,8 @@
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)"
         }
       }
     },
@@ -60,7 +61,8 @@
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)"
         }
       },
       "schedule_menu": {
@@ -445,6 +447,9 @@
       },
       "opportunistic_heating": {
         "name": "Riscaldamento opportunistico"
+      },
+      "use_weather_forecast_for_preheat": {
+        "name": "Previsioni meteo per preriscaldamento"
       }
     }
   }

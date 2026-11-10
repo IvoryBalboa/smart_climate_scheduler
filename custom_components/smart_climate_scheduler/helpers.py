@@ -1,10 +1,10 @@
-"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 2.1.0)."""
+"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 2.3.2)."""
 from __future__ import annotations
 
 import json
 import logging
 import math
-from datetime import time
+from datetime import datetime, time
 from typing import Any
 from homeassistant.helpers.device_registry import DeviceInfo
 
@@ -63,6 +63,158 @@ def get_config_entry_slug(config_entry) -> str:
         return re.sub(r"[^\w]+", "_", str(name).lower().strip()).strip("_") or "thermostat"
 
 
+ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
+    # Switches
+    "automatik": {
+        "de": "automatik",
+        "en": "auto",
+        "es": "automatico",
+        "fr": "automatique",
+        "it": "automatico",
+        "nl": "automatisch",
+        "pl": "automatyczny",
+    },
+    "adaptives_lernen": {
+        "de": "adaptives_lernen",
+        "en": "self_learning",
+        "es": "aprendizaje_adaptativo",
+        "fr": "apprentissage_adaptatif",
+        "it": "apprendimento_adattivo",
+        "nl": "zelflerend",
+        "pl": "samouczenie",
+    },
+    "vorheizen": {
+        "de": "vorheizen",
+        "en": "preheat",
+        "es": "precalentamiento",
+        "fr": "prechauffage",
+        "it": "preriscaldamento",
+        "nl": "voorverwarmen",
+        "pl": "wstepne_nagrzewanie",
+    },
+    "auskuehlen": {
+        "de": "auskuehlen",
+        "en": "cooldown",
+        "es": "enfriamiento",
+        "fr": "refroidissement",
+        "it": "raffreddamento",
+        "nl": "afkoelen",
+        "pl": "ochladzanie",
+    },
+    "abschaltung_bei_zieltemperatur": {
+        "de": "abschaltung_bei_zieltemperatur",
+        "en": "turn_off_at_target",
+        "es": "apagar_en_temperatura_objetivo",
+        "fr": "arret_temperature_cible",
+        "it": "spegni_alla_temperatura_desiderata",
+        "nl": "uitschakelen_bij_doeltemperatuur",
+        "pl": "wylacz_przy_temp_docelowej",
+    },
+    "opportunistisches_mitheizen": {
+        "de": "opportunistisches_mitheizen",
+        "en": "opportunistic_heating",
+        "es": "calefaccion_oportunista",
+        "fr": "chauffage_opportuniste",
+        "it": "riscaldamento_opportunistico",
+        "nl": "opportunistische_verwarming",
+        "pl": "ogrzewanie_oportunistyczne",
+    },
+    "wettervorhersage_vorheizen": {
+        "de": "wettervorhersage_vorheizen",
+        "en": "weather_forecast_preheat",
+        "es": "pronostico_tiempo_precalentamiento",
+        "fr": "previsions_meteo_prechauffage",
+        "it": "previsioni_meteo_preriscaldamento",
+        "nl": "weersverwachting_voorverwarmen",
+        "pl": "prognoza_pogody_nagrzewanie",
+    },
+    # Sensors
+    "zeitplan": {
+        "de": "zeitplan",
+        "en": "schedule",
+        "es": "horario",
+        "fr": "programme",
+        "it": "programma",
+        "nl": "schema",
+        "pl": "harmonogram",
+    },
+    "aufheizrate": {
+        "de": "aufheizrate",
+        "en": "heating_rate",
+        "es": "tasa_calentamiento",
+        "fr": "taux_chauffe",
+        "it": "tasso_riscaldamento",
+        "nl": "opwarmsnelheid",
+        "pl": "wskaznik_nagrzewania",
+    },
+    "abkuehlrate": {
+        "de": "abkuehlrate",
+        "en": "cooling_rate",
+        "es": "tasa_enfriamiento",
+        "fr": "taux_refroidissement",
+        "it": "tasso_raffreddamento",
+        "nl": "afkoelsnelheid",
+        "pl": "wskaznik_ochladzania",
+    },
+    "naechste_aktion": {
+        "de": "naechste_aktion",
+        "en": "next_action",
+        "es": "proxima_accion",
+        "fr": "action_suivante",
+        "it": "prossima_azione",
+        "nl": "volgende_actie",
+        "pl": "nastepna_akcja",
+    },
+    # Binary sensors
+    "binary_vorheizen": {
+        "de": "vorheizen",
+        "en": "preheat",
+        "es": "precalentamiento",
+        "fr": "prechauffage",
+        "it": "preriscaldamento",
+        "nl": "voorverwarmen",
+        "pl": "wstepne_nagrzewanie",
+    },
+    "binary_abkuehlen": {
+        "de": "abkuehlen",
+        "en": "cooldown",
+        "es": "enfriamiento",
+        "fr": "refroidissement",
+        "it": "raffreddamento",
+        "nl": "afkoelen",
+        "pl": "ochladzanie",
+    },
+    # Debug sensor
+    "diagnose": {
+        "de": "diagnose",
+        "en": "diagnostics",
+        "es": "diagnostico",
+        "fr": "diagnostic",
+        "it": "diagnosi",
+        "nl": "diagnose",
+        "pl": "diagnostyka",
+    },
+}
+
+
+def get_ha_language(hass) -> str:
+    """Ermittelt den 2-stelligen Sprachcode von Home Assistant (Standard: 'de')."""
+    if not hass:
+        return "de"
+    config = getattr(hass, "config", None)
+    lang = getattr(config, "language", "de") if config else "de"
+    if isinstance(lang, str) and lang:
+        return lang.split("-")[0].split("_")[0].lower()
+    return "de"
+
+
+def get_localized_slug_suffix(key: str, lang: str = "de") -> str:
+    """Liefert den lokalisierten Suffix für eine Entity-ID."""
+    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
+    mapping = ENTITY_SLUG_SUFFIXES.get(key, {})
+    return mapping.get(clean_lang, mapping.get("de", key))
+
+
 def get_device_info(config_entry) -> DeviceInfo:
     """Erzeugt eine einheitliche DeviceInfo-Struktur für alle Entitäten eines Config Entrys."""
     name = config_entry.data.get("name", "thermostat")
@@ -70,7 +222,8 @@ def get_device_info(config_entry) -> DeviceInfo:
         identifiers={(DOMAIN, config_entry.entry_id)},
         name=name,
         manufacturer="Smart Climate Scheduler",
-        model="Version 2.1.0",
+        model="Smart Climate Scheduler Hub",
+        sw_version="2.3.2",
     )
 
 
@@ -167,6 +320,137 @@ def get_resolved_outside_info(
                     pass
 
     return None, None
+
+
+def parse_datetime(dt_val: Any) -> datetime | None:
+    """Parst einen ISO-8601 Zeitstempel oder datetime-Objekt."""
+    if not dt_val:
+        return None
+    if isinstance(dt_val, datetime):
+        return dt_val
+    try:
+        dt_str = str(dt_val)
+        if dt_str.endswith("Z"):
+            dt_str = dt_str[:-1] + "+00:00"
+        return datetime.fromisoformat(dt_str)
+    except Exception:
+        return None
+
+
+async def async_get_hourly_forecast(hass, weather_entity: str | None) -> list[dict]:
+    """Ermittelt die stündliche Wettervorhersage (modern per weather.get_forecasts oder Attribut)."""
+    if not hass or not weather_entity:
+        return []
+
+    # Schutz vor Warning in homeassistant.helpers.service / helpers/target.py:176:
+    # Service Call nur ausführen, wenn die Entität in Home Assistant registriert und verfügbar ist!
+    if hasattr(hass, "states"):
+        st = hass.states.get(weather_entity)
+        if not st or st.state in ("unavailable", "unknown", "None", None):
+            _LOGGER.debug(
+                "Wetter-Entität '%s' nicht verfügbar (Status: %s) - überspringe weather.get_forecasts",
+                weather_entity,
+                st.state if st else "None",
+            )
+            return []
+
+    forecast_items = []
+
+    # 1. Moderner Weg: weather.get_forecasts Service Call (Home Assistant 2023.12+)
+    try:
+        if hasattr(hass, "services") and hass.services.has_service("weather", "get_forecasts"):
+            res = await hass.services.async_call(
+                "weather",
+                "get_forecasts",
+                {"entity_id": weather_entity, "type": "hourly"},
+                blocking=True,
+                return_response=True,
+            )
+            if isinstance(res, dict) and weather_entity in res:
+                raw_fc = res[weather_entity].get("forecast")
+                if isinstance(raw_fc, list):
+                    forecast_items = raw_fc
+    except Exception as e:
+        _LOGGER.debug("weather.get_forecasts Service Call fehlgeschlagen für %s: %s", weather_entity, e)
+
+    # 2. Abwärtskompatibler Fallback: Attribut 'forecast' des Wetter-States
+    if not forecast_items and hasattr(hass, "states"):
+        st = hass.states.get(weather_entity)
+        if st and isinstance(st.attributes.get("forecast"), list):
+            forecast_items = st.attributes.get("forecast", [])
+
+    parsed_forecast = []
+    for item in forecast_items:
+        if not isinstance(item, dict):
+            continue
+        dt = parse_datetime(item.get("datetime"))
+        temp = item.get("temperature")
+        if dt is not None and temp is not None:
+            try:
+                parsed_forecast.append({
+                    "datetime": dt,
+                    "temperature": float(temp),
+                })
+            except (ValueError, TypeError):
+                continue
+
+    return parsed_forecast
+
+
+def get_forecast_temperature_for_window(
+    forecast_list: list[dict] | None,
+    window_start: datetime,
+    window_end: datetime,
+) -> float | None:
+    """Berechnet das arithmetische Mittel der prognostizierten Außentemperaturen im Vorheiz-Zeitfenster."""
+    if not forecast_list or window_start >= window_end:
+        return None
+
+    matching_temps = []
+    for item in forecast_list:
+        raw_dt = item.get("datetime")
+        temp = item.get("temperature")
+        if not raw_dt or temp is None:
+            continue
+
+        dt = parse_datetime(raw_dt) if isinstance(raw_dt, str) else raw_dt
+        if not isinstance(dt, datetime):
+            continue
+
+        if window_start.tzinfo and not dt.tzinfo:
+            dt = dt.replace(tzinfo=window_start.tzinfo)
+        elif not window_start.tzinfo and dt.tzinfo:
+            dt = dt.replace(tzinfo=None)
+
+        if window_start <= dt <= window_end:
+            matching_temps.append(float(temp))
+
+    if not matching_temps:
+        mid_time = window_start + (window_end - window_start) / 2
+        closest_diff = None
+        closest_temp = None
+        for item in forecast_list:
+            raw_dt = item.get("datetime")
+            temp = item.get("temperature")
+            if not raw_dt or temp is None:
+                continue
+            dt = parse_datetime(raw_dt) if isinstance(raw_dt, str) else raw_dt
+            if not isinstance(dt, datetime):
+                continue
+            if mid_time.tzinfo and not dt.tzinfo:
+                dt = dt.replace(tzinfo=mid_time.tzinfo)
+            elif not mid_time.tzinfo and dt.tzinfo:
+                dt = dt.replace(tzinfo=None)
+            diff = abs((dt - mid_time).total_seconds())
+            if diff <= 7200:
+                if closest_diff is None or diff < closest_diff:
+                    closest_diff = diff
+                    closest_temp = float(temp)
+        if closest_temp is not None:
+            return round(closest_temp, 2)
+        return None
+
+    return round(sum(matching_temps) / len(matching_temps), 2)
 
 
 # ---------------------------------------------------------------------------
