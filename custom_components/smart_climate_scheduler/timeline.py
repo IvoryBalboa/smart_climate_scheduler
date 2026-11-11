@@ -95,13 +95,10 @@ def get_active_override(hass, config_entry, now_dt: datetime) -> tuple[str | Non
                 overrides.pop(ov_id)
                 updated = True
                 _LOGGER.info("Abgelaufener einmaliger Override '%s' wurde automatisch gelöscht.", ov_id)
-        if updated and "store" in store:
-            def _save_and_update(hass_obj, store_obj, ovs, entry_id):
-                hass_obj.async_create_task(store_obj.async_save(ovs))
-                for s in hass_obj.data.get(f"{domain}_sensors", []):
-                    if getattr(s, "config_entry", None) and s.config_entry.entry_id == entry_id:
-                        s.async_write_ha_state()
-            hass.async_create_task(_save_and_update(hass, store["store"], overrides, config_entry.entry_id))
+        if updated:
+            storage = store.get("storage")
+            if storage and hasattr(storage, "async_save_data") and hasattr(hass, "async_create_task"):
+                hass.async_create_task(storage.async_save_data({"overrides": overrides}))
 
     return active_ov_id, active_ov_data
 

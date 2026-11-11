@@ -54,6 +54,7 @@ class ClimateSchedulerStorage:
                 "average": DEFAULT_FALLBACK_HEATING_RATE,
                 "cooling_averages": {},
                 "cooling_average": DEFAULT_FALLBACK_COOLING_RATE,
+                "overrides": {},
             }
             await self._store.async_save(data)
         else:
@@ -72,6 +73,8 @@ class ClimateSchedulerStorage:
             )
 
             data["automation_enabled"] = bool(data.get("automation_enabled", False))
+            raw_ov = data.get("overrides")
+            data["overrides"] = dict(raw_ov) if isinstance(raw_ov, dict) else {}
 
         self._cached_data = data
         return data
@@ -91,6 +94,8 @@ class ClimateSchedulerStorage:
                 cleaned_patch[k] = normalize_matrix(v)
             elif k == "cooling_averages" and isinstance(v, dict):
                 cleaned_patch[k] = normalize_matrix(v)
+            elif k == "overrides" and isinstance(v, dict):
+                cleaned_patch[k] = dict(v)
             else:
                 cleaned_patch[k] = v
 

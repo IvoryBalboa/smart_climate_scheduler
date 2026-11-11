@@ -71,10 +71,59 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         norm_cooling, _safe_float(stored_data.get("cooling_average"), fallback_cooling_rate), already_normalized=True
     )
 
+    now_dt = dt_util.now()
+    raw_overrides = stored_data.get("overrides", {})
+    active_overrides: dict[str, dict] = {}
+    overrides_pruned = False
+
+    if isinstance(raw_overrides, dict):
+        for ov_id, ov_data in raw_overrides.items():
+            if not isinstance(ov_data, dict):
+                overrides_pruned = True
+                continue
+            start_val = ov_data.get("start")
+            end_val = ov_data.get("end")
+            if not start_val or not end_val:
+                overrides_pruned = True
+                continue
+            try:
+                if "T" in str(end_val):
+                    end_dt = datetime.fromisoformat(str(end_val))
+                    if now_dt.tzinfo and end_dt.tzinfo is None:
+                        end_dt = end_dt.replace(tzinfo=now_dt.tzinfo)
+                    if end_dt > now_dt:
+                        active_overrides[ov_id] = ov_data
+                    else:
+                        overrides_pruned = True
+                else:
+                    created_at_str = ov_data.get("created_at")
+                    if created_at_str and "T" in str(created_at_str):
+                        try:
+                            c_dt = datetime.fromisoformat(str(created_at_str))
+                            if c_dt.date() < now_dt.date():
+                                overrides_pruned = True
+                                continue
+                        except Exception:
+                            pass
+                    end_t = parse_time(str(end_val)[:5])
+                    start_t = parse_time(str(start_val)[:5])
+                    if end_t and start_t:
+                        if start_t <= end_t and now_dt.time() >= end_t:
+                            overrides_pruned = True
+                            continue
+                        active_overrides[ov_id] = ov_data
+                    else:
+                        active_overrides[ov_id] = ov_data
+            except Exception:
+                overrides_pruned = True
+
+    if overrides_pruned:
+        await storage.async_save_data({"overrides": active_overrides})
+
     hass.data[DOMAIN][entry.entry_id] = {
         "data": entry.data,
         "automation_enabled": automation_enabled,
-        "overrides": {},
+        "overrides": active_overrides,
         "averages": norm_averages,
         "average": overall_avg,
         "cooling_averages": norm_cooling,
@@ -265,12 +314,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             return
 
         for target_entry_id in entry_ids:
-            hass.data[DOMAIN][target_entry_id]["overrides"][override_id] = {
+            store = hass.data[DOMAIN][target_entry_id]
+            store["overrides"][override_id] = {
                 "start": start_str,
                 "end": end_str,
                 "preset": preset,
+                "created_at": now.isoformat(),
             }
             _LOGGER.info("Override '%s' gesetzt: %s bis %s -> Preset: %s (Raum: %s)", override_id, start_str, end_str, preset, target_entry_id)
+            storage = store.get("storage")
+            if storage and hasattr(storage, "async_save_data"):
+                await storage.async_save_data({"overrides": store["overrides"]})
             await _async_update_sensors(hass, target_entry_id)
 
     async def handle_remove_override(call: ServiceCall) -> None:
@@ -281,12 +335,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         for store in target_stores:
             if override_id:
-                if override_id in store["overrides"]:
+                if override_id in store.get("overrides", {}):
                     store["overrides"].pop(override_id)
                     _LOGGER.info("Override '%s' entfernt.", override_id)
             else:
-                store["overrides"].clear()
+                store.setdefault("overrides", {}).clear()
                 _LOGGER.info("Alle Overrides entfernt.")
+            storage = store.get("storage")
+            if storage and hasattr(storage, "async_save_data"):
+                await storage.async_save_data({"overrides": store.get("overrides", {})})
 
         for eid in (entry_ids or list(hass.data[DOMAIN].keys())):
             await _async_update_sensors(hass, eid)
