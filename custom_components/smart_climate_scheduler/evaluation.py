@@ -478,21 +478,29 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                 active_slot["override_id"] = active_ov_id
                 active_slot["preset"] = base_preset
 
+    next_is_override = bool(next_slot and next_slot.get("is_override"))
+
     if is_active_override:
-        # Aktiver Override hat höchste Priorität und wird nicht durch Away oder Cooldown überschrieben
+        # 1. Aktueller Slot ist ein Override -> Anwesenheit wird umgangen
         preset = base_preset
+    elif next_is_override and is_preheat_needed and next_preset_name and next_preset_name != "none":
+        # 2. Nächster Slot ist ein Override und Vorheizen ist aktiv -> Anwesenheit wird umgangen
+        preset = next_preset_name
     elif is_home:
+        # 3. Alle anderen Umstände wie vorher: Regulär Zuhause
         preset = base_preset
         if is_preheat_needed and next_preset_name and next_preset_name != "none":
             preset = next_preset_name
         elif is_cooling_down:
             preset = target_cooldown_preset
     elif is_away_near:
+        # 4. Nahe Abwesenheit
         if active_slot and active_slot.get("is_fallback"):
             preset = "sleep"
         else:
             preset = "eco"
     else:
+        # 5. Vollständige Abwesenheit
         preset = "away"
 
     lang = get_ha_language(hass)

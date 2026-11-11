@@ -1,4 +1,4 @@
-"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 2.3.4)."""
+"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 2.3.5)."""
 from __future__ import annotations
 
 import json
@@ -223,7 +223,7 @@ def get_device_info(config_entry) -> DeviceInfo:
         name=name,
         manufacturer="Smart Climate Scheduler",
         model="Smart Climate Scheduler Hub",
-        sw_version="2.3.4",
+        sw_version="2.3.5",
     )
 
 

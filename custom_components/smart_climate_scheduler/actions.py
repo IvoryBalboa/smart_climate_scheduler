@@ -157,26 +157,15 @@ def calculate_next_action(
         }
 
     if is_preheat_needed:
-        subsequent_preset = subsequent_slot.get("preset", "home") if subsequent_slot else "home"
-        subsequent_label = _format_preset(subsequent_preset, clean_lang)
-        to_time = next_slot.get("to") if next_slot else None
         return {
-            "action": f"{target_preset} -> {subsequent_label}",
-            "time": to_time,
+            "action": f"({preheat_tag}) {current_label} -> {target_preset}",
+            "time": slot_from_time,
         }
 
     if is_cooling_down:
-        if next_preset_name and next_preset_name != "none":
-            subsequent_preset = subsequent_slot.get("preset", "home") if subsequent_slot else "home"
-            subsequent_label = _format_preset(subsequent_preset, clean_lang)
-            to_time = next_slot.get("to") if next_slot else None
-            return {
-                "action": f"{target_preset} -> {subsequent_label}",
-                "time": to_time,
-            }
-        eco_label = _format_preset("eco", clean_lang)
+        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang)
         return {
-            "action": f"{eco_label} -> {target_preset}",
+            "action": f"({cooldown_tag}) {current_label} -> {cooldown_target}",
             "time": slot_from_time,
         }
 
