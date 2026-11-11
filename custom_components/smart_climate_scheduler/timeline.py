@@ -278,10 +278,18 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                 t_start = parse_time(start_str)
                 t_end = parse_time(end_str)
                 if t_start and t_end:
-                    ov_start = datetime.combine(now_dt.date(), t_start)
-                    ov_end = datetime.combine(now_dt.date(), t_end)
-                    if ov_end < ov_start:
-                        ov_end += timedelta(days=1)
+                    if t_end <= t_start:
+                        if now_dt.time() < t_end:
+                            # Started yesterday, ends today
+                            ov_start = datetime.combine(now_dt.date() - timedelta(days=1), t_start)
+                            ov_end = datetime.combine(now_dt.date(), t_end)
+                        else:
+                            # Starts today, ends tomorrow
+                            ov_start = datetime.combine(now_dt.date(), t_start)
+                            ov_end = datetime.combine(now_dt.date() + timedelta(days=1), t_end)
+                    else:
+                        ov_start = datetime.combine(now_dt.date(), t_start)
+                        ov_end = datetime.combine(now_dt.date(), t_end)
                     if now_dt.tzinfo:
                         ov_start = ov_start.replace(tzinfo=now_dt.tzinfo)
                         ov_end = ov_end.replace(tzinfo=now_dt.tzinfo)

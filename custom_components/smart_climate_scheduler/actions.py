@@ -26,11 +26,94 @@ ACTION_PREFIXES: dict[str, dict[str, str]] = {
 }
 
 
-def _format_preset(preset: str | None) -> str:
-    """Formatiert einen Preset-Namen für die Anzeige."""
+PRESET_TRANSLATIONS: dict[str, dict[str, str]] = {
+    "home": {
+        "de": "Zuhause",
+        "en": "Home",
+        "es": "En casa",
+        "fr": "Présent",
+        "it": "In casa",
+        "nl": "Thuis",
+        "pl": "W domu",
+    },
+    "comfort": {
+        "de": "Komfort",
+        "en": "Comfort",
+        "es": "Confort",
+        "fr": "Confort",
+        "it": "Comfort",
+        "nl": "Comfort",
+        "pl": "Komfort",
+    },
+    "sleep": {
+        "de": "Schlafen",
+        "en": "Sleep",
+        "es": "Noche",
+        "fr": "Nuit",
+        "it": "Notte",
+        "nl": "Slapen",
+        "pl": "Sen",
+    },
+    "away": {
+        "de": "Abwesend",
+        "en": "Away",
+        "es": "Ausente",
+        "fr": "Absent",
+        "it": "Fuori casa",
+        "nl": "Weg",
+        "pl": "Poza domem",
+    },
+    "eco": {
+        "de": "Eco",
+        "en": "Eco",
+        "es": "Eco",
+        "fr": "Éco",
+        "it": "Eco",
+        "nl": "Eco",
+        "pl": "Eko",
+    },
+    "boost": {
+        "de": "Boost",
+        "en": "Boost",
+        "es": "Boost",
+        "fr": "Boost",
+        "it": "Boost",
+        "nl": "Boost",
+        "pl": "Boost",
+    },
+    "activity": {
+        "de": "Aktivität",
+        "en": "Activity",
+        "es": "Actividad",
+        "fr": "Activité",
+        "it": "Attività",
+        "nl": "Activiteit",
+        "pl": "Aktywność",
+    },
+    "none": {
+        "de": "Keins",
+        "en": "None",
+        "es": "Ninguno",
+        "fr": "Aucun",
+        "it": "Nessuno",
+        "nl": "Geen",
+        "pl": "Brak",
+    },
+}
+
+
+def _format_preset(preset: str | None, lang: str = "de") -> str:
+    """Formatiert und übersetzt einen Preset-Namen für die Anzeige."""
     if not preset:
-        return "Home"
-    return preset.replace("_", " ").title()
+        preset_key = "home"
+    else:
+        preset_key = str(preset).lower().strip().replace(" ", "_")
+
+    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
+    if preset_key in PRESET_TRANSLATIONS:
+        return PRESET_TRANSLATIONS[preset_key].get(clean_lang, PRESET_TRANSLATIONS[preset_key]["de"])
+
+    return str(preset).replace("_", " ").title()
 
 
 def calculate_next_action(
@@ -47,16 +130,16 @@ def calculate_next_action(
     now_dt: datetime,
     lang: str = "de",
 ) -> dict[str, str | None]:
-    """Ermittelt Aktion und Zeit für die nächste Planänderung."""
-    current_label = _format_preset(base_preset)
+    """Ermittelt Aktion und Zeit für die nächste Planänderung mit übersetzten Presets."""
+    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
+    current_label = _format_preset(base_preset, clean_lang)
     next_preset_name = next_slot.get("preset") if next_slot else None
-    target_preset = _format_preset(next_preset_name)
+    target_preset = _format_preset(next_preset_name, clean_lang)
 
     preheat_start_str = preheat_start_dt.strftime("%H:%M") if preheat_start_dt else (next_slot.get("from") if next_slot else None)
     cooldown_start_str = cooldown_start_dt.strftime("%H:%M") if cooldown_start_dt else (next_slot.get("from") if next_slot else None)
     slot_from_time = next_slot.get("from") if next_slot else None
 
-    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
     preheat_tag = ACTION_PREFIXES["preheat"].get(clean_lang, ACTION_PREFIXES["preheat"]["de"])
     cooldown_tag = ACTION_PREFIXES["cooldown"].get(clean_lang, ACTION_PREFIXES["cooldown"]["de"])
 
@@ -67,7 +150,7 @@ def calculate_next_action(
         }
 
     if cooldown_duration > 0 and cooldown_start_dt and cooldown_start_dt > now_dt:
-        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else "Eco"
+        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang)
         return {
             "action": f"({cooldown_tag}) {current_label} -> {cooldown_target}",
             "time": cooldown_start_str,
@@ -75,7 +158,7 @@ def calculate_next_action(
 
     if is_preheat_needed:
         subsequent_preset = subsequent_slot.get("preset", "home") if subsequent_slot else "home"
-        subsequent_label = _format_preset(subsequent_preset)
+        subsequent_label = _format_preset(subsequent_preset, clean_lang)
         to_time = next_slot.get("to") if next_slot else None
         return {
             "action": f"{target_preset} -> {subsequent_label}",
@@ -85,14 +168,15 @@ def calculate_next_action(
     if is_cooling_down:
         if next_preset_name and next_preset_name != "none":
             subsequent_preset = subsequent_slot.get("preset", "home") if subsequent_slot else "home"
-            subsequent_label = _format_preset(subsequent_preset)
+            subsequent_label = _format_preset(subsequent_preset, clean_lang)
             to_time = next_slot.get("to") if next_slot else None
             return {
                 "action": f"{target_preset} -> {subsequent_label}",
                 "time": to_time,
             }
+        eco_label = _format_preset("eco", clean_lang)
         return {
-            "action": f"Eco -> {target_preset}",
+            "action": f"{eco_label} -> {target_preset}",
             "time": slot_from_time,
         }
 

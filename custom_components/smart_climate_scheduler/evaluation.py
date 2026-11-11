@@ -39,7 +39,7 @@ from .const import (
     DOMAIN,
 )
 from .zones import evaluate_zones
-from .timeline import format_slot, get_current_and_next_slot
+from .timeline import format_slot, get_active_override, get_current_and_next_slot
 from .actions import calculate_next_action
 from .preheat import calculate_preheat
 from .cooldown import calculate_cooldown
@@ -466,7 +466,20 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
 
     base_preset = schedule_preset if schedule_preset != "none" else "home"
 
-    if active_slot and active_slot.get("is_override"):
+    is_active_override = bool(active_slot and active_slot.get("is_override"))
+    if not is_active_override:
+        # Zusätzliche Absicherung via get_active_override
+        active_ov_id, active_ov_data = get_active_override(hass, config_entry, now_dt)
+        if active_ov_data:
+            is_active_override = True
+            base_preset = active_ov_data.get("preset", base_preset)
+            if active_slot:
+                active_slot["is_override"] = True
+                active_slot["override_id"] = active_ov_id
+                active_slot["preset"] = base_preset
+
+    if is_active_override:
+        # Aktiver Override hat höchste Priorität und wird nicht durch Away oder Cooldown überschrieben
         preset = base_preset
     elif is_home:
         preset = base_preset

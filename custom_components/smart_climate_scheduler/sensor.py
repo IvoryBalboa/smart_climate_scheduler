@@ -1,4 +1,4 @@
-"""Sensor-Plattform für Smart Climate Scheduler (Version 2.3.2)."""
+"""Sensor-Plattform für Smart Climate Scheduler (Version 2.3.4)."""
 from __future__ import annotations
 
 import logging

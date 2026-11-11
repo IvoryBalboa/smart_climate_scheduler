@@ -99,9 +99,9 @@ set_manual_heating_rate:
       default: 1.0
       selector:
         number:
-          min: 0.05
+          min: 0.001
           max: 5.0
-          step: 0.05
+          step: 0.001
           unit_of_measurement: "K/h"
           mode: box
 
@@ -130,9 +130,9 @@ set_matrix_heating_rate:
       default: 1.0
       selector:
         number:
-          min: 0.05
+          min: 0.001
           max: 5.0
-          step: 0.05
+          step: 0.001
           unit_of_measurement: "K/h"
           mode: box
 
@@ -179,9 +179,9 @@ set_matrix_cooling_rate:
       default: 0.2
       selector:
         number:
-          min: 0.01
+          min: 0.001
           max: 2.0
-          step: 0.01
+          step: 0.001
           unit_of_measurement: "K/h"
           mode: box
 
