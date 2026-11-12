@@ -84,41 +84,32 @@ class SmartClimateSchedulerProfileSelect(SelectEntity):
 
         _LOGGER.info("Schedule profile for '%s' switched: %s -> %s", self.entity_id, current_profile, option)
 
-        # 1. Update config entry options
+        # 1. Update config entry options without triggering integration reload
+        domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
+        domain_data["_updating_from_switch"] = True
+
         new_options = dict(self.config_entry.options)
         new_options["active_profile"] = option
         self.hass.config_entries.async_update_entry(self.config_entry, options=new_options)
 
         # 2. Invalidate eval cache so subsequent calls re-evaluate with the new profile immediately
-        entry_data = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id, {})
-        invalidate_eval_cache(entry_data)
+        invalidate_eval_cache(domain_data)
 
         # 3. Write state of select entity
         self._attr_current_option = option
         self.async_write_ha_state()
 
-        # 4. Trigger scheduler evaluation and climate preset update
-        try:
-            preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
-            climate_entity = (
-                self.config_entry.options.get(CONF_CLIMATE_ENTITY)
-                or self.config_entry.data.get(CONF_CLIMATE_ENTITY)
-            )
-            if climate_entity and preset and preset not in ("unavailable", "unknown", "None", None):
-                if hasattr(self.hass, "services") and self.hass.services.has_service("climate", "set_preset_mode"):
-                    await self.hass.services.async_call(
-                        "climate",
-                        "set_preset_mode",
-                        service_data={"preset_mode": preset},
-                        target={"entity_id": climate_entity},
-                    )
-                tgt_t = get_preset_temperature(self.hass.states.get(climate_entity), preset)
-                if tgt_t and hasattr(self.hass, "services") and self.hass.services.has_service("climate", "set_temperature"):
-                    await self.hass.services.async_call(
-                        "climate",
-                        "set_temperature",
-                        service_data={"temperature": tgt_t},
-                        target={"entity_id": climate_entity},
-                    )
-        except Exception as err:
-            _LOGGER.debug("Error during immediate preset update after profile change: %s", err)
+        # 4. Trigger scheduler evaluation, climate preset and two-point control
+        apply_fn = domain_data.get("async_apply_schedule")
+        if callable(apply_fn):
+            res = apply_fn()
+            if hasattr(res, "__await__"):
+                await res
+
+        update_fn = domain_data.get("update_all_entities")
+        if callable(update_fn):
+            update_fn()
+
+        timer_fn = domain_data.get("reschedule_target_timer")
+        if callable(timer_fn):
+            timer_fn()

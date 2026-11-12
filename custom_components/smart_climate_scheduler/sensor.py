@@ -899,6 +899,9 @@ async def async_setup_entry(
         async_track_state_change_event(hass, [main_sensor.entity_id], _async_schedule_changed)
     )
 
+    domain_data["reschedule_target_timer"] = _reschedule_target_timer
+    domain_data["update_all_entities"] = _async_update_all_entities
+
     # Initialen Ziel-Timer scharfschalten
     _reschedule_target_timer()
 
