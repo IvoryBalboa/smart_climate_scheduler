@@ -126,27 +126,21 @@
       },
       "add_slot": {
         "title": "Add New Slot",
-        "description": "Enter times and target preset mode. Conditions are optional (e.g. if binary_sensor.workday=on -> home, else eco):",
+        "description": "Enter start time, end time, and target preset mode:",
         "data": {
           "startzeit": "Start Time",
           "endzeit": "End Time",
-          "preset": "Preset Mode (Primary)",
-          "condition_entity": "Condition Entity (Optional, e.g. binary_sensor.workday)",
-          "condition_state": "Expected State (Default: on)",
-          "else_preset": "Else Preset (when condition is false)"
+          "preset": "Preset Mode"
         }
       },
       "edit_slot": {
         "title": "Edit Slot",
-        "description": "Update or delete the selected slot. Conditions are optional:",
+        "description": "Update or delete the selected slot:",
         "data": {
           "aktion": "Select Action",
           "startzeit": "Start Time",
           "endzeit": "End Time",
-          "preset": "Preset Mode (Primary)",
-          "condition_entity": "Condition Entity (Optional, e.g. binary_sensor.workday)",
-          "condition_state": "Expected State (Default: on)",
-          "else_preset": "Else Preset (when condition is false)"
+          "preset": "Preset Mode"
         }
       }
     },

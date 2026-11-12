@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Gestione orari",
-        "description": "Seleziona un'azione e il giorno della settimana:",
+        "title": "Gestisci programmi e profili",
+        "description": "Gestisci i tuoi programmi e profili. Profilo attivo: {active_profile}",
         "data": {
           "aktion": "Seleziona azione",
           "tag": "Giorno della settimana"
+        }
+      },
+      "switch_profile": {
+        "title": "Cambia profilo programma",
+        "description": "Scegli il profilo da attivare:",
+        "data": {
+          "profile": "Profilo"
+        }
+      },
+      "add_profile": {
+        "title": "Aggiungi nuovo profilo programma",
+        "description": "Inserisci un nome per il nuovo profilo e scegli opzionalmente un modello:",
+        "data": {
+          "profile_name": "Nome del nuovo profilo (es. Vacanze o Lavoro)",
+          "source_profile": "Modello per le fasce orarie"
+        }
+      },
+      "rename_profile": {
+        "title": "Rinomina profilo programma",
+        "description": "Seleziona un profilo da rinominare (anche il profilo Standard può essere rinominato):",
+        "data": {
+          "old_profile": "Profilo da rinominare",
+          "new_name": "Nuovo nome del profilo"
+        }
+      },
+      "delete_profile": {
+        "title": "Elimina profilo programma",
+        "description": "Seleziona il profilo da eliminare (deve rimanere sempre almeno un profilo):",
+        "data": {
+          "profile_to_delete": "Profilo da eliminare"
         }
       },
       "slot_overview": {
@@ -96,7 +126,7 @@
       },
       "add_slot": {
         "title": "Aggiungi nuova fascia",
-        "description": "Inserisci orari e modalità preset:",
+        "description": "Inserisci ora di inizio, ora di fine e preset desiderato:",
         "data": {
           "startzeit": "Ora di inizio",
           "endzeit": "Ora di fine",
@@ -105,7 +135,7 @@
       },
       "edit_slot": {
         "title": "Modifica fascia",
-        "description": "Aggiorna o elimina la fascia selezionata:",
+        "description": "Modifica o elimina la fascia selezionata:",
         "data": {
           "aktion": "Seleziona azione",
           "startzeit": "Ora di inizio",
@@ -115,7 +145,9 @@
       }
     },
     "error": {
-      "invalid_time_range": "L'ora di fine deve essere successiva all'ora di inizio."
+      "invalid_time_range": "L'ora di fine deve essere successiva all'ora di inizio.",
+      "profile_name_empty": "Il nome del profilo non può essere vuoto.",
+      "profile_name_exists": "Esiste già un profilo con questo nome."
     }
   },
   "selector": {
@@ -152,12 +184,16 @@
     "schedule_action": {
       "options": {
         "edit": "Modifica giorno / Visualizza fasce",
+        "switch_profile": "🔄 Cambia profilo attivo",
+        "add_profile": "➕ Aggiungi nuovo profilo",
+        "rename_profile": "✏️ Rinomina profilo",
+        "delete_profile": "🗑️ Elimina profilo",
         "back": "← Torna al menu principale"
       }
     },
     "edit_action": {
       "options": {
-        "save": "Salva modifiche",
+        "update": "Salva modifiche",
         "delete": "Elimina questa fascia"
       }
     },
@@ -184,14 +220,6 @@
           "name": "ID override",
           "description": "Identificatore univoco."
         },
-        "start": {
-          "name": "Ora di inizio",
-          "description": "Ora di inizio in formato HH:MM o HH:MM:SS."
-        },
-        "end": {
-          "name": "Ora di fine",
-          "description": "Ora di fine in formato HH:MM o HH:MM:SS."
-        },
         "preset": {
           "name": "Preset",
           "description": "Nome del preset."
@@ -199,6 +227,14 @@
         "duration": {
           "name": "Durata",
           "description": "Durata dell'override (es. 60 minuti o 2 ore). Inizia immediatamente se non viene specificata l'ora di inizio."
+        },
+        "start": {
+          "name": "Ora di inizio",
+          "description": "Ora di inizio in formato HH:MM o HH:MM:SS."
+        },
+        "end": {
+          "name": "Ora di fine",
+          "description": "Ora di fine in formato HH:MM o HH:MM:SS."
         }
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "ID override",
           "description": "Identificatore dell'override da rimuovere."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Attiva profilo programma",
+      "description": "Attiva uno specifico profilo programma per una o tutte le stanze.",
+      "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Stanza Smart Climate Scheduler"
+        },
+        "profile": {
+          "name": "Nome profilo",
+          "description": "Nome del profilo programma da attivare (es. Standard, Lavoro, Vacanze)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Previsioni meteo per preriscaldamento"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Profilo programma"
       }
     }
   }

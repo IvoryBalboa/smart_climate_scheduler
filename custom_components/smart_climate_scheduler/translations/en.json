@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Manage Schedules",
-        "description": "Select an action and the weekday:",
+        "title": "Manage Schedules & Profiles",
+        "description": "Manage schedules and profiles. Active profile: {active_profile}",
         "data": {
           "aktion": "Select Action",
           "tag": "Weekday"
+        }
+      },
+      "switch_profile": {
+        "title": "Switch Schedule Profile",
+        "description": "Choose the profile to activate:",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "add_profile": {
+        "title": "Add New Schedule Profile",
+        "description": "Enter a name for the new profile and optionally choose a template:",
+        "data": {
+          "profile_name": "Name of New Profile (e.g. Vacation or Work)",
+          "source_profile": "Template for Schedule Slots"
+        }
+      },
+      "rename_profile": {
+        "title": "Rename Schedule Profile",
+        "description": "Select a profile to rename (any profile including Standard can be renamed):",
+        "data": {
+          "old_profile": "Profile to Rename",
+          "new_name": "New Profile Name"
+        }
+      },
+      "delete_profile": {
+        "title": "Delete Schedule Profile",
+        "description": "Select the profile to delete (at least one profile must always remain):",
+        "data": {
+          "profile_to_delete": "Profile to Delete"
         }
       },
       "slot_overview": {
@@ -96,7 +126,7 @@
       },
       "add_slot": {
         "title": "Add New Slot",
-        "description": "Enter times and target preset mode:",
+        "description": "Enter start time, end time, and target preset mode:",
         "data": {
           "startzeit": "Start Time",
           "endzeit": "End Time",
@@ -115,7 +145,9 @@
       }
     },
     "error": {
-      "invalid_time_range": "End time must be after start time."
+      "invalid_time_range": "End time must be after start time.",
+      "profile_name_empty": "Profile name cannot be empty.",
+      "profile_name_exists": "A profile with this name already exists."
     }
   },
   "selector": {
@@ -144,14 +176,18 @@
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Manage Schedules",
+        "schedules": "📅 Manage Schedules & Profiles",
         "settings": "⚙️ Settings (Sensors, Learning & Rates)",
         "save": "💾 Save & Exit"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Edit Day / View Slots",
+        "edit": "📅 Edit Day Slots",
+        "switch_profile": "🔄 Switch Active Profile",
+        "add_profile": "➕ Add New Profile",
+        "rename_profile": "✏️ Rename Profile",
+        "delete_profile": "🗑️ Delete Profile",
         "back": "← Back to Main Menu"
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "Override ID",
           "description": "The ID of the override to remove (e.g. guests or party)."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Activate Schedule Profile",
+      "description": "Activates a specific schedule profile for one or all rooms.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Smart Climate Scheduler room"
+        },
+        "profile": {
+          "name": "Profile Name",
+          "description": "Name of the schedule profile to activate (e.g. Standard, Work, Vacation)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Use weather forecast for preheating"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Schedule Profile"
       }
     }
   }

@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Zarządzanie harmonogramami",
-        "description": "Wybierz akcję i dzień tygodnia:",
+        "title": "Zarządzaj harmonogramami i profilami",
+        "description": "Zarządzaj harmonogramami i profilami. Aktywny profil: {active_profile}",
         "data": {
           "aktion": "Wybierz akcję",
           "tag": "Dzień tygodnia"
+        }
+      },
+      "switch_profile": {
+        "title": "Przełącz profil harmonogramu",
+        "description": "Wybierz profil do aktywacji:",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "add_profile": {
+        "title": "Dodaj nowy profil harmonogramu",
+        "description": "Wprowadź nazwę nowego profilu i opcjonalnie wybierz szablon:",
+        "data": {
+          "profile_name": "Nazwa nowego profilu (np. Urlop lub Praca)",
+          "source_profile": "Szablon przedziałów czasowych"
+        }
+      },
+      "rename_profile": {
+        "title": "Zmień nazwę profilu harmonogramu",
+        "description": "Wybierz profil do zmiany nazwy (można zmienić także profil Standard):",
+        "data": {
+          "old_profile": "Profil do zmiany nazwy",
+          "new_name": "Nowa nazwa profilu"
+        }
+      },
+      "delete_profile": {
+        "title": "Usuń profil harmonogramu",
+        "description": "Wybierz profil do usunięcia (co najmniej jeden profil musi zawsze pozostać):",
+        "data": {
+          "profile_to_delete": "Profil do usunięcia"
         }
       },
       "slot_overview": {
@@ -96,7 +126,7 @@
       },
       "add_slot": {
         "title": "Dodaj nowy przedział",
-        "description": "Wprowadź godziny i tryb docelowy:",
+        "description": "Wprowadź godzinę rozpoczęcia, zakończenia oraz tryb docelowy:",
         "data": {
           "startzeit": "Czas rozpoczęcia",
           "endzeit": "Czas zakończenia",
@@ -105,7 +135,7 @@
       },
       "edit_slot": {
         "title": "Edytuj przedział",
-        "description": "Zaktualizuj lub usuń wybrany przedział:",
+        "description": "Edytuj lub usuń wybrany przedział:",
         "data": {
           "aktion": "Wybierz akcję",
           "startzeit": "Czas rozpoczęcia",
@@ -115,7 +145,9 @@
       }
     },
     "error": {
-      "invalid_time_range": "Czas zakończenia musi być późniejszy niż czas rozpoczęcia."
+      "invalid_time_range": "Czas zakończenia musi być późniejszy niż czas rozpoczęcia.",
+      "profile_name_empty": "Nazwa profilu nie może być pusta.",
+      "profile_name_exists": "Profil o tej nazwie już istnieje."
     }
   },
   "selector": {
@@ -152,12 +184,16 @@
     "schedule_action": {
       "options": {
         "edit": "Edytuj dzień / Pokaż przedziały",
+        "switch_profile": "🔄 Przełącz aktywny profil",
+        "add_profile": "➕ Dodaj nowy profil",
+        "rename_profile": "✏️ Zmień nazwę profilu",
+        "delete_profile": "🗑️ Usuń profil",
         "back": "← Powrót do menu głównego"
       }
     },
     "edit_action": {
       "options": {
-        "save": "Zapisz zmiany",
+        "update": "Zapisz zmiany",
         "delete": "Usuń ten przedział"
       }
     },
@@ -184,14 +220,6 @@
           "name": "ID nadpisania",
           "description": "Unikalny identyfikator."
         },
-        "start": {
-          "name": "Czas rozpoczęcia",
-          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
-        },
-        "end": {
-          "name": "Czas zakończenia",
-          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
-        },
         "preset": {
           "name": "Tryb",
           "description": "Nazwa trybu."
@@ -199,6 +227,14 @@
         "duration": {
           "name": "Czas trwania",
           "description": "Czas trwania nadpisania (np. 60 minut lub 2 godziny). Rozpoczyna się natychmiast, jeśli nie podano czasu rozpoczęcia."
+        },
+        "start": {
+          "name": "Czas rozpoczęcia",
+          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
+        },
+        "end": {
+          "name": "Czas zakończenia",
+          "description": "Godzina w formacie HH:MM lub HH:MM:SS."
         }
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "ID nadpisania",
           "description": "ID nadpisania do usunięcia."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Aktywuj profil harmonogramu",
+      "description": "Aktywuje wybrany profil harmonogramu dla jednego lub wszystkich pomieszczeń.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Pomieszczenie Smart Climate Scheduler"
+        },
+        "profile": {
+          "name": "Nazwa profilu",
+          "description": "Nazwa profilu harmonogramu do aktywacji (np. Standard, Praca, Urlop)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Prognoza pogody dla wstępnego nagrzewania"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Profil harmonogramu"
       }
     }
   }

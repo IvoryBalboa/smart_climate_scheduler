@@ -126,27 +126,21 @@
       },
       "add_slot": {
         "title": "Neuen Slot hinzufügen",
-        "description": "Geben Sie Zeiten und Preset an. Optional können Sie eine Bedingung definieren (z. B. wenn binary_sensor.werktag=on -> Zuhause, sonst Eco):",
+        "description": "Geben Sie Startzeit, Endzeit und Preset an:",
         "data": {
           "startzeit": "Startzeit",
           "endzeit": "Endzeit",
-          "preset": "Preset-Modus (Haupt-Preset)",
-          "condition_entity": "Bedingte Entität (Optional, z. B. binary_sensor.werktag)",
-          "condition_state": "Erwarteter Zustand (Standard: on)",
-          "else_preset": "Sonst-Preset (wenn Bedingung nicht erfüllt)"
+          "preset": "Preset-Modus"
         }
       },
       "edit_slot": {
         "title": "Slot bearbeiten",
-        "description": "Bearbeiten oder löschen Sie den gewählten Slot. Bedingungen sind optional:",
+        "description": "Bearbeiten oder löschen Sie den gewählten Slot:",
         "data": {
           "aktion": "Aktion auswählen",
           "startzeit": "Startzeit",
           "endzeit": "Endzeit",
-          "preset": "Preset-Modus (Haupt-Preset)",
-          "condition_entity": "Bedingte Entität (Optional, z. B. binary_sensor.werktag)",
-          "condition_state": "Erwarteter Zustand (Standard: on)",
-          "else_preset": "Sonst-Preset (wenn Bedingung nicht erfüllt)"
+          "preset": "Preset-Modus"
         }
       }
     },

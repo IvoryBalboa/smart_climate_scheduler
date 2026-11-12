@@ -103,7 +103,7 @@ def get_active_override(hass, config_entry, now_dt: datetime) -> tuple[str | Non
     return active_ov_id, active_ov_data
 
 
-def get_day_slots_with_fallbacks(config_entry, check_date, hass: Any = None) -> list[dict]:
+def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
     """Erzeugt eine lückenlose, überschneidungsfreie Liste von Slots für den Tag mittels Intervall-Overlay
     basierend auf dem aktuell aktiven Zeitplan-Profil."""
     profiles, active_profile = get_profiles_and_active(config_entry)
@@ -132,51 +132,14 @@ def get_day_slots_with_fallbacks(config_entry, check_date, hass: Any = None) -> 
                 end_min = 1440
             duration = end_min - start_min
             if duration > 0:
-                raw_preset = slot.get("preset", "none")
-                effective_preset = raw_preset
-                cond_entity = slot.get("condition_entity")
-                cond_state = str(slot.get("condition_state", "on")).strip() if slot.get("condition_state") is not None else "on"
-                else_preset = slot.get("else_preset")
-                cond_met = None
-
-                if cond_entity and str(cond_entity).strip():
-                    cond_entity = str(cond_entity).strip()
-                    if hass and hasattr(hass, "states"):
-                        st = hass.states.get(cond_entity)
-                        if st and st.state not in ("unavailable", "unknown", "None", None):
-                            actual_val = str(st.state).strip().lower()
-                            target_val = cond_state.strip().lower()
-                            if actual_val == target_val:
-                                cond_met = True
-                                effective_preset = raw_preset
-                            else:
-                                cond_met = False
-                                if else_preset and str(else_preset).strip():
-                                    effective_preset = str(else_preset).strip()
-                        else:
-                            cond_met = False
-                            if else_preset and str(else_preset).strip():
-                                effective_preset = str(else_preset).strip()
-                    else:
-                        cond_met = False
-                        if else_preset and str(else_preset).strip():
-                            effective_preset = str(else_preset).strip()
-
-                slot_dict = {
-                    "start": start_min,
-                    "end": end_min,
-                    "preset": effective_preset,
-                    "duration": duration,
-                }
-                if cond_entity:
-                    slot_dict["condition_entity"] = cond_entity
-                    slot_dict["condition_state"] = cond_state
-                    slot_dict["condition_met"] = cond_met
-                    slot_dict["original_preset"] = raw_preset
-                    if else_preset:
-                        slot_dict["else_preset"] = else_preset
-
-                parsed_user_slots.append(slot_dict)
+                parsed_user_slots.append(
+                    {
+                        "start": start_min,
+                        "end": end_min,
+                        "preset": slot.get("preset", "none"),
+                        "duration": duration,
+                    }
+                )
 
     parsed_user_slots.sort(key=lambda x: x["duration"], reverse=True)
 
@@ -189,63 +152,42 @@ def get_day_slots_with_fallbacks(config_entry, check_date, hass: Any = None) -> 
         for interval in intervals:
             i_start = interval["start"]
             i_end = interval["end"]
-            
+
             overlap_start = max(u_start, i_start)
             overlap_end = min(u_end, i_end)
 
             if overlap_start < overlap_end:
                 if i_start < overlap_start:
-                    left_item = {
-                        "start": i_start,
-                        "end": overlap_start,
-                        "preset": interval["preset"],
-                        "is_fallback": interval.get("is_fallback", False)
-                    }
-                    if interval.get("condition_entity"):
-                        left_item["condition_entity"] = interval["condition_entity"]
-                        left_item["condition_state"] = interval.get("condition_state")
-                        left_item["condition_met"] = interval.get("condition_met")
-                        if interval.get("else_preset"):
-                            left_item["else_preset"] = interval["else_preset"]
-                        if interval.get("original_preset"):
-                            left_item["original_preset"] = interval["original_preset"]
-                    new_intervals.append(left_item)
+                    new_intervals.append(
+                        {
+                            "start": i_start,
+                            "end": overlap_start,
+                            "preset": interval["preset"],
+                            "is_fallback": interval.get("is_fallback", False),
+                        }
+                    )
 
-                mid_item = {
-                    "start": overlap_start,
-                    "end": overlap_end,
-                    "preset": u_preset,
-                    "is_fallback": False,
-                }
-                if u_slot.get("condition_entity"):
-                    mid_item["condition_entity"] = u_slot["condition_entity"]
-                    mid_item["condition_state"] = u_slot.get("condition_state")
-                    mid_item["condition_met"] = u_slot.get("condition_met")
-                    if u_slot.get("else_preset"):
-                        mid_item["else_preset"] = u_slot["else_preset"]
-                    if u_slot.get("original_preset"):
-                        mid_item["original_preset"] = u_slot["original_preset"]
-                new_intervals.append(mid_item)
+                new_intervals.append(
+                    {
+                        "start": overlap_start,
+                        "end": overlap_end,
+                        "preset": u_preset,
+                        "is_fallback": False,
+                    }
+                )
 
                 if overlap_end < i_end:
-                    right_item = {
-                        "start": overlap_end,
-                        "end": i_end,
-                        "preset": interval["preset"],
-                        "is_fallback": interval.get("is_fallback", False)
-                    }
-                    if interval.get("condition_entity"):
-                        right_item["condition_entity"] = interval["condition_entity"]
-                        right_item["condition_state"] = interval.get("condition_state")
-                        right_item["condition_met"] = interval.get("condition_met")
-                        if interval.get("else_preset"):
-                            right_item["else_preset"] = interval["else_preset"]
-                        if interval.get("original_preset"):
-                            right_item["original_preset"] = interval["original_preset"]
-                    new_intervals.append(right_item)
+                    new_intervals.append(
+                        {
+                            "start": overlap_end,
+                            "end": i_end,
+                            "preset": interval["preset"],
+                            "is_fallback": interval.get("is_fallback", False),
+                        }
+                    )
             else:
                 new_intervals.append(interval)
-        
+
         intervals = new_intervals
 
     intervals.sort(key=lambda x: x["start"])
@@ -254,13 +196,13 @@ def get_day_slots_with_fallbacks(config_entry, check_date, hass: Any = None) -> 
     for interval in intervals:
         start_m = interval["start"]
         end_m = interval["end"]
-        
+
         start_h, start_m_rem = divmod(start_m, 60)
         end_h, end_m_rem = divmod(end_m, 60)
-        
+
         from_str = f"{start_h:02d}:{start_m_rem:02d}"
         to_str = f"{end_h:02d}:{end_m_rem:02d}" if end_m < 1440 else "00:00"
-        
+
         slot_dict = {
             "from": from_str,
             "to": to_str,
@@ -268,14 +210,6 @@ def get_day_slots_with_fallbacks(config_entry, check_date, hass: Any = None) -> 
         }
         if interval.get("is_fallback"):
             slot_dict["is_fallback"] = True
-        if interval.get("condition_entity"):
-            slot_dict["condition_entity"] = interval["condition_entity"]
-            slot_dict["condition_state"] = interval.get("condition_state", "on")
-            slot_dict["condition_met"] = interval.get("condition_met")
-            if interval.get("else_preset"):
-                slot_dict["else_preset"] = interval["else_preset"]
-            if interval.get("original_preset"):
-                slot_dict["original_preset"] = interval["original_preset"]
         complete_slots.append(slot_dict)
 
     return complete_slots
@@ -288,7 +222,7 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
     timeline = []
     for day_offset in range(2):
         check_date = now_dt.date() + timedelta(days=day_offset)
-        day_slots = get_day_slots_with_fallbacks(config_entry, check_date, hass=hass)
+        day_slots = get_day_slots_with_fallbacks(config_entry, check_date)
         for s in day_slots:
             from_t = parse_time(s["from"])
             to_t = parse_time(s["to"])
@@ -314,14 +248,6 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                 "to_str": s["to"][:5],
                 "date": check_date.strftime("%Y-%m-%d"),
             }
-            if s.get("condition_entity"):
-                timeline_item["condition_entity"] = s["condition_entity"]
-                timeline_item["condition_state"] = s.get("condition_state", "on")
-                timeline_item["condition_met"] = s.get("condition_met")
-                if s.get("else_preset"):
-                    timeline_item["else_preset"] = s["else_preset"]
-                if s.get("original_preset"):
-                    timeline_item["original_preset"] = s["original_preset"]
             timeline.append(timeline_item)
 
     store = hass.data.get(domain, {}).get(config_entry.entry_id, {}) if hass else {}
@@ -434,8 +360,6 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                 and not item.get("is_override")
                 and last["preset"] == item["preset"]
                 and last["end"] == item["start"]
-                and last.get("condition_entity") == item.get("condition_entity")
-                and last.get("condition_met") == item.get("condition_met")
             ):
                 last["end"] = item["end"]
                 last["to_str"] = item["to_str"]
@@ -467,14 +391,6 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
             payload["override_id"] = item.get("override_id")
         else:
             payload["profile"] = active_profile
-        if item.get("condition_entity"):
-            payload["condition_entity"] = item["condition_entity"]
-            payload["condition_state"] = item.get("condition_state", "on")
-            payload["condition_met"] = item.get("condition_met")
-            if item.get("else_preset"):
-                payload["else_preset"] = item["else_preset"]
-            if item.get("original_preset"):
-                payload["original_preset"] = item["original_preset"]
         return payload
 
     active_item = timeline[active_idx]

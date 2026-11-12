@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Gérer les plannings",
-        "description": "Sélectionnez une action et le jour de la semaine :",
+        "title": "Gérer les programmes et profils",
+        "description": "Gérez vos programmes et profils. Profil actif : {active_profile}",
         "data": {
           "aktion": "Sélectionner une action",
           "tag": "Jour de la semaine"
+        }
+      },
+      "switch_profile": {
+        "title": "Changer de profil de programme",
+        "description": "Choisissez le profil à activer :",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "add_profile": {
+        "title": "Créer un nouveau profil de programme",
+        "description": "Saisissez un nom pour le nouveau profil et choisissez éventuellement un modèle :",
+        "data": {
+          "profile_name": "Nom du nouveau profil (ex. Vacances ou Travail)",
+          "source_profile": "Modèle de plages horaires"
+        }
+      },
+      "rename_profile": {
+        "title": "Renommer un profil de programme",
+        "description": "Sélectionnez un profil à renommer (y compris le profil Standard) :",
+        "data": {
+          "old_profile": "Profil à renommer",
+          "new_name": "Nouveau nom du profil"
+        }
+      },
+      "delete_profile": {
+        "title": "Supprimer un profil de programme",
+        "description": "Sélectionnez le profil à supprimer (au moins un profil doit toujours rester) :",
+        "data": {
+          "profile_to_delete": "Profil à supprimer"
         }
       },
       "slot_overview": {
@@ -96,7 +126,7 @@
       },
       "add_slot": {
         "title": "Ajouter un créneau",
-        "description": "Saisissez les heures et le mode de préréglage :",
+        "description": "Saisissez l'heure de début, l'heure de fin et le préréglage cible :",
         "data": {
           "startzeit": "Heure de début",
           "endzeit": "Heure de fin",
@@ -105,7 +135,7 @@
       },
       "edit_slot": {
         "title": "Modifier le créneau",
-        "description": "Mettre à jour ou supprimer le créneau sélectionné :",
+        "description": "Modifiez ou supprimez la plage sélectionnée :",
         "data": {
           "aktion": "Sélectionner une action",
           "startzeit": "Heure de début",
@@ -115,7 +145,9 @@
       }
     },
     "error": {
-      "invalid_time_range": "L'heure de fin doit être postérieure à l'heure de début."
+      "invalid_time_range": "L'heure de fin doit être postérieure à l'heure de début.",
+      "profile_name_empty": "Le nom du profil ne peut pas être vide.",
+      "profile_name_exists": "Un profil portant ce nom existe déjà."
     }
   },
   "selector": {
@@ -152,12 +184,16 @@
     "schedule_action": {
       "options": {
         "edit": "Modifier le jour / Voir les créneaux",
+        "switch_profile": "🔄 Changer le profil actif",
+        "add_profile": "➕ Ajouter un nouveau profil",
+        "rename_profile": "✏️ Renommer un profil",
+        "delete_profile": "🗑️ Supprimer un profil",
         "back": "← Retour au menu principal"
       }
     },
     "edit_action": {
       "options": {
-        "save": "Enregistrer les modifications",
+        "update": "Enregistrer les modifications",
         "delete": "Supprimer ce créneau"
       }
     },
@@ -184,14 +220,6 @@
           "name": "ID de dérogation",
           "description": "Identifiant unique (par ex. boost_soir)."
         },
-        "start": {
-          "name": "Heure de début",
-          "description": "Heure de début au format HH:MM ou HH:MM:SS."
-        },
-        "end": {
-          "name": "Heure de fin",
-          "description": "Heure de fin au format HH:MM ou HH:MM:SS."
-        },
         "preset": {
           "name": "Préréglage",
           "description": "Nom du préréglage (par ex. home, eco, boost, comfort)."
@@ -199,6 +227,14 @@
         "duration": {
           "name": "Durée",
           "description": "Durée de la dérogation (par ex. 60 minutes ou 2 heures). Démarre immédiatement si aucune heure de début n'est spécifiée."
+        },
+        "start": {
+          "name": "Heure de début",
+          "description": "Heure de début au format HH:MM ou HH:MM:SS."
+        },
+        "end": {
+          "name": "Heure de fin",
+          "description": "Heure de fin au format HH:MM ou HH:MM:SS."
         }
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "ID de dérogation",
           "description": "Identifiant unique de la dérogation à supprimer."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Activer le profil de programme",
+      "description": "Active un profil de programme spécifique pour une ou toutes les pièces.",
+      "fields": {
+        "device_id": {
+          "name": "Appareil",
+          "description": "Pièce Smart Climate Scheduler"
+        },
+        "profile": {
+          "name": "Nom du profil",
+          "description": "Nom du profil de programme à activer (ex. Standard, Travail, Vacances)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Prévisions météo pour préchauffage"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Profil de programme"
       }
     }
   }

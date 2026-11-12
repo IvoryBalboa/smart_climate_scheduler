@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Gestionar horarios",
-        "description": "Seleccione una acción y el día de la semana:",
+        "title": "Gestionar horarios y perfiles",
+        "description": "Gestione sus horarios y perfiles. Perfil activo: {active_profile}",
         "data": {
           "aktion": "Seleccionar acción",
           "tag": "Día de la semana"
+        }
+      },
+      "switch_profile": {
+        "title": "Cambiar perfil de horario",
+        "description": "Seleccione el perfil que desea activar:",
+        "data": {
+          "profile": "Perfil"
+        }
+      },
+      "add_profile": {
+        "title": "Crear nuevo perfil de horario",
+        "description": "Introduzca un nombre para el nuevo perfil y elija opcionalmente una plantilla:",
+        "data": {
+          "profile_name": "Nombre del nuevo perfil (p. ej. Vacaciones o Trabajo)",
+          "source_profile": "Plantilla para franjas horarias"
+        }
+      },
+      "rename_profile": {
+        "title": "Renombrar perfil de horario",
+        "description": "Seleccione un perfil para renombrar (también se puede renombrar el perfil Standard):",
+        "data": {
+          "old_profile": "Perfil a renombrar",
+          "new_name": "Nuevo nombre del perfil"
+        }
+      },
+      "delete_profile": {
+        "title": "Eliminar perfil de horario",
+        "description": "Seleccione el perfil a eliminar (siempre debe permanecer al menos un perfil):",
+        "data": {
+          "profile_to_delete": "Perfil a eliminar"
         }
       },
       "slot_overview": {
@@ -96,26 +126,28 @@
       },
       "add_slot": {
         "title": "Añadir nueva franja",
-        "description": "Introduzca las horas y el modo de operación:",
+        "description": "Introduzca la hora de inicio, la hora de fin y el modo preestablecido:",
         "data": {
           "startzeit": "Hora de inicio",
           "endzeit": "Hora de fin",
-          "preset": "Modo predeterminado"
+          "preset": "Modo preestablecido"
         }
       },
       "edit_slot": {
         "title": "Editar franja",
-        "description": "Actualizar o eliminar la franja seleccionada:",
+        "description": "Edite o elimine la franja seleccionada:",
         "data": {
           "aktion": "Seleccionar acción",
           "startzeit": "Hora de inicio",
           "endzeit": "Hora de fin",
-          "preset": "Modo predeterminado"
+          "preset": "Modo preestablecido"
         }
       }
     },
     "error": {
-      "invalid_time_range": "La hora de fin debe ser posterior a la hora de inicio."
+      "invalid_time_range": "La hora de fin debe ser posterior a la hora de inicio.",
+      "profile_name_empty": "El nombre del perfil no puede estar vacío.",
+      "profile_name_exists": "Ya existe un perfil con este nombre."
     }
   },
   "selector": {
@@ -152,12 +184,16 @@
     "schedule_action": {
       "options": {
         "edit": "Editar día / Ver franjas",
+        "switch_profile": "🔄 Cambiar perfil activo",
+        "add_profile": "➕ Añadir nuevo perfil",
+        "rename_profile": "✏️ Renombrar perfil",
+        "delete_profile": "🗑️ Eliminar perfil",
         "back": "← Volver al menú principal"
       }
     },
     "edit_action": {
       "options": {
-        "save": "Guardar cambios",
+        "update": "Guardar cambios",
         "delete": "Eliminar esta franja"
       }
     },
@@ -184,14 +220,6 @@
           "name": "ID de anulación",
           "description": "Identificador único (p. ej. boost_noche)."
         },
-        "start": {
-          "name": "Hora de inicio",
-          "description": "Hora de inicio en formato HH:MM o HH:MM:SS."
-        },
-        "end": {
-          "name": "Hora de fin",
-          "description": "Hora de fin en formato HH:MM o HH:MM:SS."
-        },
         "preset": {
           "name": "Modo",
           "description": "Nombre del modo (p. ej. home, eco, boost, comfort)."
@@ -199,6 +227,14 @@
         "duration": {
           "name": "Duración",
           "description": "Duración de la anulación (p. ej. 60 minutos o 2 horas). Comienza inmediatamente si no se especifica hora de inicio."
+        },
+        "start": {
+          "name": "Hora de inicio",
+          "description": "Hora de inicio en formato HH:MM o HH:MM:SS."
+        },
+        "end": {
+          "name": "Hora de fin",
+          "description": "Hora de fin en formato HH:MM o HH:MM:SS."
         }
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "ID de anulación",
           "description": "Identificador único de la anulación a eliminar."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Activar perfil de horario",
+      "description": "Activa un perfil de horario específico para una o todas las habitaciones.",
+      "fields": {
+        "device_id": {
+          "name": "Dispositivo",
+          "description": "Habitación de Smart Climate Scheduler"
+        },
+        "profile": {
+          "name": "Nombre del perfil",
+          "description": "Nombre del perfil de horario a activar (p. ej. Standard, Trabajo, Vacaciones)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Pronóstico del tiempo para precalentamiento"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Perfil de horario"
       }
     }
   }

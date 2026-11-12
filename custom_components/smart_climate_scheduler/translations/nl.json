@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Schema's beheren",
-        "description": "Selecteer een actie en de weekdag:",
+        "title": "Schema's en profielen beheren",
+        "description": "Beheer uw schema's en profielen. Actief profiel: {active_profile}",
         "data": {
           "aktion": "Selecteer actie",
           "tag": "Weekdag"
+        }
+      },
+      "switch_profile": {
+        "title": "Schemaprofiel wisselen",
+        "description": "Kies het profiel dat u wilt activeren:",
+        "data": {
+          "profile": "Profiel"
+        }
+      },
+      "add_profile": {
+        "title": "Nieuw schemaprofiel toevoegen",
+        "description": "Voer een naam in voor het nieuwe profiel en kies optioneel een sjabloon:",
+        "data": {
+          "profile_name": "Naam van nieuw profiel (bijv. Vakantie of Werk)",
+          "source_profile": "Sjabloon voor tijdsloten"
+        }
+      },
+      "rename_profile": {
+        "title": "Schemaprofiel hernoemen",
+        "description": "Selecteer een profiel om te hernoemen (ook het Standard-profiel kan vrij worden hernoemd):",
+        "data": {
+          "old_profile": "Te hernoemen profiel",
+          "new_name": "Nieuwe profielnaam"
+        }
+      },
+      "delete_profile": {
+        "title": "Schemaprofiel verwijderen",
+        "description": "Selecteer het te verwijderen profiel (er moet altijd minimaal één profiel overblijven):",
+        "data": {
+          "profile_to_delete": "Te verwijderen profiel"
         }
       },
       "slot_overview": {
@@ -96,7 +126,7 @@
       },
       "add_slot": {
         "title": "Nieuw tijdvak toevoegen",
-        "description": "Voer tijden en doel-preset in:",
+        "description": "Voer starttijd, eindtijd en gewenste preset in:",
         "data": {
           "startzeit": "Starttijd",
           "endzeit": "Eindtijd",
@@ -105,7 +135,7 @@
       },
       "edit_slot": {
         "title": "Tijdvak bewerken",
-        "description": "Werk het geselecteerde tijdvak bij of verwijder het:",
+        "description": "Bewerk of verwijder het geselecteerde tijdvak:",
         "data": {
           "aktion": "Selecteer actie",
           "startzeit": "Starttijd",
@@ -115,7 +145,9 @@
       }
     },
     "error": {
-      "invalid_time_range": "Eindtijd moet na starttijd liggen."
+      "invalid_time_range": "Eindtijd moet na starttijd liggen.",
+      "profile_name_empty": "De profielnaam mag niet leeg zijn.",
+      "profile_name_exists": "Er bestaat al een profiel met deze naam."
     }
   },
   "selector": {
@@ -152,12 +184,16 @@
     "schedule_action": {
       "options": {
         "edit": "Dag bewerken / Tijdvakken bekijken",
+        "switch_profile": "🔄 Actief profiel wisselen",
+        "add_profile": "➕ Nieuw profiel toevoegen",
+        "rename_profile": "✏️ Profiel hernoemen",
+        "delete_profile": "🗑️ Profiel verwijderen",
         "back": "← Terug naar hoofdmenu"
       }
     },
     "edit_action": {
       "options": {
-        "save": "Wijzigingen opslaan",
+        "update": "Wijzigingen opslaan",
         "delete": "Dit tijdvak verwijderen"
       }
     },
@@ -184,14 +220,6 @@
           "name": "Overschrijvings-ID",
           "description": "Unieke identificatiecode."
         },
-        "start": {
-          "name": "Starttijd",
-          "description": "Starttijd in formaat HH:MM of HH:MM:SS."
-        },
-        "end": {
-          "name": "Eindtijd",
-          "description": "Eindtijd in formaat HH:MM of HH:MM:SS."
-        },
         "preset": {
           "name": "Preset",
           "description": "Preset-naam."
@@ -199,6 +227,14 @@
         "duration": {
           "name": "Duur",
           "description": "Duur van de overschrijving (bijv. 60 minuten of 2 uur). Start direct als er geen starttijd is opgegeven."
+        },
+        "start": {
+          "name": "Starttijd",
+          "description": "Starttijd in formaat HH:MM of HH:MM:SS."
+        },
+        "end": {
+          "name": "Eindtijd",
+          "description": "Eindtijd in formaat HH:MM of HH:MM:SS."
         }
       }
     },
@@ -213,6 +249,20 @@
         "override_id": {
           "name": "Overschrijvings-ID",
           "description": "ID van te verwijderen overschrijving."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Schemaprofiel activeren",
+      "description": "Activeert een specifiek schemaprofiel voor één of alle kamers.",
+      "fields": {
+        "device_id": {
+          "name": "Apparaat",
+          "description": "Smart Climate Scheduler kamer"
+        },
+        "profile": {
+          "name": "Profielnaam",
+          "description": "Naam van het te activeren schemaprofiel (bijv. Standard, Werk, Vakantie)."
         }
       }
     },
@@ -450,6 +500,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Weersverwachting voor voorverwarmen"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Schemaprofiel"
       }
     }
   }

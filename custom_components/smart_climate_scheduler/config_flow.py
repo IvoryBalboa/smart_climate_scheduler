@@ -809,17 +809,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             preset_label = PRESET_NAMES_DE.get(preset, preset.capitalize())
             from_t = slot.get("from", "00:00:00")
             to_t = slot.get("to", "00:00:00")
-            cond_ent = slot.get("condition_entity")
-            if cond_ent:
-                cond_st = slot.get("condition_state", "on")
-                else_p = slot.get("else_preset")
-                if else_p:
-                    else_label = PRESET_NAMES_DE.get(else_p, else_p.capitalize())
-                    label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} (Wenn {cond_ent}={cond_st} → {preset_label}, sonst {else_label})"
-                else:
-                    label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} (Wenn {cond_ent}={cond_st} → {preset_label})"
-            else:
-                label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} ({preset_label})"
+            label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} ({preset_label})"
             options.append({"value": f"slot_{idx}", "label": label})
 
         schema = vol.Schema(
@@ -872,7 +862,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_add_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot hinzufügen mit Zeitvalidierung und optionaler Wenn-Dann-Sonst Bedingung."""
+        """Slot hinzufügen mit Zeitvalidierung."""
         self._init_data()
         errors: dict[str, str] = {}
 
@@ -890,13 +880,6 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     "to": end_str,
                     "preset": user_input["preset"],
                 }
-                cond_ent = user_input.get("condition_entity")
-                if cond_ent and str(cond_ent).strip():
-                    slot_data["condition_entity"] = str(cond_ent).strip()
-                    slot_data["condition_state"] = str(user_input.get("condition_state", "on")).strip() or "on"
-                    else_p = user_input.get("else_preset")
-                    if else_p and str(else_p).strip() and str(else_p).strip() != "none_selected":
-                        slot_data["else_preset"] = str(else_p).strip()
 
                 day_slots = list(self.current_schedule.get(self.selected_day, []))
                 day_slots.append(slot_data)
@@ -906,9 +889,6 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         supported_presets = self._get_supported_presets()
         default_preset = supported_presets[0] if supported_presets else "none"
-        else_preset_options = [{"value": "none_selected", "label": "Kein alternatives Preset (Standard)"}] + [
-            {"value": p, "label": PRESET_NAMES_DE.get(p, p.capitalize())} for p in supported_presets
-        ]
 
         schema = vol.Schema(
             {
@@ -920,15 +900,6 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         options=supported_presets,
                     )
                 ),
-                vol.Optional("condition_entity"): EntitySelector(
-                    EntitySelectorConfig()
-                ),
-                vol.Optional("condition_state", default="on"): TextSelector(),
-                vol.Optional("else_preset", default="none_selected"): SelectSelector(
-                    SelectSelectorConfig(
-                        options=else_preset_options,
-                    )
-                ),
             }
         )
 
@@ -937,7 +908,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_edit_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot bearbeiten mit Zeitvalidierung und optionaler Wenn-Dann-Sonst Bedingung."""
+        """Slot bearbeiten mit Zeitvalidierung."""
         self._init_data()
         day_slots = list(self.current_schedule.get(self.selected_day, []))
         errors: dict[str, str] = {}
@@ -970,13 +941,6 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     "to": end_str,
                     "preset": user_input["preset"],
                 }
-                cond_ent = user_input.get("condition_entity")
-                if cond_ent and str(cond_ent).strip():
-                    updated_slot["condition_entity"] = str(cond_ent).strip()
-                    updated_slot["condition_state"] = str(user_input.get("condition_state", "on")).strip() or "on"
-                    else_p = user_input.get("else_preset")
-                    if else_p and str(else_p).strip() and str(else_p).strip() != "none_selected":
-                        updated_slot["else_preset"] = str(else_p).strip()
 
                 day_slots[self.selected_slot_index] = updated_slot
                 day_slots.sort(key=lambda s: s.get("from", "00:00:00"))
@@ -987,15 +951,6 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         current_preset = current_slot.get("preset") or (
             supported_presets[0] if supported_presets else "none"
         )
-        current_cond_entity = current_slot.get("condition_entity")
-        current_cond_state = current_slot.get("condition_state", "on")
-        current_else_preset = current_slot.get("else_preset", "none_selected")
-        if current_else_preset not in supported_presets:
-            current_else_preset = "none_selected"
-
-        else_preset_options = [{"value": "none_selected", "label": "Kein alternatives Preset (Standard)"}] + [
-            {"value": p, "label": PRESET_NAMES_DE.get(p, p.capitalize())} for p in supported_presets
-        ]
 
         edit_schema_dict: dict[Any, Any] = {
             vol.Required("aktion", default="update"): SelectSelector(
@@ -1017,19 +972,5 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 )
             ),
         }
-        if current_cond_entity:
-            edit_schema_dict[vol.Optional("condition_entity", default=current_cond_entity)] = EntitySelector(
-                EntitySelectorConfig()
-            )
-        else:
-            edit_schema_dict[vol.Optional("condition_entity")] = EntitySelector(
-                EntitySelectorConfig()
-            )
-        edit_schema_dict[vol.Optional("condition_state", default=current_cond_state)] = TextSelector()
-        edit_schema_dict[vol.Optional("else_preset", default=current_else_preset)] = SelectSelector(
-            SelectSelectorConfig(
-                options=else_preset_options,
-            )
-        )
 
         return self.async_show_form(step_id="edit_slot", data_schema=vol.Schema(edit_schema_dict), errors=errors)

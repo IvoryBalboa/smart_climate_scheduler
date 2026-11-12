@@ -812,15 +812,28 @@ async def async_sync_device_registry_version(hass: Any, config_entry: Any) -> st
     try:
         from homeassistant.helpers import device_registry as dr
         dev_reg = dr.async_get(hass)
-        if dev_reg and hasattr(dev_reg, "async_get_device"):
-            device = dev_reg.async_get_device(identifiers={(DOMAIN, config_entry.entry_id)})
-            if device and getattr(device, "sw_version", None) != live_version:
-                dev_reg.async_update_device(
-                    device.id,
-                    sw_version=live_version,
-                    manufacturer="Smart Climate Scheduler",
-                    model="Smart Climate Scheduler Hub",
-                )
+        if dev_reg:
+            devices_to_check: list[Any] = []
+            if hasattr(dr, "async_entries_for_config_entry"):
+                entries = dr.async_entries_for_config_entry(dev_reg, config_entry.entry_id)
+                if isinstance(entries, (list, tuple, set)):
+                    devices_to_check.extend(entries)
+            if not devices_to_check and hasattr(dev_reg, "async_get_device_by_identifier"):
+                dev = dev_reg.async_get_device_by_identifier((DOMAIN, config_entry.entry_id))
+                if dev:
+                    devices_to_check.append(dev)
+
+            target_ident = (DOMAIN, config_entry.entry_id)
+            for device in devices_to_check:
+                idents = getattr(device, "identifiers", None) or set()
+                if not idents or target_ident in idents:
+                    if getattr(device, "sw_version", None) != live_version:
+                        dev_reg.async_update_device(
+                            device.id,
+                            sw_version=live_version,
+                            manufacturer="Smart Climate Scheduler",
+                            model="Smart Climate Scheduler Hub",
+                        )
     except Exception as err:
         _LOGGER.debug("Fehler beim Synchronisieren der Device-Registry Version: %s", err)
 
