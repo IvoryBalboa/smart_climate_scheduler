@@ -74,7 +74,7 @@ def get_config_entry_slug(config_entry) -> str:
 
 ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
     # Switches
-    "automatik": {
+    "automatic": {
         "de": "automatik",
         "en": "auto",
         "es": "automatico",
@@ -83,7 +83,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "automatisch",
         "pl": "automatyczny",
     },
-    "adaptives_lernen": {
+    "self_learning": {
         "de": "adaptives_lernen",
         "en": "self_learning",
         "es": "aprendizaje_adaptativo",
@@ -92,7 +92,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "zelflerend",
         "pl": "samouczenie",
     },
-    "vorheizen": {
+    "preheat": {
         "de": "vorheizen",
         "en": "preheat",
         "es": "precalentamiento",
@@ -101,7 +101,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "voorverwarmen",
         "pl": "wstepne_nagrzewanie",
     },
-    "auskuehlen": {
+    "cooldown": {
         "de": "auskuehlen",
         "en": "cooldown",
         "es": "enfriamiento",
@@ -110,7 +110,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "afkoelen",
         "pl": "ochladzanie",
     },
-    "abschaltung_bei_zieltemperatur": {
+    "hvac_off_on_target": {
         "de": "abschaltung_bei_zieltemperatur",
         "en": "turn_off_at_target",
         "es": "apagar_en_temperatura_objetivo",
@@ -119,7 +119,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "uitschakelen_bij_doeltemperatuur",
         "pl": "wylacz_przy_temp_docelowej",
     },
-    "opportunistisches_mitheizen": {
+    "opportunistic_heating": {
         "de": "opportunistisches_mitheizen",
         "en": "opportunistic_heating",
         "es": "calefaccion_oportunista",
@@ -128,7 +128,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "opportunistische_verwarming",
         "pl": "ogrzewanie_oportunistyczne",
     },
-    "wettervorhersage_vorheizen": {
+    "weather_forecast_preheat": {
         "de": "wettervorhersage_vorheizen",
         "en": "weather_forecast_preheat",
         "es": "pronostico_tiempo_precalentamiento",
@@ -138,7 +138,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "pl": "prognoza_pogody_nagrzewanie",
     },
     # Sensors
-    "zeitplan": {
+    "schedule": {
         "de": "zeitplan",
         "en": "schedule",
         "es": "horario",
@@ -147,7 +147,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "schema",
         "pl": "harmonogram",
     },
-    "aufheizrate": {
+    "heating_rate": {
         "de": "aufheizrate",
         "en": "heating_rate",
         "es": "tasa_calentamiento",
@@ -156,7 +156,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "opwarmsnelheid",
         "pl": "wskaznik_nagrzewania",
     },
-    "abkuehlrate": {
+    "cooling_rate": {
         "de": "abkuehlrate",
         "en": "cooling_rate",
         "es": "tasa_enfriamiento",
@@ -165,7 +165,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "afkoelsnelheid",
         "pl": "wskaznik_ochladzania",
     },
-    "naechste_aktion": {
+    "next_action": {
         "de": "naechste_aktion",
         "en": "next_action",
         "es": "proxima_accion",
@@ -175,7 +175,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "pl": "nastepna_akcja",
     },
     # Binary sensors
-    "binary_vorheizen": {
+    "binary_preheat": {
         "de": "vorheizen",
         "en": "preheat",
         "es": "precalentamiento",
@@ -184,7 +184,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "voorverwarmen",
         "pl": "wstepne_nagrzewanie",
     },
-    "binary_abkuehlen": {
+    "binary_cooldown": {
         "de": "abkuehlen",
         "en": "cooldown",
         "es": "enfriamiento",
@@ -194,7 +194,7 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "pl": "ochladzanie",
     },
     # Debug sensor
-    "diagnose": {
+    "diagnostics": {
         "de": "diagnose",
         "en": "diagnostics",
         "es": "diagnostico",
@@ -203,11 +203,40 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "diagnose",
         "pl": "diagnostyka",
     },
+    # Select entity
+    "schedule_profile": {
+        "de": "zeitplan_profil",
+        "en": "schedule_profile",
+        "es": "perfil_horario",
+        "fr": "profil_programme",
+        "it": "profilo_programma",
+        "nl": "schemaprofiel",
+        "pl": "profil_harmonogramu",
+    },
+}
+
+# Legacy key aliases for backwards compatibility
+ENTITY_SLUG_KEY_ALIASES: dict[str, str] = {
+    "automatik": "automatic",
+    "adaptives_lernen": "self_learning",
+    "vorheizen": "preheat",
+    "auskuehlen": "cooldown",
+    "abschaltung_bei_zieltemperatur": "hvac_off_on_target",
+    "opportunistisches_mitheizen": "opportunistic_heating",
+    "wettervorhersage_vorheizen": "weather_forecast_preheat",
+    "zeitplan": "schedule",
+    "aufheizrate": "heating_rate",
+    "abkuehlrate": "cooling_rate",
+    "naechste_aktion": "next_action",
+    "binary_vorheizen": "binary_preheat",
+    "binary_abkuehlen": "binary_cooldown",
+    "diagnose": "diagnostics",
+    "zeitplan_profil": "schedule_profile",
 }
 
 
 def get_ha_language(hass) -> str:
-    """Ermittelt den 2-stelligen Sprachcode von Home Assistant (Standard: 'de')."""
+    """Returns the 2-letter language code configured in Home Assistant."""
     if not hass:
         return "de"
     config = getattr(hass, "config", None)
@@ -218,10 +247,11 @@ def get_ha_language(hass) -> str:
 
 
 def get_localized_slug_suffix(key: str, lang: str = "de") -> str:
-    """Liefert den lokalisierten Suffix für eine Entity-ID."""
+    """Returns the localized entity_id slug suffix for the given key and language."""
     clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
-    mapping = ENTITY_SLUG_SUFFIXES.get(key, {})
-    return mapping.get(clean_lang, mapping.get("de", key))
+    canonical_key = ENTITY_SLUG_KEY_ALIASES.get(key, key)
+    mapping = ENTITY_SLUG_SUFFIXES.get(canonical_key, {})
+    return mapping.get(clean_lang, mapping.get("en", key))
 
 
 def get_device_info(config_entry) -> DeviceInfo:

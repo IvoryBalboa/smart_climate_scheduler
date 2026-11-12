@@ -56,7 +56,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_ENABLE_SELF_LEARNING,
             translation_key="self_learning",
-            slug_suffix="adaptives_lernen",
+            slug_suffix="self_learning",
             default_value=DEFAULT_ENABLE_SELF_LEARNING,
             icon="mdi:school",
         ),
@@ -65,7 +65,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_PREHEAT_ENABLED,
             translation_key="preheat",
-            slug_suffix="vorheizen",
+            slug_suffix="preheat",
             default_value=DEFAULT_PREHEAT_ENABLED,
             icon="mdi:fire",
         ),
@@ -74,7 +74,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_COOLDOWN_ENABLED,
             translation_key="cooldown",
-            slug_suffix="auskuehlen",
+            slug_suffix="cooldown",
             default_value=DEFAULT_COOLDOWN_ENABLED,
             icon="mdi:snowflake",
         ),
@@ -83,7 +83,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_HVAC_OFF_ON_TARGET,
             translation_key="hvac_off_on_target",
-            slug_suffix="abschaltung_bei_zieltemperatur",
+            slug_suffix="hvac_off_on_target",
             default_value=DEFAULT_HVAC_OFF_ON_TARGET,
             icon="mdi:power-standby",
         ),
@@ -92,7 +92,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_OPPORTUNISTIC_HEATING,
             translation_key="opportunistic_heating",
-            slug_suffix="opportunistisches_mitheizen",
+            slug_suffix="opportunistic_heating",
             default_value=DEFAULT_OPPORTUNISTIC_HEATING,
             icon="mdi:heat-wave",
         ),
@@ -101,7 +101,7 @@ async def async_setup_entry(
             config_entry,
             option_key=CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
             translation_key="use_weather_forecast_for_preheat",
-            slug_suffix="wettervorhersage_vorheizen",
+            slug_suffix="weather_forecast_preheat",
             default_value=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
             icon="mdi:weather-partly-cloudy",
         ),
@@ -122,7 +122,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         self.config_entry = config_entry
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass)
-        suffix = get_localized_slug_suffix("automatik", lang)
+        suffix = get_localized_slug_suffix("automatic", lang)
         self.entity_id = f"switch.{slug}_{suffix}"
         
         # Zustand aus hass.data laden (wurde beim Start aus dem Storage befüllt)

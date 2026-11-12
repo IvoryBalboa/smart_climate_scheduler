@@ -1,7 +1,8 @@
-"""Aktions- und Text-Formatierung für Smart Climate Scheduler."""
+"""Action and UI text formatting for Smart Climate Scheduler."""
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 
 ACTION_PREFIXES: dict[str, dict[str, str]] = {
@@ -26,33 +27,25 @@ ACTION_PREFIXES: dict[str, dict[str, str]] = {
 }
 
 
+# Official Home Assistant Core climate preset_mode translations
 PRESET_TRANSLATIONS: dict[str, dict[str, str]] = {
+    "none": {
+        "de": "Keine",
+        "en": "None",
+        "es": "Ninguno",
+        "fr": "Aucun",
+        "it": "Nessuno",
+        "nl": "Geen",
+        "pl": "Brak",
+    },
     "home": {
         "de": "Zuhause",
         "en": "Home",
         "es": "En casa",
-        "fr": "Présent",
-        "it": "In casa",
+        "fr": "Maison",
+        "it": "A casa",
         "nl": "Thuis",
         "pl": "W domu",
-    },
-    "comfort": {
-        "de": "Komfort",
-        "en": "Comfort",
-        "es": "Confort",
-        "fr": "Confort",
-        "it": "Comfort",
-        "nl": "Comfort",
-        "pl": "Komfort",
-    },
-    "sleep": {
-        "de": "Schlafen",
-        "en": "Sleep",
-        "es": "Noche",
-        "fr": "Nuit",
-        "it": "Notte",
-        "nl": "Slapen",
-        "pl": "Sen",
     },
     "away": {
         "de": "Abwesend",
@@ -60,17 +53,8 @@ PRESET_TRANSLATIONS: dict[str, dict[str, str]] = {
         "es": "Ausente",
         "fr": "Absent",
         "it": "Fuori casa",
-        "nl": "Weg",
+        "nl": "Afwezig",
         "pl": "Poza domem",
-    },
-    "eco": {
-        "de": "Eco",
-        "en": "Eco",
-        "es": "Eco",
-        "fr": "Éco",
-        "it": "Eco",
-        "nl": "Eco",
-        "pl": "Eko",
     },
     "boost": {
         "de": "Boost",
@@ -81,6 +65,33 @@ PRESET_TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Boost",
         "pl": "Boost",
     },
+    "comfort": {
+        "de": "Komfort",
+        "en": "Comfort",
+        "es": "Confort",
+        "fr": "Confort",
+        "it": "Comfort",
+        "nl": "Comfort",
+        "pl": "Komfort",
+    },
+    "eco": {
+        "de": "Eco",
+        "en": "Eco",
+        "es": "Eco",
+        "fr": "Éco",
+        "it": "Eco",
+        "nl": "Eco",
+        "pl": "Eko",
+    },
+    "sleep": {
+        "de": "Schlafen",
+        "en": "Sleep",
+        "es": "Dormir",
+        "fr": "Sommeil",
+        "it": "Sonno",
+        "nl": "Slapen",
+        "pl": "Sen",
+    },
     "activity": {
         "de": "Aktivität",
         "en": "Activity",
@@ -90,20 +101,64 @@ PRESET_TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Activiteit",
         "pl": "Aktywność",
     },
-    "none": {
-        "de": "Keins",
-        "en": "None",
-        "es": "Ninguno",
-        "fr": "Aucun",
-        "it": "Nessuno",
-        "nl": "Geen",
-        "pl": "Brak",
+}
+
+
+UI_TEXT_TRANSLATIONS: dict[str, dict[str, str]] = {
+    "empty_schedule": {
+        "de": "Leerer Zeitplan (ohne Slots)",
+        "en": "Empty schedule (no slots)",
+        "es": "Horario vacío (sin franjas)",
+        "fr": "Programme vide (sans créneaux)",
+        "it": "Programma vuoto (senza fasce)",
+        "nl": "Leeg schema (zonder tijdvakken)",
+        "pl": "Pusty harmonogram (bez przedziałów)",
+    },
+    "copy_of_profile": {
+        "de": "Kopie von '{profile}'",
+        "en": "Copy of '{profile}'",
+        "es": "Copia de '{profile}'",
+        "fr": "Copie de '{profile}'",
+        "it": "Copia di '{profile}'",
+        "nl": "Kopie van '{profile}'",
+        "pl": "Kopia '{profile}'",
+    },
+    "no_slots_configured": {
+        "de": "(Keine Slots konfiguriert)",
+        "en": "(No slots configured)",
+        "es": "(No hay franjas configuradas)",
+        "fr": "(Aucun créneau configuré)",
+        "it": "(Nessuna fascia configurata)",
+        "nl": "(Geen tijdvakken geconfigureerd)",
+        "pl": "(Brak skonfigurowanych przedziałów)",
+    },
+    "slot_item": {
+        "de": "Slot {index}: {from_time} - {to_time} ({preset})",
+        "en": "Slot {index}: {from_time} - {to_time} ({preset})",
+        "es": "Franja {index}: {from_time} - {to_time} ({preset})",
+        "fr": "Créneau {index}: {from_time} - {to_time} ({preset})",
+        "it": "Fascia {index}: {from_time} - {to_time} ({preset})",
+        "nl": "Tijdvak {index}: {from_time} - {to_time} ({preset})",
+        "pl": "Przedział {index}: {from_time} - {to_time} ({preset})",
     },
 }
 
 
+def get_localized_ui_text(key: str, lang: str = "en", **kwargs: Any) -> str:
+    """Returns a localized dynamic UI text formatted with optional placeholders."""
+    clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) and lang else "en"
+    mapping = UI_TEXT_TRANSLATIONS.get(key, {})
+    template = mapping.get(clean_lang, mapping.get("en", key))
+    if kwargs:
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return template
+    return template
+
+
 def _format_preset(preset: str | None, lang: str = "de") -> str:
-    """Formatiert und übersetzt einen Preset-Namen für die Anzeige."""
+    """Formats and translates a preset mode according to Home Assistant standards."""
     if not preset:
         preset_key = "home"
     else:
@@ -111,7 +166,7 @@ def _format_preset(preset: str | None, lang: str = "de") -> str:
 
     clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
     if preset_key in PRESET_TRANSLATIONS:
-        return PRESET_TRANSLATIONS[preset_key].get(clean_lang, PRESET_TRANSLATIONS[preset_key]["de"])
+        return PRESET_TRANSLATIONS[preset_key].get(clean_lang, PRESET_TRANSLATIONS[preset_key]["en"])
 
     return str(preset).replace("_", " ").title()
 
@@ -130,7 +185,7 @@ def calculate_next_action(
     now_dt: datetime,
     lang: str = "de",
 ) -> dict[str, str | None]:
-    """Ermittelt Aktion und Zeit für die nächste Planänderung mit übersetzten Presets."""
+    """Determines the next scheduled action and time with localized preset labels."""
     clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
     current_label = _format_preset(base_preset, clean_lang)
     next_preset_name = next_slot.get("preset") if next_slot else None
@@ -140,8 +195,8 @@ def calculate_next_action(
     cooldown_start_str = cooldown_start_dt.strftime("%H:%M") if cooldown_start_dt else (next_slot.get("from") if next_slot else None)
     slot_from_time = next_slot.get("from") if next_slot else None
 
-    preheat_tag = ACTION_PREFIXES["preheat"].get(clean_lang, ACTION_PREFIXES["preheat"]["de"])
-    cooldown_tag = ACTION_PREFIXES["cooldown"].get(clean_lang, ACTION_PREFIXES["cooldown"]["de"])
+    preheat_tag = ACTION_PREFIXES["preheat"].get(clean_lang, ACTION_PREFIXES["preheat"]["en"])
+    cooldown_tag = ACTION_PREFIXES["cooldown"].get(clean_lang, ACTION_PREFIXES["cooldown"]["en"])
 
     if preheat_duration > 0 and preheat_start_dt and preheat_start_dt > now_dt:
         return {

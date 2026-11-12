@@ -69,8 +69,8 @@
         "title": "Gestisci programmi e profili",
         "description": "Gestisci i tuoi programmi e profili. Profilo attivo: {active_profile}",
         "data": {
-          "aktion": "Seleziona azione",
-          "tag": "Giorno della settimana"
+          "action": "Seleziona azione",
+          "day": "Giorno della settimana"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Gestione fasce orarie ({slots_count})",
         "description": "Fasce attualmente configurate per il giorno selezionato ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Seleziona o gestisci fasce"
+          "slot_action": "Seleziona o gestisci fasce"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Aggiungi nuova fascia",
         "description": "Inserisci ora di inizio, ora di fine e preset desiderato:",
         "data": {
-          "startzeit": "Ora di inizio",
-          "endzeit": "Ora di fine",
+          "start_time": "Ora di inizio",
+          "end_time": "Ora di fine",
           "preset": "Modalità preset"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Modifica fascia",
         "description": "Modifica o elimina la fascia selezionata:",
         "data": {
-          "aktion": "Seleziona azione",
-          "startzeit": "Ora di inizio",
-          "endzeit": "Ora di fine",
+          "action": "Seleziona azione",
+          "start_time": "Ora di inizio",
+          "end_time": "Ora di fine",
           "preset": "Modalità preset"
         }
       }
@@ -164,26 +164,26 @@
     },
     "preset": {
       "options": {
-        "none": "Nessuno / Spento",
-        "home": "In casa",
+        "none": "Nessuno",
+        "home": "A casa",
         "away": "Fuori casa",
         "comfort": "Comfort",
         "eco": "Eco",
-        "sleep": "Notte",
+        "sleep": "Sonno",
         "boost": "Boost",
         "activity": "Attività"
       }
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Gestisci orari",
+        "schedules": "📅 Gestisci programmi e profili",
         "settings": "⚙️ Impostazioni (Sensori, Apprendimento e Tassi)",
         "save": "💾 Salva ed esci"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Modifica giorno / Visualizza fasce",
+        "edit": "📅 Modifica fasce del giorno",
         "switch_profile": "🔄 Cambia profilo attivo",
         "add_profile": "➕ Aggiungi nuovo profilo",
         "rename_profile": "✏️ Rinomina profilo",
@@ -199,11 +199,11 @@
     },
     "slot_action": {
       "options": {
-        "add": "Aggiungi nuova fascia",
-        "edit": "Modifica fascia esistente",
-        "copy": "Copia fasce su altri giorni",
-        "clear": "Cancella tutte le fasce di questo giorno",
-        "back": "← Torna alla selezione del giorno"
+        "add": "➕ Aggiungi nuova fascia",
+        "edit": "✏️ Modifica fascia",
+        "copy": "📋 Copia fasce su altri giorni",
+        "clear": "🗑 Cancella tutte le fasce del giorno",
+        "back": "◀️ Torna alla selezione del giorno"
       }
     }
   },
@@ -391,14 +391,14 @@
     },
     "sensor": {
       "schedule": {
-        "name": "Orario",
+        "name": "Programma",
         "state": {
-          "none": "Nessuno / Spento",
-          "home": "In casa",
+          "none": "Nessuno",
+          "home": "A casa",
           "away": "Fuori casa",
           "comfort": "Comfort",
           "eco": "Eco",
-          "sleep": "Notte",
+          "sleep": "Sonno",
           "boost": "Boost",
           "activity": "Attività"
         },
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Debug",
+        "name": "Diagnosi",
         "state_attributes": {
           "preset": {
             "name": "Preset attivo"

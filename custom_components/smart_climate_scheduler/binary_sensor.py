@@ -59,7 +59,7 @@ class SmartClimateSchedulerPreheatBinarySensor(BinarySensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_preheat"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("binary_vorheizen", lang)
+        suffix = get_localized_slug_suffix("binary_preheat", lang)
         self.entity_id = f"binary_sensor.{slug}_{suffix}"
 
     @property
@@ -121,7 +121,7 @@ class SmartClimateSchedulerCooldownBinarySensor(BinarySensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_cooldown"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("binary_abkuehlen", lang)
+        suffix = get_localized_slug_suffix("binary_cooldown", lang)
         self.entity_id = f"binary_sensor.{slug}_{suffix}"
 
     @property

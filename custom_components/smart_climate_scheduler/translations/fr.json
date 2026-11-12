@@ -69,8 +69,8 @@
         "title": "Gérer les programmes et profils",
         "description": "Gérez vos programmes et profils. Profil actif : {active_profile}",
         "data": {
-          "aktion": "Sélectionner une action",
-          "tag": "Jour de la semaine"
+          "action": "Sélectionner une action",
+          "day": "Jour de la semaine"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Gérer les créneaux ({slots_count})",
         "description": "Créneaux actuellement configurés pour le jour sélectionné ({slots_count}) :{slots_list}",
         "data": {
-          "slot_aktion": "Sélectionner ou gérer les créneaux"
+          "slot_action": "Sélectionner ou gérer les créneaux"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Ajouter un créneau",
         "description": "Saisissez l'heure de début, l'heure de fin et le préréglage cible :",
         "data": {
-          "startzeit": "Heure de début",
-          "endzeit": "Heure de fin",
+          "start_time": "Heure de début",
+          "end_time": "Heure de fin",
           "preset": "Mode de préréglage"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Modifier le créneau",
         "description": "Modifiez ou supprimez la plage sélectionnée :",
         "data": {
-          "aktion": "Sélectionner une action",
-          "startzeit": "Heure de début",
-          "endzeit": "Heure de fin",
+          "action": "Sélectionner une action",
+          "start_time": "Heure de début",
+          "end_time": "Heure de fin",
           "preset": "Mode de préréglage"
         }
       }
@@ -164,26 +164,26 @@
     },
     "preset": {
       "options": {
-        "none": "Aucun / Arrêt",
-        "home": "Présent",
+        "none": "Aucun",
+        "home": "Maison",
         "away": "Absent",
         "comfort": "Confort",
         "eco": "Éco",
-        "sleep": "Nuit",
+        "sleep": "Sommeil",
         "boost": "Boost",
         "activity": "Activité"
       }
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Gérer les plannings",
+        "schedules": "📅 Gérer les programmes et profils",
         "settings": "⚙️ Paramètres (Capteurs, Apprentissage & Taux)",
         "save": "💾 Enregistrer et quitter"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Modifier le jour / Voir les créneaux",
+        "edit": "📅 Modifier les créneaux du jour",
         "switch_profile": "🔄 Changer le profil actif",
         "add_profile": "➕ Ajouter un nouveau profil",
         "rename_profile": "✏️ Renommer un profil",
@@ -199,11 +199,11 @@
     },
     "slot_action": {
       "options": {
-        "add": "Ajouter un nouveau créneau",
-        "edit": "Modifier un créneau existant",
-        "copy": "Copier les créneaux vers d'autres jours",
-        "clear": "Effacer tous les créneaux de ce jour",
-        "back": "← Retour à la sélection du jour"
+        "add": "➕ Ajouter un nouveau créneau",
+        "edit": "✏️ Modifier un créneau",
+        "copy": "📋 Copier les créneaux vers d'autres jours",
+        "clear": "🗑 Effacer tous les créneaux du jour",
+        "back": "◀️ Retour à la sélection du jour"
       }
     }
   },
@@ -391,14 +391,14 @@
     },
     "sensor": {
       "schedule": {
-        "name": "Planning",
+        "name": "Programme",
         "state": {
-          "none": "Aucun / Arrêt",
-          "home": "Présent",
+          "none": "Aucun",
+          "home": "Maison",
           "away": "Absent",
           "comfort": "Confort",
           "eco": "Éco",
-          "sleep": "Nuit",
+          "sleep": "Sommeil",
           "boost": "Boost",
           "activity": "Activité"
         },
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Débogage",
+        "name": "Diagnostic",
         "state_attributes": {
           "preset": {
             "name": "Préréglage actif"

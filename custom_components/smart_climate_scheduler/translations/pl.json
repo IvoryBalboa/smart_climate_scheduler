@@ -69,8 +69,8 @@
         "title": "Zarządzaj harmonogramami i profilami",
         "description": "Zarządzaj harmonogramami i profilami. Aktywny profil: {active_profile}",
         "data": {
-          "aktion": "Wybierz akcję",
-          "tag": "Dzień tygodnia"
+          "action": "Wybierz akcję",
+          "day": "Dzień tygodnia"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Zarządzaj przedziałami ({slots_count})",
         "description": "Aktualnie skonfigurowane przedziały dla wybranego dnia ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Wybierz lub zarządzaj przedziałami"
+          "slot_action": "Wybierz lub zarządzaj przedziałami"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Dodaj nowy przedział",
         "description": "Wprowadź godzinę rozpoczęcia, zakończenia oraz tryb docelowy:",
         "data": {
-          "startzeit": "Czas rozpoczęcia",
-          "endzeit": "Czas zakończenia",
+          "start_time": "Czas rozpoczęcia",
+          "end_time": "Czas zakończenia",
           "preset": "Tryb docelowy"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Edytuj przedział",
         "description": "Edytuj lub usuń wybrany przedział:",
         "data": {
-          "aktion": "Wybierz akcję",
-          "startzeit": "Czas rozpoczęcia",
-          "endzeit": "Czas zakończenia",
+          "action": "Wybierz akcję",
+          "start_time": "Czas rozpoczęcia",
+          "end_time": "Czas zakończenia",
           "preset": "Tryb docelowy"
         }
       }
@@ -164,7 +164,7 @@
     },
     "preset": {
       "options": {
-        "none": "Brak / Wyłączone",
+        "none": "Brak",
         "home": "W domu",
         "away": "Poza domem",
         "comfort": "Komfort",
@@ -176,14 +176,14 @@
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Zarządzanie harmonogramami",
+        "schedules": "📅 Zarządzaj harmonogramami i profilami",
         "settings": "⚙️ Ustawienia (Czujniki, Uczenie i Prędkości)",
         "save": "💾 Zapisz i zamknij"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Edytuj dzień / Pokaż przedziały",
+        "edit": "📅 Edytuj przedziały dnia",
         "switch_profile": "🔄 Przełącz aktywny profil",
         "add_profile": "➕ Dodaj nowy profil",
         "rename_profile": "✏️ Zmień nazwę profilu",
@@ -199,11 +199,11 @@
     },
     "slot_action": {
       "options": {
-        "add": "Dodaj nowy przedział",
-        "edit": "Edytuj istniejący przedział",
-        "copy": "Kopiuj przedziały na inne dni",
-        "clear": "Wyczyść wszystkie przedziały tego dnia",
-        "back": "← Powrót do wyboru dnia"
+        "add": "➕ Dodaj nowy przedział",
+        "edit": "✏️ Edytuj przedział",
+        "copy": "📋 Kopiuj przedziały na inne dni",
+        "clear": "🗑 Wyczyść wszystkie przedziały dnia",
+        "back": "◀️ Powrót do wyboru dnia"
       }
     }
   },
@@ -393,7 +393,7 @@
       "schedule": {
         "name": "Harmonogram",
         "state": {
-          "none": "Brak / Wyłączone",
+          "none": "Brak",
           "home": "W domu",
           "away": "Poza domem",
           "comfort": "Komfort",
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Debug",
+        "name": "Diagnostyka",
         "state_attributes": {
           "preset": {
             "name": "Aktywny tryb"

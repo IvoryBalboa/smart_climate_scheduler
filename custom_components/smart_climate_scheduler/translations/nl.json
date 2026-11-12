@@ -69,8 +69,8 @@
         "title": "Schema's en profielen beheren",
         "description": "Beheer uw schema's en profielen. Actief profiel: {active_profile}",
         "data": {
-          "aktion": "Selecteer actie",
-          "tag": "Weekdag"
+          "action": "Selecteer actie",
+          "day": "Weekdag"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Tijdvakken beheren ({slots_count})",
         "description": "Momenteel geconfigureerde tijdvakken voor de geselecteerde dag ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Selecteer of beheer tijdvakken"
+          "slot_action": "Selecteer of beheer tijdvakken"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Nieuw tijdvak toevoegen",
         "description": "Voer starttijd, eindtijd en gewenste preset in:",
         "data": {
-          "startzeit": "Starttijd",
-          "endzeit": "Eindtijd",
+          "start_time": "Starttijd",
+          "end_time": "Eindtijd",
           "preset": "Preset-modus"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Tijdvak bewerken",
         "description": "Bewerk of verwijder het geselecteerde tijdvak:",
         "data": {
-          "aktion": "Selecteer actie",
-          "startzeit": "Starttijd",
-          "endzeit": "Eindtijd",
+          "action": "Selecteer actie",
+          "start_time": "Starttijd",
+          "end_time": "Eindtijd",
           "preset": "Preset-modus"
         }
       }
@@ -164,9 +164,9 @@
     },
     "preset": {
       "options": {
-        "none": "Geen / Uit",
+        "none": "Geen",
         "home": "Thuis",
-        "away": "Weg",
+        "away": "Afwezig",
         "comfort": "Comfort",
         "eco": "Eco",
         "sleep": "Slapen",
@@ -176,14 +176,14 @@
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Schema's beheren",
+        "schedules": "📅 Schema's en profielen beheren",
         "settings": "⚙️ Instellingen (Sensoren, Leren & Snelheden)",
         "save": "💾 Opslaan en sluiten"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Dag bewerken / Tijdvakken bekijken",
+        "edit": "📅 Tijdvakken voor dag bewerken",
         "switch_profile": "🔄 Actief profiel wisselen",
         "add_profile": "➕ Nieuw profiel toevoegen",
         "rename_profile": "✏️ Profiel hernoemen",
@@ -199,11 +199,11 @@
     },
     "slot_action": {
       "options": {
-        "add": "Nieuw tijdvak toevoegen",
-        "edit": "Bestaand tijdvak bewerken",
-        "copy": "Tijdvakken naar andere dagen kopiëren",
-        "clear": "Alle tijdvakken van deze dag wissen",
-        "back": "← Terug naar dagselectie"
+        "add": "➕ Nieuw tijdvak toevoegen",
+        "edit": "✏️ Tijdvak bewerken",
+        "copy": "📋 Tijdvakken naar andere dagen kopiëren",
+        "clear": "🗑 Alle tijdvakken van de dag wissen",
+        "back": "◀️ Terug naar dagselectie"
       }
     }
   },
@@ -393,9 +393,9 @@
       "schedule": {
         "name": "Schema",
         "state": {
-          "none": "Geen / Uit",
+          "none": "Geen",
           "home": "Thuis",
-          "away": "Weg",
+          "away": "Afwezig",
           "comfort": "Comfort",
           "eco": "Eco",
           "sleep": "Slapen",
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Debug",
+        "name": "Diagnose",
         "state_attributes": {
           "preset": {
             "name": "Actieve preset"

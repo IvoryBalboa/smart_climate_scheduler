@@ -1,4 +1,4 @@
-"""Config Flow und Options Flow für Smart Climate Scheduler (Version 2.0)."""
+"""Config Flow and Options Flow for Smart Climate Scheduler."""
 from __future__ import annotations
 
 import copy
@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
     TextSelectorConfig,
 )
 
+from .actions import _format_preset, get_localized_ui_text
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
@@ -57,24 +58,18 @@ from .const import (
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
-from .helpers import parse_time, safe_float as _safe_float, get_profiles_and_active
+from .helpers import (
+    get_ha_language,
+    get_profiles_and_active,
+    parse_time,
+    safe_float as _safe_float,
+)
 
 DEFAULT_PRESETS = ["none", "home", "away", "boost", "comfort", "eco", "sleep", "activity"]
 
-PRESET_NAMES_DE = {
-    "none": "Keins / Aus",
-    "home": "Zuhause",
-    "away": "Abwesend",
-    "comfort": "Komfort",
-    "eco": "Eco",
-    "sleep": "Schlafen",
-    "boost": "Boost",
-    "activity": "Aktivität",
-}
-
 
 def _get_slot_preset(slot: dict) -> str:
-    """Extrahiert den Preset-Namen mit Fallback 'none'."""
+    """Extracts the preset name with fallback 'none'."""
     if "preset" in slot and slot["preset"]:
         return slot["preset"]
     if "data" in slot and isinstance(slot["data"], dict):
@@ -83,7 +78,7 @@ def _get_slot_preset(slot: dict) -> str:
 
 
 def _normalize_schedule(raw_schedule: dict | None) -> dict[str, list[dict]]:
-    """Normalisiert den Zeitplan in eine einheitliche Struktur."""
+    """Normalizes the schedule into a uniform dictionary structure."""
     if not isinstance(raw_schedule, dict):
         return {day: [] for day in DAYS}
 
@@ -106,14 +101,14 @@ def _normalize_schedule(raw_schedule: dict | None) -> dict[str, list[dict]]:
 
 
 class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handhabt den Erstellungsprozess der Integration (Version 2.0)."""
+    """Handles the initial configuration flow for the integration."""
 
     VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Ersteinrichtung des Integrationseintrags."""
+        """Initial setup of the integration entry."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -125,7 +120,6 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
 
-                # Sichere Standardwerte für Raten & Lernen
                 user_input[CONF_FALLBACK_HEATING_RATE] = _safe_float(
                     user_input.get(CONF_FALLBACK_HEATING_RATE), DEFAULT_FALLBACK_HEATING_RATE
                 )
@@ -242,12 +236,12 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
-        """Erstellt den Options Flow Handler."""
+        """Creates the Options Flow handler."""
         return SmartClimateSchedulerOptionsFlowHandler()
 
 
 class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
-    """Options Flow mit strukturiertem Hauptmenü (Version 2.0)."""
+    """Options Flow with structured main menu and profile management."""
 
     def __init__(self) -> None:
         self.profiles: dict[str, dict[str, list[dict]]] | None = None
@@ -258,7 +252,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         self.selected_slot_index: int | None = None
 
     def _init_data(self) -> None:
-        """Lädt Zeitpläne, Profile und Einstellungen in den Zwischenspeicher."""
+        """Loads schedules, profiles, and settings into the temporary buffer."""
         if self.profiles is None:
             raw_profiles, active_prof = get_profiles_and_active(self.config_entry)
             self.profiles = copy.deepcopy(raw_profiles)
@@ -385,7 +379,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Hauptmenü."""
+        """Main menu step."""
         self._init_data()
 
         if user_input is not None:
@@ -429,7 +423,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Einstellungen bearbeiten."""
+        """Edit general settings and thermal parameters."""
         self._init_data()
 
         if user_input is not None:
@@ -545,23 +539,23 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_schedule_menu(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Menü für Zeitpläne & Profile."""
+        """Menu for schedules and profiles."""
         self._init_data()
 
         if user_input is not None:
-            aktion = user_input["aktion"]
-            if aktion == "back":
+            action = user_input.get("action") or user_input.get("aktion")
+            if action == "back":
                 return await self.async_step_init()
-            if aktion == "switch_profile":
+            if action == "switch_profile":
                 return await self.async_step_switch_profile()
-            if aktion == "add_profile":
+            if action == "add_profile":
                 return await self.async_step_add_profile()
-            if aktion == "rename_profile":
+            if action == "rename_profile":
                 return await self.async_step_rename_profile()
-            if aktion == "delete_profile":
+            if action == "delete_profile":
                 return await self.async_step_delete_profile()
-            if aktion == "edit":
-                self.selected_day = user_input.get("tag", self.selected_day)
+            if action == "edit":
+                self.selected_day = user_input.get("day") or user_input.get("tag") or self.selected_day
                 return await self.async_step_slot_overview()
 
         schedule_actions = ["edit", "switch_profile", "add_profile", "rename_profile"]
@@ -571,13 +565,13 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
-                vol.Required("aktion", default="edit"): SelectSelector(
+                vol.Required("action", default="edit"): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="schedule_action",
                         options=schedule_actions,
                     )
                 ),
-                vol.Required("tag", default=self.selected_day): SelectSelector(
+                vol.Required("day", default=self.selected_day): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="day",
                         options=DAYS,
@@ -594,7 +588,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_switch_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Aktives Zeitplan-Profil auswählen."""
+        """Select active schedule profile."""
         self._init_data()
 
         if user_input is not None:
@@ -619,7 +613,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_add_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Neues Zeitplan-Profil anlegen."""
+        """Add a new schedule profile."""
         self._init_data()
         errors: dict[str, str] = {}
 
@@ -644,8 +638,14 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     self.current_schedule = _normalize_schedule(self.profiles[new_name])
                     return await self.async_step_schedule_menu()
 
-        profile_choices = [{"value": "empty", "label": "Leerer Zeitplan (ohne Slots)"}] + [
-            {"value": p, "label": f"Kopie von '{p}'"} for p in (self.profiles.keys() if self.profiles else [])
+        lang = get_ha_language(getattr(self, "hass", None))
+        empty_label = get_localized_ui_text("empty_schedule", lang)
+        profile_choices = [{"value": "empty", "label": empty_label}] + [
+            {
+                "value": p,
+                "label": get_localized_ui_text("copy_of_profile", lang, profile=p),
+            }
+            for p in (self.profiles.keys() if self.profiles else [])
         ]
         schema = vol.Schema(
             {
@@ -660,7 +660,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_rename_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Ein bestehendes Zeitplan-Profil umbenennen (auch Standard)."""
+        """Rename an existing schedule profile (including Standard)."""
         self._init_data()
         errors: dict[str, str] = {}
 
@@ -701,7 +701,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_delete_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Ein bestehendes Zeitplan-Profil löschen."""
+        """Delete an existing schedule profile."""
         self._init_data()
         errors: dict[str, str] = {}
 
@@ -730,11 +730,11 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_slot_overview(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Hauptmenü für den ausgewählten Wochentag (Aktionen)."""
+        """Overview and actions for the selected weekday's slots."""
         self._init_data()
 
         if user_input is not None:
-            choice = user_input["slot_aktion"]
+            choice = user_input.get("slot_action") or user_input.get("slot_aktion")
             if choice == "add":
                 return await self.async_step_add_slot()
             if choice == "edit":
@@ -757,7 +757,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
-                vol.Required("slot_aktion", default="add"): SelectSelector(
+                vol.Required("slot_action", default="add"): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="slot_action",
                         options=actions,
@@ -766,17 +766,26 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
+        lang = get_ha_language(getattr(self, "hass", None))
         if slots:
             slot_lines = []
             for idx, s in enumerate(slots):
                 p = s.get("preset", "none")
-                p_label = PRESET_NAMES_DE.get(p, p.capitalize())
+                p_label = _format_preset(p, lang)
                 f = s.get("from", "00:00:00")[:5]
                 t = s.get("to", "00:00:00")[:5]
-                slot_lines.append(f"• Slot {idx + 1}: {f} - {t} ({p_label})")
+                item_text = get_localized_ui_text(
+                    "slot_item",
+                    lang,
+                    index=idx + 1,
+                    from_time=f,
+                    to_time=t,
+                    preset=p_label,
+                )
+                slot_lines.append(f"• {item_text}")
             slots_list_str = "\n" + "\n".join(slot_lines)
         else:
-            slots_list_str = "\n(Keine Slots konfiguriert)"
+            slots_list_str = "\n" + get_localized_ui_text("no_slots_configured", lang)
 
         return self.async_show_form(
             step_id="slot_overview",
@@ -790,7 +799,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_select_slot_to_edit(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Zeigt eine saubere Liste aller Slots eines Tages zur Auswahl an."""
+        """Displays a list of all slots of a day for selection."""
         self._init_data()
         slots = self.current_schedule.get(self.selected_day, [])
 
@@ -803,13 +812,21 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 self.selected_slot_index = int(selected_val.split("_")[1])
                 return await self.async_step_edit_slot()
 
+        lang = get_ha_language(getattr(self, "hass", None))
         options = []
         for idx, slot in enumerate(slots):
             preset = slot.get("preset", "none")
-            preset_label = PRESET_NAMES_DE.get(preset, preset.capitalize())
+            preset_label = _format_preset(preset, lang)
             from_t = slot.get("from", "00:00:00")
             to_t = slot.get("to", "00:00:00")
-            label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} ({preset_label})"
+            label = get_localized_ui_text(
+                "slot_item",
+                lang,
+                index=idx + 1,
+                from_time=from_t[:5],
+                to_time=to_t[:5],
+                preset=preset_label,
+            )
             options.append({"value": f"slot_{idx}", "label": label})
 
         schema = vol.Schema(
@@ -828,7 +845,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_copy_slots(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Kopiert die Slots des aktuellen Tages auf mehrere ausgewählte Wochentage."""
+        """Copies the slots of the current day to multiple selected weekdays."""
         self._init_data()
 
         if user_input is not None:
@@ -862,13 +879,13 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_add_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot hinzufügen mit Zeitvalidierung."""
+        """Add a slot with time range validation."""
         self._init_data()
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            start_str = user_input["startzeit"]
-            end_str = user_input["endzeit"]
+            start_str = user_input.get("start_time") or user_input.get("startzeit")
+            end_str = user_input.get("end_time") or user_input.get("endzeit")
             start_t = parse_time(start_str)
             end_t = parse_time(end_str)
 
@@ -892,8 +909,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
-                vol.Required("startzeit"): TimeSelector(),
-                vol.Required("endzeit"): TimeSelector(),
+                vol.Required("start_time"): TimeSelector(),
+                vol.Required("end_time"): TimeSelector(),
                 vol.Required("preset", default=default_preset): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="preset",
@@ -908,7 +925,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_edit_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot bearbeiten mit Zeitvalidierung."""
+        """Edit or delete a slot with time range validation."""
         self._init_data()
         day_slots = list(self.current_schedule.get(self.selected_day, []))
         errors: dict[str, str] = {}
@@ -922,14 +939,15 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         current_slot = day_slots[self.selected_slot_index]
 
         if user_input is not None:
-            if user_input["aktion"] == "delete":
+            action = user_input.get("action") or user_input.get("aktion")
+            if action == "delete":
                 day_slots.pop(self.selected_slot_index)
                 day_slots.sort(key=lambda s: s.get("from", "00:00:00"))
                 self.current_schedule[self.selected_day] = day_slots
                 return await self.async_step_slot_overview()
 
-            start_str = user_input["startzeit"]
-            end_str = user_input["endzeit"]
+            start_str = user_input.get("start_time") or user_input.get("startzeit")
+            end_str = user_input.get("end_time") or user_input.get("endzeit")
             start_t = parse_time(start_str)
             end_t = parse_time(end_str)
 
@@ -953,17 +971,17 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         edit_schema_dict: dict[Any, Any] = {
-            vol.Required("aktion", default="update"): SelectSelector(
+            vol.Required("action", default="update"): SelectSelector(
                 SelectSelectorConfig(
                     translation_key="edit_action",
                     options=["update", "delete"],
                 )
             ),
             vol.Required(
-                "startzeit", default=current_slot.get("from", "00:00:00")
+                "start_time", default=current_slot.get("from", "00:00:00")
             ): TimeSelector(),
             vol.Required(
-                "endzeit", default=current_slot.get("to", "00:00:00")
+                "end_time", default=current_slot.get("to", "00:00:00")
             ): TimeSelector(),
             vol.Required("preset", default=current_preset): SelectSelector(
                 SelectSelectorConfig(

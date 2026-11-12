@@ -69,8 +69,8 @@
         "title": "Manage Schedules & Profiles",
         "description": "Manage schedules and profiles. Active profile: {active_profile}",
         "data": {
-          "aktion": "Select Action",
-          "tag": "Weekday"
+          "action": "Select Action",
+          "day": "Weekday"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Manage Slots ({slots_count})",
         "description": "Currently configured slots for the selected day ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Select or manage slots"
+          "slot_action": "Select or manage slots"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Add New Slot",
         "description": "Enter start time, end time, and target preset mode:",
         "data": {
-          "startzeit": "Start Time",
-          "endzeit": "End Time",
+          "start_time": "Start Time",
+          "end_time": "End Time",
           "preset": "Preset Mode"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Edit Slot",
         "description": "Update or delete the selected slot:",
         "data": {
-          "aktion": "Select Action",
-          "startzeit": "Start Time",
-          "endzeit": "End Time",
+          "action": "Select Action",
+          "start_time": "Start Time",
+          "end_time": "End Time",
           "preset": "Preset Mode"
         }
       }
@@ -164,7 +164,7 @@
     },
     "preset": {
       "options": {
-        "none": "None / Off",
+        "none": "None",
         "home": "Home",
         "away": "Away",
         "comfort": "Comfort",
@@ -393,7 +393,7 @@
       "schedule": {
         "name": "Schedule",
         "state": {
-          "none": "None / Off",
+          "none": "None",
           "home": "Home",
           "away": "Away",
           "comfort": "Comfort",
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Debug",
+        "name": "Diagnostics",
         "state_attributes": {
           "preset": {
             "name": "Active Preset"

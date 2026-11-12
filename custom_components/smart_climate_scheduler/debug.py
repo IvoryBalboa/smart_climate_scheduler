@@ -31,7 +31,7 @@ class SmartClimateSchedulerDebugSensor(SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_debug"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(main_sensor, "hass", None) or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("diagnose", lang)
+        suffix = get_localized_slug_suffix("diagnostics", lang)
         self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:

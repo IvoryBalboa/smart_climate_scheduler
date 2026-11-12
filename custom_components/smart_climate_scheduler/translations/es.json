@@ -21,8 +21,8 @@
           "max_minutes_preheat": "Tiempo máx. de precalentamiento (minutos)",
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
-          "hvac_off_on_target": "Activar control por histeresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)",
+          "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
+          "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)"
         }
@@ -59,8 +59,8 @@
           "max_minutes_preheat": "Tiempo máx. de precalentamiento (minutos)",
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
-          "hvac_off_on_target": "Activar control por histeresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivacion por defecto (K)",
+          "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
+          "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)"
         }
@@ -69,8 +69,8 @@
         "title": "Gestionar horarios y perfiles",
         "description": "Gestione sus horarios y perfiles. Perfil activo: {active_profile}",
         "data": {
-          "aktion": "Seleccionar acción",
-          "tag": "Día de la semana"
+          "action": "Seleccionar acción",
+          "day": "Día de la semana"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Gestionar franjas ({slots_count})",
         "description": "Franjas actualmente configuradas para el día seleccionado ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Seleccionar o gestionar franjas"
+          "slot_action": "Seleccionar o gestionar franjas"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Añadir nueva franja",
         "description": "Introduzca la hora de inicio, la hora de fin y el modo preestablecido:",
         "data": {
-          "startzeit": "Hora de inicio",
-          "endzeit": "Hora de fin",
+          "start_time": "Hora de inicio",
+          "end_time": "Hora de fin",
           "preset": "Modo preestablecido"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Editar franja",
         "description": "Edite o elimine la franja seleccionada:",
         "data": {
-          "aktion": "Seleccionar acción",
-          "startzeit": "Hora de inicio",
-          "endzeit": "Hora de fin",
+          "action": "Seleccionar acción",
+          "start_time": "Hora de inicio",
+          "end_time": "Hora de fin",
           "preset": "Modo preestablecido"
         }
       }
@@ -164,26 +164,26 @@
     },
     "preset": {
       "options": {
-        "none": "Ninguno / Apagado",
+        "none": "Ninguno",
         "home": "En casa",
         "away": "Ausente",
         "comfort": "Confort",
         "eco": "Eco",
-        "sleep": "Noche",
+        "sleep": "Dormir",
         "boost": "Boost",
         "activity": "Actividad"
       }
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Gestionar horarios",
+        "schedules": "📅 Gestionar horarios y perfiles",
         "settings": "⚙️ Ajustes (Sensores, Aprendizaje y Tasas)",
         "save": "💾 Guardar y salir"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Editar día / Ver franjas",
+        "edit": "📅 Editar franjas del día",
         "switch_profile": "🔄 Cambiar perfil activo",
         "add_profile": "➕ Añadir nuevo perfil",
         "rename_profile": "✏️ Renombrar perfil",
@@ -199,11 +199,11 @@
     },
     "slot_action": {
       "options": {
-        "add": "Añadir nueva franja",
-        "edit": "Editar franja existente",
-        "copy": "Copiar franjas a otros días",
-        "clear": "Borrar todas las franjas de este día",
-        "back": "← Volver a la selección de día"
+        "add": "➕ Añadir nueva franja",
+        "edit": "✏️ Editar franja",
+        "copy": "📋 Copiar franjas a otros días",
+        "clear": "🗑 Borrar todas las franjas del día",
+        "back": "◀️ Volver a la selección de día"
       }
     }
   },
@@ -393,12 +393,12 @@
       "schedule": {
         "name": "Horario",
         "state": {
-          "none": "Ninguno / Apagado",
+          "none": "Ninguno",
           "home": "En casa",
           "away": "Ausente",
           "comfort": "Confort",
           "eco": "Eco",
-          "sleep": "Noche",
+          "sleep": "Dormir",
           "boost": "Boost",
           "activity": "Actividad"
         },
@@ -448,7 +448,7 @@
         }
       },
       "debug": {
-        "name": "Depuración",
+        "name": "Diagnóstico",
         "state_attributes": {
           "preset": {
             "name": "Modo activo"

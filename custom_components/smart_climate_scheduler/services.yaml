@@ -1,23 +1,23 @@
 set_override:
-  name: Override setzen
-  description: Aktiviert einen temporären Slot-Override mit einem bestimmten Preset für einen Zeitraum oder eine Dauer.
+  name: Set Override
+  description: Activates a temporary slot override with a specific preset for a period or duration.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     override_id:
       name: Override ID
-      description: Eindeutige ID für den Override (z. B. gaeste oder party). Optional.
+      description: Unique ID for the override (e.g. guests or party). Optional.
       required: false
       selector:
         text: {}
     preset:
       name: Preset
-      description: Das zu aktivierende Preset (z. B. comfort, boost, eco).
+      description: The preset to activate (e.g. comfort, boost, eco).
       required: true
       default: boost
       selector:
@@ -33,86 +33,86 @@ set_override:
             - sleep
             - activity
     duration:
-      name: Dauer
-      description: Dauer des Overrides (z. B. 1 Stunde, 30 Minuten). Wenn keine Startzeit angegeben ist, startet der Override sofort ab jetzt.
+      name: Duration
+      description: Duration of the override (e.g. 1 hour, 30 minutes). Starts immediately if no start time is specified.
       required: false
       selector:
         duration: {}
     start:
-      name: Startzeit
-      description: Startzeitpunkt des Overrides (z. B. 14:00 oder ISO-Zeitstempel). Optional bei Angabe einer Dauer.
+      name: Start Time
+      description: Start time of the override (e.g. 14:00 or ISO timestamp). Optional when duration is set.
       required: false
       selector:
         time: {}
     end:
-      name: Endzeit
-      description: Endzeitpunkt des Overrides (z. B. 16:00 oder ISO-Zeitstempel). Optional bei Angabe einer Dauer.
+      name: End Time
+      description: End time of the override (e.g. 16:00 or ISO timestamp). Optional when duration is set.
       required: false
       selector:
         time: {}
 
 remove_override:
-  name: Override entfernen
-  description: Hebt einen aktiven temporären Slot-Override vorzeitig auf.
+  name: Remove Override
+  description: Prematurely cancels an active temporary slot override.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     override_id:
       name: Override ID
-      description: Die ID des zu entfernenden Overrides (z. B. gaeste oder party).
+      description: The ID of the override to remove (e.g. guests or party).
       required: true
       selector:
         text: {}
 
 set_schedule_profile:
-  name: Zeitplan-Profil aktivieren
-  description: Aktiviert ein bestimmtes Zeitplan-Profil (z. B. Standard, Arbeit, Urlaub) für einen oder alle Räume.
+  name: Activate Schedule Profile
+  description: Activates a specific schedule profile for one or all rooms.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     profile:
-      name: Profil-Name
-      description: Der Name des zu aktivierenden Zeitplan-Profils (z. B. Standard, Arbeit, Urlaub).
+      name: Profile Name
+      description: Name of the schedule profile to activate (e.g. Standard, Work, Vacation).
       required: true
       selector:
         text: {}
 
 reset_heating_rates:
-  name: Aufheizraten zurücksetzen
-  description: Löscht alle gelernten Aufheizraten (Außentemperatur-Matrix & Gesamt-Durchschnitt) und setzt sie auf den konfigurierten Standardwert zurück.
+  name: Reset Heating Rates
+  description: Deletes all learned heating rates (matrix & overall average) and resets to default values.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
 
 set_manual_heating_rate:
-  name: Aufheizrate manuell setzen
-  description: Setzt den Gesamt-Durchschnitt der Aufheizrate (in K/h) manuell für diesen Raum.
+  name: Set Manual Heating Rate
+  description: Manually sets the overall average heating rate (in K/h) for this room.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     rate:
-      name: Aufheizrate (K/h)
-      description: Erwartete Aufheizrate in Kelvin/Stunde (°C/h). Z. B. 1.2 für einen schnell heizenden Raum oder 0.7 für Fußbodenheizung.
+      name: Heating Rate (K/h)
+      description: Expected heating rate in Kelvin/hour (°C/h). E.g. 1.2 for fast heating or 0.7 for underfloor heating.
       required: true
       default: 1.0
       selector:
@@ -124,26 +124,26 @@ set_manual_heating_rate:
           mode: box
 
 set_matrix_heating_rate:
-  name: Matrix-Aufheizrate bearbeiten oder hinzufügen
-  description: Fügt einen gezielten Wert für eine Außentemperatur zur Aufheizraten-Matrix hinzu oder überschreibt diesen direkt.
+  name: Set/Add Matrix Heating Rate
+  description: Adds or updates an outdoor temperature heating rate bucket in the matrix.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     temperature:
-      name: Außentemperatur (°C)
-      description: Die Außentemperatur für diesen Tabellen-Eintrag (z. B. -5, 0, 5, 12) oder "default".
+      name: Outdoor Temperature (°C)
+      description: The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or "default".
       required: true
       default: "5"
       selector:
         text: {}
     rate:
-      name: Aufheizrate (K/h)
-      description: Aufheizrate in Kelvin pro Stunde (°C/h) für diese Außentemperatur.
+      name: Heating Rate (K/h)
+      description: Heating rate in Kelvin per hour (°C/h) for this outdoor temperature.
       required: true
       default: 1.0
       selector:
@@ -155,44 +155,44 @@ set_matrix_heating_rate:
           mode: box
 
 delete_matrix_heating_rate:
-  name: Matrix-Aufheizrate löschen
-  description: Entfernt einen einzelnen Temperaturwert aus der gelernten Außentemperatur-Matrix.
+  name: Delete Matrix Heating Rate
+  description: Deletes an outdoor temperature heating rate entry from the matrix.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     temperature:
-      name: Außentemperatur (°C)
-      description: Die Außentemperatur des zu entfernenden Eintrags (z. B. 5, -2) oder "default".
+      name: Outdoor Temperature (°C)
+      description: The outdoor temperature of the entry to delete (e.g. 5, -2) or "default".
       required: true
       selector:
         text: {}
 
 set_matrix_cooling_rate:
-  name: Matrix-Abkühlrate bearbeiten oder hinzufügen
-  description: Fügt einen gezielten Wert für eine Außentemperatur zur Abkühlraten-Matrix hinzu oder überschreibt diesen direkt.
+  name: Set/Add Matrix Cooling Rate
+  description: Adds or updates an outdoor temperature cooling rate bucket in the matrix.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     temperature:
-      name: Außentemperatur (°C)
-      description: Die Außentemperatur für diesen Tabellen-Eintrag (z. B. -5, 0, 5, 12) oder "default".
+      name: Outdoor Temperature (°C)
+      description: The outdoor temperature for this bucket (e.g. -5, 0, 5, 12) or "default".
       required: true
       default: "5"
       selector:
         text: {}
     rate:
-      name: Abkühlrate (K/h)
-      description: Abkühlrate in Kelvin pro Stunde (°C/h) für diese Außentemperatur.
+      name: Cooling Rate (K/h)
+      description: Cooling rate in Kelvin per hour (°C/h) for this outdoor temperature.
       required: true
       default: 0.2
       selector:
@@ -204,19 +204,19 @@ set_matrix_cooling_rate:
           mode: box
 
 delete_matrix_cooling_rate:
-  name: Matrix-Abkühlrate löschen
-  description: Entfernt einen einzelnen Temperaturwert aus der gelernten Abkühlraten-Matrix.
+  name: Delete Matrix Cooling Rate
+  description: Deletes an outdoor temperature cooling rate entry from the matrix.
   fields:
     device_id:
-      name: Gerät
-      description: Smart Climate Scheduler Raum
+      name: Device
+      description: Smart Climate Scheduler room
       required: true
       selector:
         device:
           integration: smart_climate_scheduler
     temperature:
-      name: Außentemperatur (°C)
-      description: Die Außentemperatur des zu entfernenden Eintrags (z. B. 5, -2) oder "default".
+      name: Outdoor Temperature (°C)
+      description: The outdoor temperature of the entry to delete (e.g. 5, -2) or "default".
       required: true
       selector:
         text: {}

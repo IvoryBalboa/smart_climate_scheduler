@@ -69,8 +69,8 @@
         "title": "Zeitpläne & Profile verwalten",
         "description": "Verwalten Sie Ihre Zeitpläne und Profile. Aktives Profil: {active_profile}",
         "data": {
-          "aktion": "Aktion auswählen",
-          "tag": "Wochentag"
+          "action": "Aktion auswählen",
+          "day": "Wochentag"
         }
       },
       "switch_profile": {
@@ -107,7 +107,7 @@
         "title": "Slots verwalten ({slots_count})",
         "description": "Aktuell konfigurierte Slots für den gewählten Tag ({slots_count}):{slots_list}",
         "data": {
-          "slot_aktion": "Slot auswählen oder verwalten"
+          "slot_action": "Slot auswählen oder verwalten"
         }
       },
       "select_slot_to_edit": {
@@ -128,8 +128,8 @@
         "title": "Neuen Slot hinzufügen",
         "description": "Geben Sie Startzeit, Endzeit und Preset an:",
         "data": {
-          "startzeit": "Startzeit",
-          "endzeit": "Endzeit",
+          "start_time": "Startzeit",
+          "end_time": "Endzeit",
           "preset": "Preset-Modus"
         }
       },
@@ -137,9 +137,9 @@
         "title": "Slot bearbeiten",
         "description": "Bearbeiten oder löschen Sie den gewählten Slot:",
         "data": {
-          "aktion": "Aktion auswählen",
-          "startzeit": "Startzeit",
-          "endzeit": "Endzeit",
+          "action": "Aktion auswählen",
+          "start_time": "Startzeit",
+          "end_time": "Endzeit",
           "preset": "Preset-Modus"
         }
       }
@@ -164,7 +164,7 @@
     },
     "preset": {
       "options": {
-        "none": "Keins / Aus",
+        "none": "Keine",
         "home": "Zuhause",
         "away": "Abwesend",
         "comfort": "Komfort",
@@ -393,7 +393,7 @@
       "schedule": {
         "name": "Zeitplan",
         "state": {
-          "none": "Keins / Aus",
+          "none": "Keine",
           "home": "Zuhause",
           "away": "Abwesend",
           "comfort": "Komfort",

@@ -878,7 +878,8 @@ async def async_setup_entry(
     if outside_weather:
         tracked_entities.append(outside_weather)
     switch_slug = get_config_entry_slug(config_entry)
-    tracked_entities.append(f"switch.{switch_slug}_automatik")
+    auto_suffix = get_localized_slug_suffix("automatic", get_ha_language(hass))
+    tracked_entities.append(f"switch.{switch_slug}_{auto_suffix}")
 
     config_entry.async_on_unload(
         async_track_state_change_event(hass, tracked_entities, async_climate_changed)
@@ -931,7 +932,7 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_schedule"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("zeitplan", lang)
+        suffix = get_localized_slug_suffix("schedule", lang)
         self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_added_to_hass(self) -> None:
@@ -1017,7 +1018,7 @@ class SmartClimateSchedulerHeatingRateSensor(SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_heating_rate"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("aufheizrate", lang)
+        suffix = get_localized_slug_suffix("heating_rate", lang)
         self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
@@ -1120,7 +1121,7 @@ class SmartClimateSchedulerCoolingRateSensor(SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_cooling_rate"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("abkuehlrate", lang)
+        suffix = get_localized_slug_suffix("cooling_rate", lang)
         self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
@@ -1221,7 +1222,7 @@ class SmartClimateSchedulerNextActionSensor(SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_next_action"
         slug = get_config_entry_slug(config_entry)
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
-        suffix = get_localized_slug_suffix("naechste_aktion", lang)
+        suffix = get_localized_slug_suffix("next_action", lang)
         self.entity_id = f"sensor.{slug}_{suffix}"
 
     async def async_update(self) -> None:
