@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Schema",
+        "state": {
+          "none": "Geen / Uit",
+          "home": "Thuis",
+          "away": "Weg",
+          "comfort": "Comfort",
+          "eco": "Eco",
+          "sleep": "Slapen",
+          "boost": "Boost",
+          "activity": "Activiteit"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Actief tijdvak"

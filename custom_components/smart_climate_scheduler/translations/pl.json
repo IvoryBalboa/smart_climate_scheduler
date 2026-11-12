@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Harmonogram",
+        "state": {
+          "none": "Brak / Wyłączone",
+          "home": "W domu",
+          "away": "Poza domem",
+          "comfort": "Komfort",
+          "eco": "Eko",
+          "sleep": "Sen",
+          "boost": "Boost",
+          "activity": "Aktywność"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Aktywny przedział"

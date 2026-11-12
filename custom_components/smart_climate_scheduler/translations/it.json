@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Orario",
+        "state": {
+          "none": "Nessuno / Spento",
+          "home": "In casa",
+          "away": "Fuori casa",
+          "comfort": "Comfort",
+          "eco": "Eco",
+          "sleep": "Notte",
+          "boost": "Boost",
+          "activity": "Attività"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Fascia attiva"

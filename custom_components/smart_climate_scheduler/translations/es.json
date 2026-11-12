@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Horario",
+        "state": {
+          "none": "Ninguno / Apagado",
+          "home": "En casa",
+          "away": "Ausente",
+          "comfort": "Confort",
+          "eco": "Eco",
+          "sleep": "Noche",
+          "boost": "Boost",
+          "activity": "Actividad"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Franja activa"

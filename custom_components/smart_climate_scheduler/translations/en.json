@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Schedule",
+        "state": {
+          "none": "None / Off",
+          "home": "Home",
+          "away": "Away",
+          "comfort": "Comfort",
+          "eco": "Eco",
+          "sleep": "Sleep",
+          "boost": "Boost",
+          "activity": "Activity"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Active Slot"

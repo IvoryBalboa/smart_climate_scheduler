@@ -5,7 +5,7 @@ import logging
 import math
 import time as time_mod
 from datetime import datetime, timedelta
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -903,15 +903,30 @@ async def async_setup_entry(
     _reschedule_target_timer()
 
 
+SCHEDULE_PRESET_OPTIONS = [
+    "none",
+    "home",
+    "away",
+    "comfort",
+    "eco",
+    "sleep",
+    "boost",
+    "activity",
+]
+
+
 class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
     """Haupt-Zeitplan-Sensor mit Zustands-Wiederherstellung nach Neustarts."""
 
     _attr_icon = "mdi:calendar-clock"
     _attr_has_entity_name = True
     _attr_translation_key = "schedule"
+    _attr_device_class = SensorDeviceClass.ENUM
 
     def __init__(self, config_entry: ConfigEntry, hass: HomeAssistant | None = None) -> None:
         self.config_entry = config_entry
+        if hass is not None:
+            self.hass = hass
         self._last_known_state = None
         self._attr_unique_id = f"{config_entry.entry_id}_schedule"
         slug = get_config_entry_slug(config_entry)
@@ -923,7 +938,7 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
         await super().async_added_to_hass()
         last_state = await self.async_get_last_state()
         if last_state and last_state.state not in (None, "unavailable", "unknown"):
-            self._last_known_state = last_state.state
+            self._last_known_state = str(last_state.state).strip().lower()
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -935,27 +950,51 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
         return get_device_info(self.config_entry)
 
     @property
-    def native_value(self) -> str:
+    def options(self) -> list[str]:
+        """Gibt alle zulässigen Zustandsoptionen für die ENUM-Geräteklasse zurück."""
+        opts = list(SCHEDULE_PRESET_OPTIONS)
+        hass_obj = getattr(self, "hass", None)
         climate_entity = (
             self.config_entry.options.get(CONF_CLIMATE_ENTITY)
             or self.config_entry.data.get(CONF_CLIMATE_ENTITY, "")
         ).strip()
-        climate_state = self.hass.states.get(climate_entity) if climate_entity and self.hass else None
+        if climate_entity and hass_obj:
+            state_obj = hass_obj.states.get(climate_entity)
+            if state_obj and "preset_modes" in state_obj.attributes:
+                for pm in state_obj.attributes.get("preset_modes") or []:
+                    pm_str = str(pm).strip().lower()
+                    if pm_str and pm_str not in opts:
+                        opts.append(pm_str)
+        cur_val = self.native_value
+        if cur_val and str(cur_val).strip().lower() not in opts:
+            opts.append(str(cur_val).strip().lower())
+        return opts
+
+    @property
+    def native_value(self) -> str:
+        hass_obj = getattr(self, "hass", None)
+        climate_entity = (
+            self.config_entry.options.get(CONF_CLIMATE_ENTITY)
+            or self.config_entry.data.get(CONF_CLIMATE_ENTITY, "")
+        ).strip()
+        climate_state = hass_obj.states.get(climate_entity) if climate_entity and hass_obj else None
 
         if not climate_state or climate_state.state in ("unavailable", "unknown"):
             if self._last_known_state:
-                return self._last_known_state
+                return str(self._last_known_state).strip().lower()
 
-        preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
+        preset, _, _, _, _, _, _ = evaluate_state(hass_obj, self.config_entry)
         if preset and preset not in ("unavailable", "unknown"):
-            self._last_known_state = preset
-        return preset or self._last_known_state or "eco"
+            self._last_known_state = str(preset).strip().lower()
+        val = preset or self._last_known_state or "eco"
+        return str(val).strip().lower()
 
     @property
     def extra_state_attributes(self) -> dict:
         """Gibt die aktiven und nachfolgenden Slots des Zeitplans zurück."""
+        hass_obj = getattr(self, "hass", None)
         _, _, _, active_slot, next_slot, _, _ = evaluate_state(
-            self.hass, self.config_entry
+            hass_obj, self.config_entry
         )
 
         return {

@@ -392,6 +392,16 @@
     "sensor": {
       "schedule": {
         "name": "Planning",
+        "state": {
+          "none": "Aucun / Arrêt",
+          "home": "Présent",
+          "away": "Absent",
+          "comfort": "Confort",
+          "eco": "Éco",
+          "sleep": "Nuit",
+          "boost": "Boost",
+          "activity": "Activité"
+        },
         "state_attributes": {
           "active_slot": {
             "name": "Créneau actif"
