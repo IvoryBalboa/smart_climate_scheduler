@@ -13,6 +13,7 @@ from .helpers import (
     async_set_matrix_entry,
     async_sync_device_registry_version,
     async_sync_entity_registry_disabled,
+    async_write_ha_state_if_enabled,
     calculate_overall_average,
     get_profiles_and_active,
     normalize_matrix,
@@ -559,8 +560,7 @@ async def _async_update_sensors(hass: HomeAssistant, entry_id: str) -> None:
     invalidate_eval_cache(entry_data)
     for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
         if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == entry_id:
-            if getattr(sensor, "hass", None):
-                sensor.async_write_ha_state()
+            async_write_ha_state_if_enabled(sensor)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

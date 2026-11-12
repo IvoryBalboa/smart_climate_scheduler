@@ -895,3 +895,15 @@ def get_profiles_and_active(config_entry: Any) -> tuple[dict[str, dict[str, list
 
     return profiles, str(active_profile)
 
+
+def async_write_ha_state_if_enabled(entity: Any) -> None:
+    """Schreibt den Zustand der Entität nur dann, wenn sie existiert, hass hat und NICHT deaktiviert ist."""
+    if entity is None:
+        return
+    if getattr(entity, "hass", None) is None:
+        return
+    # In Home Assistant ist `entity.enabled` False, wenn die Entität in der Entity Registry deaktiviert ist.
+    if getattr(entity, "enabled", True) is False:
+        return
+    entity.async_write_ha_state()
+

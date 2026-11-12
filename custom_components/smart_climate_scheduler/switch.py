@@ -31,6 +31,7 @@ from .const import (
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
     async_sync_entity_registry_disabled,
+    async_write_ha_state_if_enabled,
     get_config_entry_slug,
     get_device_info,
     get_ha_language,
@@ -362,18 +363,17 @@ class SmartClimateSchedulerOptionSwitch(SwitchEntity):
 
         self.async_write_ha_state()
 
+        # Entity-Registry Deaktivierung / Reaktivierung synchronisieren VOR State-Writes
+        if self._option_key in (CONF_PREHEAT_ENABLED, CONF_COOLDOWN_ENABLED, CONF_ENABLE_SELF_LEARNING):
+            await async_sync_entity_registry_disabled(self.hass, self.config_entry)
+
         # Evaluierungs-Cache invalidieren
         invalidate_eval_cache(domain_data)
 
-        # Alle zugehörigen Sensoren aktualisieren
+        # Alle zugehörigen Sensoren aktualisieren (nur wenn nicht in Entity Registry deaktiviert)
         for sensor in self.hass.data.get(f"{DOMAIN}_sensors", []):
             if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == self.config_entry.entry_id:
-                if getattr(sensor, "hass", None):
-                    sensor.async_write_ha_state()
-
-        # Entity-Registry Deaktivierung / Reaktivierung synchronisieren
-        if self._option_key in (CONF_PREHEAT_ENABLED, CONF_COOLDOWN_ENABLED, CONF_ENABLE_SELF_LEARNING):
-            await async_sync_entity_registry_disabled(self.hass, self.config_entry)
+                async_write_ha_state_if_enabled(sensor)
 
         # Bei Hysterese / Opportunistischem Mitheizen direkt Zeitplan anwenden falls Automatik aktiv
         if self._option_key in (CONF_HVAC_OFF_ON_TARGET, CONF_OPPORTUNISTIC_HEATING):

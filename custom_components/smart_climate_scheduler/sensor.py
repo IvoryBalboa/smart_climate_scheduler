@@ -33,6 +33,7 @@ from .heating_rate import (
 from .helpers import (
     async_get_hourly_forecast,
     async_sync_entity_registry_disabled,
+    async_write_ha_state_if_enabled,
     calculate_overall_average,
     get_config_entry_slug,
     get_device_info,
@@ -257,7 +258,7 @@ async def async_setup_entry(
                 config_entry.entry_id,
                 start_t,
             )
-            heating_rate_sensor.async_write_ha_state()
+            async_write_ha_state_if_enabled(heating_rate_sensor)
 
         elif is_heating and session is not None:
             # Brenner ist aktiv ('on') -> Differenziellen Schritt bei mindestens 0.10°C Anstieg und 300s (5 Min) prüfen
@@ -300,8 +301,8 @@ async def async_setup_entry(
                         learning_enabled=learning_enabled,
                     )
 
-                heating_rate_sensor.async_write_ha_state()
-                main_sensor.async_write_ha_state()
+                async_write_ha_state_if_enabled(heating_rate_sensor)
+                async_write_ha_state_if_enabled(main_sensor)
 
         elif not is_heating and session is not None:
             # Brenner ausgeschaltet ('off') -> Ggf. noch offenen letzten Teilschritt verbuchen
@@ -360,9 +361,8 @@ async def async_setup_entry(
 
             domain_data["active_session"] = None
             domain_data["last_heating_off_time"] = now_dt
-            heating_rate_sensor.async_write_ha_state()
-            main_sensor.async_write_ha_state()
-            main_sensor.async_write_ha_state()
+            async_write_ha_state_if_enabled(heating_rate_sensor)
+            async_write_ha_state_if_enabled(main_sensor)
 
         elif not is_heating and session is None:
             # Brenner ist aus und keine Heiz-Session aktiv (kein unnötiger State-Write)
@@ -392,7 +392,7 @@ async def async_setup_entry(
                         config_entry.entry_id,
                         curr_temp,
                     )
-                    cooling_rate_sensor.async_write_ha_state()
+                    async_write_ha_state_if_enabled(cooling_rate_sensor)
                 else:
                     last_step_time = cooling_session.get("last_step_time") or cooling_session.get("start_time")
                     last_step_temp = cooling_session.get("last_step_temp", cooling_session.get("start_temp", curr_temp))
@@ -404,7 +404,7 @@ async def async_setup_entry(
                         cooling_session["live_rate"] = 0.0
                         cooling_session["last_step_temp"] = curr_temp
                         cooling_session["last_step_time"] = now_dt
-                        cooling_rate_sensor.async_write_ha_state()
+                        async_write_ha_state_if_enabled(cooling_rate_sensor)
                     else:
                         step_rate, is_valid_step = calculate_step_cooling_rate(
                             last_time=last_step_time,
@@ -442,16 +442,15 @@ async def async_setup_entry(
                                 fallback_rate=fallback_c,
                                 learning_enabled=learning_enabled,
                             )
-                            cooling_rate_sensor.async_write_ha_state()
-                            main_sensor.async_write_ha_state()
+                            async_write_ha_state_if_enabled(cooling_rate_sensor)
+                            async_write_ha_state_if_enabled(main_sensor)
 
     def _async_update_all_entities():
         """Triggert ein sofortiges Update aller registrierten Entitäten dieses Entrys."""
         invalidate_eval_cache(domain_data)
         for ent in hass.data.get(f"{DOMAIN}_sensors", []):
             if getattr(ent, "config_entry", None) and ent.config_entry.entry_id == config_entry.entry_id:
-                if getattr(ent, "hass", None):
-                    ent.async_write_ha_state()
+                async_write_ha_state_if_enabled(ent)
 
     # Automatik: Preset und optionale Zweipunkt-Regelung anwenden
     async def async_apply_schedule_to_climate(event=None):
