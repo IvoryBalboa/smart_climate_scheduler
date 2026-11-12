@@ -11,9 +11,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    CONF_COOLDOWN_ENABLED,
+    CONF_PREHEAT_ENABLED,
+    DEFAULT_COOLDOWN_ENABLED,
+    DEFAULT_PREHEAT_ENABLED,
+    DOMAIN,
+)
 from .evaluation import evaluate_state
 from .helpers import (
+    async_sync_entity_registry_disabled,
     get_config_entry_slug,
     get_device_info,
     get_ha_language,
@@ -36,6 +43,7 @@ async def async_setup_entry(
     sensors.extend([preheat_binary, cooldown_binary])
 
     async_add_entities([preheat_binary, cooldown_binary], True)
+    await async_sync_entity_registry_disabled(hass, config_entry)
 
 
 class SmartClimateSchedulerPreheatBinarySensor(BinarySensorEntity):
@@ -53,6 +61,16 @@ class SmartClimateSchedulerPreheatBinarySensor(BinarySensorEntity):
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
         suffix = get_localized_slug_suffix("binary_vorheizen", lang)
         self.entity_id = f"binary_sensor.{slug}_{suffix}"
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Legt fest, ob der Sensor standardmäßig aktiviert ist."""
+        return bool(
+            self.config_entry.options.get(
+                CONF_PREHEAT_ENABLED,
+                self.config_entry.data.get(CONF_PREHEAT_ENABLED, DEFAULT_PREHEAT_ENABLED),
+            )
+        )
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""
@@ -105,6 +123,16 @@ class SmartClimateSchedulerCooldownBinarySensor(BinarySensorEntity):
         lang = get_ha_language(hass or getattr(config_entry, "hass", None))
         suffix = get_localized_slug_suffix("binary_abkuehlen", lang)
         self.entity_id = f"binary_sensor.{slug}_{suffix}"
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Legt fest, ob der Sensor standardmäßig aktiviert ist."""
+        return bool(
+            self.config_entry.options.get(
+                CONF_COOLDOWN_ENABLED,
+                self.config_entry.data.get(CONF_COOLDOWN_ENABLED, DEFAULT_COOLDOWN_ENABLED),
+            )
+        )
 
     async def async_update(self) -> None:
         """Manuelle Aktualisierung des Sensors."""

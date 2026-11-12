@@ -8,7 +8,15 @@ from datetime import datetime, time
 from typing import Any
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from .const import DOMAIN
+from .const import (
+    CONF_COOLDOWN_ENABLED,
+    CONF_ENABLE_SELF_LEARNING,
+    CONF_PREHEAT_ENABLED,
+    DEFAULT_COOLDOWN_ENABLED,
+    DEFAULT_ENABLE_SELF_LEARNING,
+    DEFAULT_PREHEAT_ENABLED,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -731,3 +739,57 @@ def get_target_hvac_mode(climate_state: Any) -> str:
     if "heat_cool" in supported_modes:
         return "heat_cool"
     return "heat"
+
+
+async def async_sync_entity_registry_disabled(hass: Any, config_entry: Any) -> None:
+    """Synchronisiert den Deaktiviert-Status in der Entity Registry basierend auf den Optionen."""
+    if not hass or not config_entry:
+        return
+    try:
+        from homeassistant.helpers import entity_registry as er
+        ent_reg = er.async_get(hass)
+
+        def _sync_entity(domain_plat: str, unique_id: str, is_active: bool) -> None:
+            ent_id = ent_reg.async_get_entity_id(domain_plat, DOMAIN, unique_id)
+            if not ent_id:
+                return
+            reg_entry = ent_reg.async_get(ent_id)
+            if not reg_entry:
+                return
+            if not is_active and not reg_entry.disabled:
+                ent_reg.async_update_entity(ent_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION)
+                _LOGGER.info("Sensor '%s' in Entity Registry deaktiviert (Option ausgeschaltet).", ent_id)
+            elif is_active and reg_entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                ent_reg.async_update_entity(ent_id, disabled_by=None)
+                _LOGGER.info("Sensor '%s' in Entity Registry reaktiviert (Option eingeschaltet).", ent_id)
+
+        # 1. Vorheizen (binary_sensor.<entry_id>_preheat)
+        preheat_on = bool(
+            config_entry.options.get(
+                CONF_PREHEAT_ENABLED,
+                config_entry.data.get(CONF_PREHEAT_ENABLED, DEFAULT_PREHEAT_ENABLED),
+            )
+        )
+        _sync_entity("binary_sensor", f"{config_entry.entry_id}_preheat", preheat_on)
+
+        # 2. Auskühlen (binary_sensor.<entry_id>_cooldown)
+        cooldown_on = bool(
+            config_entry.options.get(
+                CONF_COOLDOWN_ENABLED,
+                config_entry.data.get(CONF_COOLDOWN_ENABLED, DEFAULT_COOLDOWN_ENABLED),
+            )
+        )
+        _sync_entity("binary_sensor", f"{config_entry.entry_id}_cooldown", cooldown_on)
+
+        # 3. Selbstlernen (sensor.<entry_id>_heating_rate, sensor.<entry_id>_cooling_rate)
+        learning_on = bool(
+            config_entry.options.get(
+                CONF_ENABLE_SELF_LEARNING,
+                config_entry.data.get(CONF_ENABLE_SELF_LEARNING, DEFAULT_ENABLE_SELF_LEARNING),
+            )
+        )
+        _sync_entity("sensor", f"{config_entry.entry_id}_heating_rate", learning_on)
+        _sync_entity("sensor", f"{config_entry.entry_id}_cooling_rate", learning_on)
+    except Exception as err:
+        _LOGGER.debug("Fehler beim Synchronisieren der Entity-Registry Deaktivierung: %s", err)
+

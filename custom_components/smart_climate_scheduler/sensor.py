@@ -32,6 +32,7 @@ from .heating_rate import (
 )
 from .helpers import (
     async_get_hourly_forecast,
+    async_sync_entity_registry_disabled,
     calculate_overall_average,
     get_config_entry_slug,
     get_device_info,
@@ -132,27 +133,8 @@ async def async_setup_entry(
 
     async_add_entities([main_sensor, heating_rate_sensor, cooling_rate_sensor, next_action_sensor, debug_sensor], True)
 
-    # Entity-Registry Deaktivierung/Aktivierung für die Raten-Sensoren synchronisieren
-    try:
-        from homeassistant.helpers import entity_registry as er
-        ent_reg = er.async_get(hass)
-        learning_on = bool(
-            config_entry.options.get(
-                CONF_ENABLE_SELF_LEARNING,
-                config_entry.data.get(CONF_ENABLE_SELF_LEARNING, DEFAULT_ENABLE_SELF_LEARNING),
-            )
-        )
-        for rate_key in ("heating_rate", "cooling_rate"):
-            unique_id = f"{config_entry.entry_id}_{rate_key}"
-            ent_id = ent_reg.async_get_entity_id("sensor", DOMAIN, unique_id)
-            if ent_id:
-                reg_entry = ent_reg.async_get(ent_id)
-                if not learning_on and (reg_entry and not reg_entry.disabled):
-                    ent_reg.async_update_entity(ent_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION)
-                elif learning_on and (reg_entry and reg_entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION):
-                    ent_reg.async_update_entity(ent_id, disabled_by=None)
-    except Exception as err:
-        _LOGGER.debug("Could not sync entity registry disabled status: %s", err)
+    # Entity-Registry Deaktivierung/Aktivierung für die Raten- und Binär-Sensoren synchronisieren
+    await async_sync_entity_registry_disabled(hass, config_entry)
 
     climate_entity = (
         config_entry.options.get(CONF_CLIMATE_ENTITY)

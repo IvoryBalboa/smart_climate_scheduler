@@ -11,6 +11,7 @@ from homeassistant.util import dt as dt_util
 from .helpers import (
     async_delete_matrix_entry,
     async_set_matrix_entry,
+    async_sync_entity_registry_disabled,
     calculate_overall_average,
     normalize_matrix,
     parse_time,
@@ -135,6 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await async_sync_entity_registry_disabled(hass, entry)
 
     def _resolve_entry_ids(call_or_data: ServiceCall | dict | str | None) -> list[str]:
         if not hass.data.get(DOMAIN):
@@ -536,6 +538,8 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if domain_data and domain_data.pop("_updating_from_switch", False):
         # Optionen wurden durch einen Options-Switch geändert:
         # Kein störender Plattform-Reload nötig, sofortiges Update der Sensoren und Schalter
+        await async_sync_entity_registry_disabled(hass, entry)
         await _async_update_sensors(hass, entry.entry_id)
         return
+    await async_sync_entity_registry_disabled(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
