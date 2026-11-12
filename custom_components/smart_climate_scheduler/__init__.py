@@ -11,8 +11,10 @@ from homeassistant.util import dt as dt_util
 from .helpers import (
     async_delete_matrix_entry,
     async_set_matrix_entry,
+    async_sync_device_registry_version,
     async_sync_entity_registry_disabled,
     calculate_overall_average,
+    get_profiles_and_active,
     normalize_matrix,
     parse_time,
     safe_float as _safe_float,
@@ -29,7 +31,12 @@ from .const import (
 )
 from .storage import ClimateSchedulerStorage
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.BINARY_SENSOR,
+    Platform.SELECT,
+]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -136,6 +143,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await async_sync_device_registry_version(hass, entry)
     await async_sync_entity_registry_disabled(hass, entry)
 
     def _resolve_entry_ids(call_or_data: ServiceCall | dict | str | None) -> list[str]:
@@ -484,10 +492,50 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Service zum Löschen eines Werts aus der Abkühlraten-Matrix."""
         await _handle_matrix_delete(call, is_cooling=True)
 
+    async def handle_set_schedule_profile(call: ServiceCall) -> None:
+        """Service zum Wechseln des aktiven Zeitplan-Profils."""
+        profile_name = call.data.get("profile")
+        if not profile_name:
+            _LOGGER.warning("Service set_schedule_profile ohne Profil-Namen aufgerufen.")
+            return
+
+        entry_ids = _resolve_entry_ids(call)
+        if not entry_ids:
+            _LOGGER.warning("Kein passender Smart Climate Scheduler Raum für set_schedule_profile gefunden.")
+            return
+
+        for target_entry_id in entry_ids:
+            entry_obj = hass.config_entries.async_get_entry(target_entry_id)
+            if not entry_obj:
+                continue
+
+            profiles, _ = get_profiles_and_active(entry_obj)
+            if profile_name not in profiles:
+                _LOGGER.warning(
+                    "Profil '%s' existiert nicht für Eintrag '%s'. Verfügbare Profile: %s",
+                    profile_name,
+                    target_entry_id,
+                    list(profiles.keys()),
+                )
+                continue
+
+            select_entity = hass.data.get(DOMAIN, {}).get(target_entry_id, {}).get("profile_select")
+            if select_entity and hasattr(select_entity, "async_select_option"):
+                await select_entity.async_select_option(profile_name)
+            else:
+                new_options = dict(entry_obj.options)
+                new_options["active_profile"] = profile_name
+                hass.config_entries.async_update_entry(entry_obj, options=new_options)
+                await _async_update_sensors(hass, target_entry_id)
+
+            _LOGGER.info("Zeitplan-Profil für '%s' auf '%s' gewechselt.", target_entry_id, profile_name)
+
     if not hass.services.has_service(DOMAIN, "set_override"):
         hass.services.async_register(DOMAIN, "set_override", handle_set_override)
     if not hass.services.has_service(DOMAIN, "remove_override"):
         hass.services.async_register(DOMAIN, "remove_override", handle_remove_override)
+    if not hass.services.has_service(DOMAIN, "set_schedule_profile"):
+        hass.services.async_register(DOMAIN, "set_schedule_profile", handle_set_schedule_profile)
     if not hass.services.has_service(DOMAIN, "reset_heating_rates"):
         hass.services.async_register(DOMAIN, "reset_heating_rates", handle_reset_heating_rates)
     if not hass.services.has_service(DOMAIN, "set_manual_heating_rate"):
@@ -523,6 +571,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not hass.data[DOMAIN]:
             hass.services.async_remove(DOMAIN, "set_override")
             hass.services.async_remove(DOMAIN, "remove_override")
+            hass.services.async_remove(DOMAIN, "set_schedule_profile")
             hass.services.async_remove(DOMAIN, "reset_heating_rates")
             hass.services.async_remove(DOMAIN, "set_manual_heating_rate")
             hass.services.async_remove(DOMAIN, "set_matrix_heating_rate")

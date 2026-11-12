@@ -69,6 +69,24 @@ remove_override:
       selector:
         text: {}
 
+set_schedule_profile:
+  name: Zeitplan-Profil aktivieren
+  description: Aktiviert ein bestimmtes Zeitplan-Profil (z. B. Standard, Arbeit, Urlaub) für einen oder alle Räume.
+  fields:
+    device_id:
+      name: Gerät
+      description: Smart Climate Scheduler Raum
+      required: true
+      selector:
+        device:
+          integration: smart_climate_scheduler
+    profile:
+      name: Profil-Name
+      description: Der Name des zu aktivierenden Zeitplan-Profils (z. B. Standard, Arbeit, Urlaub).
+      required: true
+      selector:
+        text: {}
+
 reset_heating_rates:
   name: Aufheizraten zurücksetzen
   description: Löscht alle gelernten Aufheizraten (Außentemperatur-Matrix & Gesamt-Durchschnitt) und setzt sie auf den konfigurierten Standardwert zurück.

@@ -66,11 +66,41 @@
         }
       },
       "schedule_menu": {
-        "title": "Zeitpläne verwalten",
-        "description": "Wählen Sie eine Aktion und den Wochentag aus:",
+        "title": "Zeitpläne & Profile verwalten",
+        "description": "Verwalten Sie Ihre Zeitpläne und Profile. Aktives Profil: {active_profile}",
         "data": {
           "aktion": "Aktion auswählen",
           "tag": "Wochentag"
+        }
+      },
+      "switch_profile": {
+        "title": "Zeitplan-Profil wechseln",
+        "description": "Wählen Sie das zu aktivierende Profil aus:",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "add_profile": {
+        "title": "Neues Zeitplan-Profil anlegen",
+        "description": "Geben Sie einen Namen für das neue Profil an und wählen Sie optional eine Kopiervorlage:",
+        "data": {
+          "profile_name": "Name des neuen Profils (z. B. Urlaub oder Arbeit)",
+          "source_profile": "Vorlage für Zeitplan-Slots"
+        }
+      },
+      "rename_profile": {
+        "title": "Zeitplan-Profil umbenennen",
+        "description": "Wählen Sie ein Profil aus und vergeben Sie einen neuen Namen (auch das Standard-Profil kann frei umbenannt werden):",
+        "data": {
+          "old_profile": "Zu umbenennendes Profil",
+          "new_name": "Neuer Profilname"
+        }
+      },
+      "delete_profile": {
+        "title": "Zeitplan-Profil löschen",
+        "description": "Wählen Sie das zu löschende Profil aus (mindestens ein Profil bleibt immer erhalten):",
+        "data": {
+          "profile_to_delete": "Zu löschendes Profil"
         }
       },
       "slot_overview": {
@@ -96,26 +126,34 @@
       },
       "add_slot": {
         "title": "Neuen Slot hinzufügen",
-        "description": "Geben Sie die Zeiten und den Preset-Modus an:",
+        "description": "Geben Sie Zeiten und Preset an. Optional können Sie eine Bedingung definieren (z. B. wenn binary_sensor.werktag=on -> Zuhause, sonst Eco):",
         "data": {
           "startzeit": "Startzeit",
           "endzeit": "Endzeit",
-          "preset": "Preset-Modus"
+          "preset": "Preset-Modus (Haupt-Preset)",
+          "condition_entity": "Bedingte Entität (Optional, z. B. binary_sensor.werktag)",
+          "condition_state": "Erwarteter Zustand (Standard: on)",
+          "else_preset": "Sonst-Preset (wenn Bedingung nicht erfüllt)"
         }
       },
       "edit_slot": {
         "title": "Slot bearbeiten",
-        "description": "Bearbeiten oder löschen Sie den gewählten Slot:",
+        "description": "Bearbeiten oder löschen Sie den gewählten Slot. Bedingungen sind optional:",
         "data": {
           "aktion": "Aktion auswählen",
           "startzeit": "Startzeit",
           "endzeit": "Endzeit",
-          "preset": "Preset-Modus"
+          "preset": "Preset-Modus (Haupt-Preset)",
+          "condition_entity": "Bedingte Entität (Optional, z. B. binary_sensor.werktag)",
+          "condition_state": "Erwarteter Zustand (Standard: on)",
+          "else_preset": "Sonst-Preset (wenn Bedingung nicht erfüllt)"
         }
       }
     },
     "error": {
-      "invalid_time_range": "Die Endzeit muss nach der Startzeit liegen."
+      "invalid_time_range": "Die Endzeit muss nach der Startzeit liegen.",
+      "profile_name_empty": "Der Profilname darf nicht leer sein.",
+      "profile_name_exists": "Ein Profil mit diesem Namen existiert bereits."
     }
   },
   "selector": {
@@ -144,14 +182,18 @@
     },
     "init_action": {
       "options": {
-        "schedules": "📅 Zeitpläne verwalten",
+        "schedules": "📅 Zeitpläne & Profile verwalten",
         "settings": "⚙️ Einstellungen (Sensoren, Lernen & Raten)",
         "save": "💾 Speichern & Beenden"
       }
     },
     "schedule_action": {
       "options": {
-        "edit": "Tag bearbeiten / Slots anzeigen",
+        "edit": "📅 Slots für Tag bearbeiten",
+        "switch_profile": "🔄 Aktives Profil wechseln",
+        "add_profile": "➕ Neues Profil anlegen",
+        "rename_profile": "✏️ Profil umbenennen",
+        "delete_profile": "🗑️ Profil löschen",
         "back": "← Zurück zum Hauptmenü"
       }
     },
@@ -213,6 +255,20 @@
         "override_id": {
           "name": "Override ID",
           "description": "Die ID des zu entfernenden Overrides (z. B. gaeste oder party)."
+        }
+      }
+    },
+    "set_schedule_profile": {
+      "name": "Zeitplan-Profil aktivieren",
+      "description": "Aktiviert ein bestimmtes Zeitplan-Profil (z. B. Standard, Arbeit, Urlaub) für einen oder alle Räume.",
+      "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Smart Climate Scheduler Raum"
+        },
+        "profile": {
+          "name": "Profil-Name",
+          "description": "Der Name des zu aktivierenden Zeitplan-Profils (z. B. Standard, Arbeit, Urlaub)."
         }
       }
     },
@@ -450,6 +506,11 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Wettervorhersage für Vorheizen"
+      }
+    },
+    "select": {
+      "schedule_profile": {
+        "name": "Zeitplan-Profil"
       }
     }
   }

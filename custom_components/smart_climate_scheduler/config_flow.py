@@ -57,7 +57,7 @@ from .const import (
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
-from .helpers import parse_time, safe_float as _safe_float
+from .helpers import parse_time, safe_float as _safe_float, get_profiles_and_active
 
 DEFAULT_PRESETS = ["none", "home", "away", "boost", "comfort", "eco", "sleep", "activity"]
 
@@ -250,18 +250,20 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     """Options Flow mit strukturiertem Hauptmenü (Version 2.0)."""
 
     def __init__(self) -> None:
+        self.profiles: dict[str, dict[str, list[dict]]] | None = None
+        self.active_profile: str = "Standard"
         self.current_schedule: dict[str, list[dict]] | None = None
         self.settings_data: dict[str, Any] = {}
         self.selected_day: str = "monday"
         self.selected_slot_index: int | None = None
 
     def _init_data(self) -> None:
-        """Lädt Zeitpläne und Einstellungen in den Zwischenspeicher."""
-        if self.current_schedule is None:
-            raw_schedule = self.config_entry.options.get("schedule")
-            if not raw_schedule and "schedule" in self.config_entry.data:
-                raw_schedule = self.config_entry.data.get("schedule", {})
-            self.current_schedule = _normalize_schedule(raw_schedule)
+        """Lädt Zeitpläne, Profile und Einstellungen in den Zwischenspeicher."""
+        if self.profiles is None:
+            raw_profiles, active_prof = get_profiles_and_active(self.config_entry)
+            self.profiles = copy.deepcopy(raw_profiles)
+            self.active_profile = active_prof
+            self.current_schedule = _normalize_schedule(self.profiles.get(self.active_profile, {}))
 
         if not self.settings_data:
             options = self.config_entry.options
@@ -393,6 +395,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             elif action == "schedules":
                 return await self.async_step_schedule_menu()
             elif action == "save":
+                if self.profiles is not None and self.current_schedule is not None:
+                    self.profiles[self.active_profile] = copy.deepcopy(self.current_schedule)
+
                 new_data = dict(self.config_entry.data)
                 new_data.update(self.settings_data)
                 self.hass.config_entries.async_update_entry(
@@ -403,6 +408,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     title="",
                     data={
                         "schedule": self.current_schedule,
+                        "profiles": self.profiles,
+                        "active_profile": self.active_profile,
                         **self.settings_data,
                     },
                 )
@@ -538,21 +545,36 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_schedule_menu(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Wochentag auswählen."""
+        """Menü für Zeitpläne & Profile."""
         self._init_data()
 
         if user_input is not None:
-            if user_input["aktion"] == "back":
+            aktion = user_input["aktion"]
+            if aktion == "back":
                 return await self.async_step_init()
-            self.selected_day = user_input["tag"]
-            return await self.async_step_slot_overview()
+            if aktion == "switch_profile":
+                return await self.async_step_switch_profile()
+            if aktion == "add_profile":
+                return await self.async_step_add_profile()
+            if aktion == "rename_profile":
+                return await self.async_step_rename_profile()
+            if aktion == "delete_profile":
+                return await self.async_step_delete_profile()
+            if aktion == "edit":
+                self.selected_day = user_input.get("tag", self.selected_day)
+                return await self.async_step_slot_overview()
+
+        schedule_actions = ["edit", "switch_profile", "add_profile", "rename_profile"]
+        if self.profiles and len(self.profiles) > 1:
+            schedule_actions.append("delete_profile")
+        schedule_actions.append("back")
 
         schema = vol.Schema(
             {
                 vol.Required("aktion", default="edit"): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="schedule_action",
-                        options=["edit", "back"],
+                        options=schedule_actions,
                     )
                 ),
                 vol.Required("tag", default=self.selected_day): SelectSelector(
@@ -563,7 +585,147 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
             }
         )
-        return self.async_show_form(step_id="schedule_menu", data_schema=schema)
+        return self.async_show_form(
+            step_id="schedule_menu",
+            data_schema=schema,
+            description_placeholders={"active_profile": self.active_profile},
+        )
+
+    async def async_step_switch_profile(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Aktives Zeitplan-Profil auswählen."""
+        self._init_data()
+
+        if user_input is not None:
+            chosen = user_input["profile"]
+            if self.profiles and chosen in self.profiles:
+                if self.current_schedule is not None:
+                    self.profiles[self.active_profile] = copy.deepcopy(self.current_schedule)
+                self.active_profile = chosen
+                self.current_schedule = _normalize_schedule(self.profiles.get(chosen, {}))
+            return await self.async_step_schedule_menu()
+
+        profile_options = list(self.profiles.keys()) if self.profiles else ["Standard"]
+        schema = vol.Schema(
+            {
+                vol.Required("profile", default=self.active_profile): SelectSelector(
+                    SelectSelectorConfig(options=profile_options)
+                )
+            }
+        )
+        return self.async_show_form(step_id="switch_profile", data_schema=schema)
+
+    async def async_step_add_profile(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Neues Zeitplan-Profil anlegen."""
+        self._init_data()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            new_name = str(user_input.get("profile_name", "")).strip()
+            if not new_name:
+                errors["base"] = "profile_name_empty"
+            elif self.profiles and new_name in self.profiles:
+                errors["base"] = "profile_name_exists"
+            else:
+                source = user_input.get("source_profile", "empty")
+                if self.profiles is not None:
+                    if self.current_schedule is not None:
+                        self.profiles[self.active_profile] = copy.deepcopy(self.current_schedule)
+
+                    if source != "empty" and source in self.profiles:
+                        self.profiles[new_name] = copy.deepcopy(self.profiles[source])
+                    else:
+                        self.profiles[new_name] = _normalize_schedule({})
+
+                    self.active_profile = new_name
+                    self.current_schedule = _normalize_schedule(self.profiles[new_name])
+                    return await self.async_step_schedule_menu()
+
+        profile_choices = [{"value": "empty", "label": "Leerer Zeitplan (ohne Slots)"}] + [
+            {"value": p, "label": f"Kopie von '{p}'"} for p in (self.profiles.keys() if self.profiles else [])
+        ]
+        schema = vol.Schema(
+            {
+                vol.Required("profile_name"): TextSelector(),
+                vol.Required("source_profile", default="empty"): SelectSelector(
+                    SelectSelectorConfig(options=profile_choices)
+                ),
+            }
+        )
+        return self.async_show_form(step_id="add_profile", data_schema=schema, errors=errors)
+
+    async def async_step_rename_profile(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Ein bestehendes Zeitplan-Profil umbenennen (auch Standard)."""
+        self._init_data()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            old_name = user_input.get("old_profile")
+            new_name = str(user_input.get("new_name", "")).strip()
+
+            if not new_name:
+                errors["base"] = "profile_name_empty"
+            elif self.profiles and new_name in self.profiles and new_name != old_name:
+                errors["base"] = "profile_name_exists"
+            elif self.profiles and old_name in self.profiles:
+                if self.current_schedule is not None and old_name == self.active_profile:
+                    self.profiles[old_name] = copy.deepcopy(self.current_schedule)
+
+                profile_data = self.profiles.pop(old_name)
+                self.profiles[new_name] = profile_data
+
+                if old_name == self.active_profile:
+                    self.active_profile = new_name
+                    self.current_schedule = profile_data
+
+                return await self.async_step_schedule_menu()
+
+        profile_options = list(self.profiles.keys()) if self.profiles else ["Standard"]
+        default_old = self.active_profile if self.active_profile in profile_options else profile_options[0]
+
+        schema = vol.Schema(
+            {
+                vol.Required("old_profile", default=default_old): SelectSelector(
+                    SelectSelectorConfig(options=profile_options)
+                ),
+                vol.Required("new_name", default=default_old): TextSelector(),
+            }
+        )
+        return self.async_show_form(step_id="rename_profile", data_schema=schema, errors=errors)
+
+    async def async_step_delete_profile(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Ein bestehendes Zeitplan-Profil löschen."""
+        self._init_data()
+        errors: dict[str, str] = {}
+
+        if not self.profiles or len(self.profiles) <= 1:
+            return await self.async_step_schedule_menu()
+
+        if user_input is not None:
+            to_delete = user_input.get("profile_to_delete")
+            if to_delete in self.profiles and len(self.profiles) > 1:
+                self.profiles.pop(to_delete)
+                if to_delete == self.active_profile:
+                    self.active_profile = list(self.profiles.keys())[0]
+                    self.current_schedule = _normalize_schedule(self.profiles[self.active_profile])
+                return await self.async_step_schedule_menu()
+
+        deletable_profiles = list(self.profiles.keys())
+        schema = vol.Schema(
+            {
+                vol.Required("profile_to_delete"): SelectSelector(
+                    SelectSelectorConfig(options=deletable_profiles)
+                )
+            }
+        )
+        return self.async_show_form(step_id="delete_profile", data_schema=schema, errors=errors)
 
     async def async_step_slot_overview(
         self, user_input: dict[str, Any] | None = None
@@ -647,7 +809,17 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             preset_label = PRESET_NAMES_DE.get(preset, preset.capitalize())
             from_t = slot.get("from", "00:00:00")
             to_t = slot.get("to", "00:00:00")
-            label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} ({preset_label})"
+            cond_ent = slot.get("condition_entity")
+            if cond_ent:
+                cond_st = slot.get("condition_state", "on")
+                else_p = slot.get("else_preset")
+                if else_p:
+                    else_label = PRESET_NAMES_DE.get(else_p, else_p.capitalize())
+                    label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} (Wenn {cond_ent}={cond_st} → {preset_label}, sonst {else_label})"
+                else:
+                    label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} (Wenn {cond_ent}={cond_st} → {preset_label})"
+            else:
+                label = f"Slot {idx + 1}: {from_t[:5]} - {to_t[:5]} ({preset_label})"
             options.append({"value": f"slot_{idx}", "label": label})
 
         schema = vol.Schema(
@@ -700,7 +872,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_add_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot hinzufügen mit Zeitvalidierung."""
+        """Slot hinzufügen mit Zeitvalidierung und optionaler Wenn-Dann-Sonst Bedingung."""
         self._init_data()
         errors: dict[str, str] = {}
 
@@ -713,20 +885,30 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             if start_t and end_t and start_t >= end_t:
                 errors["base"] = "invalid_time_range"
             else:
+                slot_data: dict[str, Any] = {
+                    "from": start_str,
+                    "to": end_str,
+                    "preset": user_input["preset"],
+                }
+                cond_ent = user_input.get("condition_entity")
+                if cond_ent and str(cond_ent).strip():
+                    slot_data["condition_entity"] = str(cond_ent).strip()
+                    slot_data["condition_state"] = str(user_input.get("condition_state", "on")).strip() or "on"
+                    else_p = user_input.get("else_preset")
+                    if else_p and str(else_p).strip() and str(else_p).strip() != "none_selected":
+                        slot_data["else_preset"] = str(else_p).strip()
+
                 day_slots = list(self.current_schedule.get(self.selected_day, []))
-                day_slots.append(
-                    {
-                        "from": start_str,
-                        "to": end_str,
-                        "preset": user_input["preset"],
-                    }
-                )
+                day_slots.append(slot_data)
                 day_slots.sort(key=lambda s: s.get("from", "00:00:00"))
                 self.current_schedule[self.selected_day] = day_slots
                 return await self.async_step_slot_overview()
 
         supported_presets = self._get_supported_presets()
         default_preset = supported_presets[0] if supported_presets else "none"
+        else_preset_options = [{"value": "none_selected", "label": "Kein alternatives Preset (Standard)"}] + [
+            {"value": p, "label": PRESET_NAMES_DE.get(p, p.capitalize())} for p in supported_presets
+        ]
 
         schema = vol.Schema(
             {
@@ -738,6 +920,15 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         options=supported_presets,
                     )
                 ),
+                vol.Optional("condition_entity"): EntitySelector(
+                    EntitySelectorConfig()
+                ),
+                vol.Optional("condition_state", default="on"): TextSelector(),
+                vol.Optional("else_preset", default="none_selected"): SelectSelector(
+                    SelectSelectorConfig(
+                        options=else_preset_options,
+                    )
+                ),
             }
         )
 
@@ -746,7 +937,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_edit_slot(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Slot bearbeiten mit Zeitvalidierung."""
+        """Slot bearbeiten mit Zeitvalidierung und optionaler Wenn-Dann-Sonst Bedingung."""
         self._init_data()
         day_slots = list(self.current_schedule.get(self.selected_day, []))
         errors: dict[str, str] = {}
@@ -774,12 +965,20 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             if start_t and end_t and start_t >= end_t:
                 errors["base"] = "invalid_time_range"
             else:
-                day_slots[self.selected_slot_index] = {
+                updated_slot: dict[str, Any] = {
                     "from": start_str,
                     "to": end_str,
                     "preset": user_input["preset"],
                 }
+                cond_ent = user_input.get("condition_entity")
+                if cond_ent and str(cond_ent).strip():
+                    updated_slot["condition_entity"] = str(cond_ent).strip()
+                    updated_slot["condition_state"] = str(user_input.get("condition_state", "on")).strip() or "on"
+                    else_p = user_input.get("else_preset")
+                    if else_p and str(else_p).strip() and str(else_p).strip() != "none_selected":
+                        updated_slot["else_preset"] = str(else_p).strip()
 
+                day_slots[self.selected_slot_index] = updated_slot
                 day_slots.sort(key=lambda s: s.get("from", "00:00:00"))
                 self.current_schedule[self.selected_day] = day_slots
                 return await self.async_step_slot_overview()
@@ -788,28 +987,49 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         current_preset = current_slot.get("preset") or (
             supported_presets[0] if supported_presets else "none"
         )
+        current_cond_entity = current_slot.get("condition_entity")
+        current_cond_state = current_slot.get("condition_state", "on")
+        current_else_preset = current_slot.get("else_preset", "none_selected")
+        if current_else_preset not in supported_presets:
+            current_else_preset = "none_selected"
 
-        schema = vol.Schema(
-            {
-                vol.Required("aktion", default="update"): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="edit_action",
-                        options=["update", "delete"],
-                    )
-                ),
-                vol.Required(
-                    "startzeit", default=current_slot.get("from", "00:00:00")
-                ): TimeSelector(),
-                vol.Required(
-                    "endzeit", default=current_slot.get("to", "00:00:00")
-                ): TimeSelector(),
-                vol.Required("preset", default=current_preset): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="preset",
-                        options=supported_presets,
-                    )
-                ),
-            }
+        else_preset_options = [{"value": "none_selected", "label": "Kein alternatives Preset (Standard)"}] + [
+            {"value": p, "label": PRESET_NAMES_DE.get(p, p.capitalize())} for p in supported_presets
+        ]
+
+        edit_schema_dict: dict[Any, Any] = {
+            vol.Required("aktion", default="update"): SelectSelector(
+                SelectSelectorConfig(
+                    translation_key="edit_action",
+                    options=["update", "delete"],
+                )
+            ),
+            vol.Required(
+                "startzeit", default=current_slot.get("from", "00:00:00")
+            ): TimeSelector(),
+            vol.Required(
+                "endzeit", default=current_slot.get("to", "00:00:00")
+            ): TimeSelector(),
+            vol.Required("preset", default=current_preset): SelectSelector(
+                SelectSelectorConfig(
+                    translation_key="preset",
+                    options=supported_presets,
+                )
+            ),
+        }
+        if current_cond_entity:
+            edit_schema_dict[vol.Optional("condition_entity", default=current_cond_entity)] = EntitySelector(
+                EntitySelectorConfig()
+            )
+        else:
+            edit_schema_dict[vol.Optional("condition_entity")] = EntitySelector(
+                EntitySelectorConfig()
+            )
+        edit_schema_dict[vol.Optional("condition_state", default=current_cond_state)] = TextSelector()
+        edit_schema_dict[vol.Optional("else_preset", default=current_else_preset)] = SelectSelector(
+            SelectSelectorConfig(
+                options=else_preset_options,
+            )
         )
 
-        return self.async_show_form(step_id="edit_slot", data_schema=schema, errors=errors)
+        return self.async_show_form(step_id="edit_slot", data_schema=vol.Schema(edit_schema_dict), errors=errors)

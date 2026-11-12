@@ -16,6 +16,7 @@ from .const import (
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_PREHEAT_ENABLED,
     DOMAIN,
+    VERSION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -231,7 +232,7 @@ def get_device_info(config_entry) -> DeviceInfo:
         name=name,
         manufacturer="Smart Climate Scheduler",
         model="Smart Climate Scheduler Hub",
-        sw_version="2.3.5",
+        sw_version=VERSION,
     )
 
 
@@ -792,4 +793,62 @@ async def async_sync_entity_registry_disabled(hass: Any, config_entry: Any) -> N
         _sync_entity("sensor", f"{config_entry.entry_id}_cooling_rate", learning_on)
     except Exception as err:
         _LOGGER.debug("Fehler beim Synchronisieren der Entity-Registry Deaktivierung: %s", err)
+
+
+async def async_sync_device_registry_version(hass: Any, config_entry: Any) -> str:
+    """Synchronisiert die Firmware-Anzeige (sw_version) in der Home Assistant Device Registry direkt mit manifest.json."""
+    live_version = VERSION
+    if not hass or not config_entry:
+        return live_version
+
+    try:
+        from homeassistant.loader import async_get_integration
+        integration = await async_get_integration(hass, DOMAIN)
+        if integration and getattr(integration, "version", None):
+            live_version = str(integration.version)
+    except Exception:
+        live_version = VERSION
+
+    try:
+        from homeassistant.helpers import device_registry as dr
+        dev_reg = dr.async_get(hass)
+        if dev_reg and hasattr(dev_reg, "async_get_device"):
+            device = dev_reg.async_get_device(identifiers={(DOMAIN, config_entry.entry_id)})
+            if device and getattr(device, "sw_version", None) != live_version:
+                dev_reg.async_update_device(
+                    device.id,
+                    sw_version=live_version,
+                    manufacturer="Smart Climate Scheduler",
+                    model="Smart Climate Scheduler Hub",
+                )
+    except Exception as err:
+        _LOGGER.debug("Fehler beim Synchronisieren der Device-Registry Version: %s", err)
+
+    return live_version
+
+
+def get_profiles_and_active(config_entry: Any) -> tuple[dict[str, dict[str, list[dict]]], str]:
+    """Extrahiert alle Zeitplan-Profile und den Namen des aktiven Profils (mit automatischer Migration von 'schedule')."""
+    if not config_entry:
+        return {"Standard": {}}, "Standard"
+
+    options = getattr(config_entry, "options", {}) or {}
+    data = getattr(config_entry, "data", {}) or {}
+
+    raw_profiles = options.get("profiles") or data.get("profiles")
+    if isinstance(raw_profiles, dict) and raw_profiles:
+        profiles = {str(k): (v if isinstance(v, dict) else {}) for k, v in raw_profiles.items()}
+    else:
+        # Fallback / Migration: Einzelzeitplan 'schedule' wird als 'Standard'-Profil übernommen
+        legacy_schedule = options.get("schedule") or data.get("schedule") or {}
+        profiles = {"Standard": legacy_schedule if isinstance(legacy_schedule, dict) else {}}
+
+    if not profiles:
+        profiles = {"Standard": {}}
+
+    active_profile = options.get("active_profile") or data.get("active_profile") or "Standard"
+    if active_profile not in profiles:
+        active_profile = list(profiles.keys())[0]
+
+    return profiles, str(active_profile)
 
