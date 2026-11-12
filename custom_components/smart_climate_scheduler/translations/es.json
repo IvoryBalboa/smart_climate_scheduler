@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
-          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)"
+          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
+          "preheat_ignores_away": "Precalentar antes de la llegada en ausencia (Anula ausente y cercano)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Pronóstico del tiempo para precalentamiento"
+      },
+      "preheat_ignores_away": {
+        "name": "Precalentamiento en ausencia"
       }
     },
     "select": {

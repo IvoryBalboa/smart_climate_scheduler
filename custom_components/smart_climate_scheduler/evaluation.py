@@ -26,6 +26,7 @@ from .const import (
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
+    CONF_PREHEAT_IGNORES_AWAY,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -36,6 +37,7 @@ from .const import (
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
+    DEFAULT_PREHEAT_IGNORES_AWAY,
     DOMAIN,
 )
 from .zones import evaluate_zones
@@ -182,6 +184,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     next_temp = get_preset_temperature(climate_state, next_preset_name)
 
     preheat_enabled = bool(options.get(CONF_PREHEAT_ENABLED, data.get(CONF_PREHEAT_ENABLED, True)))
+    preheat_ignores_away = bool(
+        options.get(CONF_PREHEAT_IGNORES_AWAY, data.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY))
+    )
     cooldown_enabled = bool(options.get(CONF_COOLDOWN_ENABLED, data.get(CONF_COOLDOWN_ENABLED, True)))
 
     max_preheat = int(
@@ -486,21 +491,25 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     elif next_is_override and is_preheat_needed and next_preset_name and next_preset_name != "none":
         # 2. Nächster Slot ist ein Override und Vorheizen ist aktiv -> Anwesenheit wird umgangen
         preset = next_preset_name
+    elif preheat_enabled and preheat_ignores_away and is_preheat_needed and next_preset_name and next_preset_name != "none":
+        # 3. Vorheizen für geplanten Zeitplan-Slot aktiv: Überstimmt Abwesenheit (sowohl away als auch away_near),
+        # damit das Haus bei Feierabend (auch wenn der Arbeitsplatz in away_near liegt) rechtzeitig warm ist!
+        preset = next_preset_name
     elif is_home:
-        # 3. Alle anderen Umstände wie vorher: Regulär Zuhause
+        # 4. Regulär Zuhause
         preset = base_preset
         if is_preheat_needed and next_preset_name and next_preset_name != "none":
             preset = next_preset_name
         elif is_cooling_down:
             preset = target_cooldown_preset
     elif is_away_near:
-        # 4. Nahe Abwesenheit
+        # 5. Nahe Abwesenheit
         if active_slot and active_slot.get("is_fallback"):
             preset = "sleep"
         else:
             preset = "eco"
     else:
-        # 5. Vollständige Abwesenheit
+        # 6. Vollständige Abwesenheit
         preset = "away"
 
     lang = get_ha_language(hass)

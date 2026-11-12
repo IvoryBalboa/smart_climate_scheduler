@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
           "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
-          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)"
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
+          "preheat_ignores_away": "Vorheizen vor Ankunft trotz Abwesenheit (Überstimmt Abwesend & Nahbereich)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Wettervorhersage für Vorheizen"
+      },
+      "preheat_ignores_away": {
+        "name": "Vorheizen bei Abwesenheit"
       }
     },
     "select": {

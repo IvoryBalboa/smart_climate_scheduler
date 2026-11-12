@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
           "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
-          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)"
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
+          "preheat_ignores_away": "Preriscalda prima dell'arrivo in assenza (Ignora assenza e zona vicina)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Previsioni meteo per preriscaldamento"
+      },
+      "preheat_ignores_away": {
+        "name": "Preriscaldamento in assenza"
       }
     },
     "select": {

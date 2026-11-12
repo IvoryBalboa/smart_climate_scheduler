@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Re-activation tolerance fallback (K)",
           "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
-          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)"
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
+          "preheat_ignores_away": "Preheat ahead of scheduled arrival even while away (Overrides away and near presence)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Use weather forecast for preheating"
+      },
+      "preheat_ignores_away": {
+        "name": "Preheat when away"
       }
     },
     "select": {

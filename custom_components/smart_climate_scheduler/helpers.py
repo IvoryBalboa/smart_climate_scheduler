@@ -137,6 +137,15 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "weersverwachting_voorverwarmen",
         "pl": "prognoza_pogody_nagrzewanie",
     },
+    "preheat_ignores_away": {
+        "de": "vorheizen_bei_abwesenheit",
+        "en": "preheat_ignores_away",
+        "es": "precalentamiento_en_ausencia",
+        "fr": "prechauffage_en_absence",
+        "it": "preriscaldamento_in_assenza",
+        "nl": "voorverwarmen_bij_afwezigheid",
+        "pl": "nagrzewanie_podczas_nieobecnosci",
+    },
     # Sensors
     "schedule": {
         "de": "zeitplan",

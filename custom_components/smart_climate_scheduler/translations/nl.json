@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
-          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)"
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
+          "preheat_ignores_away": "Voorverwarmen voor aankomst bij afwezigheid (Overschrijft afwezig en nabij)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Weersverwachting voor voorverwarmen"
+      },
+      "preheat_ignores_away": {
+        "name": "Voorverwarmen bij afwezigheid"
       }
     },
     "select": {

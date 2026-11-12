@@ -42,6 +42,7 @@ from .const import (
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
+    CONF_PREHEAT_IGNORES_AWAY,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_FALLBACK_PRESET,
@@ -56,6 +57,7 @@ from .const import (
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
+    DEFAULT_PREHEAT_IGNORES_AWAY,
     DOMAIN,
 )
 from .helpers import (
@@ -364,6 +366,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         data.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT),
                     )
                 ),
+                CONF_PREHEAT_IGNORES_AWAY: bool(
+                    options.get(
+                        CONF_PREHEAT_IGNORES_AWAY,
+                        data.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY),
+                    )
+                ),
             }
 
     def _get_supported_presets(self) -> list[str]:
@@ -465,6 +473,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
                 user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
             )
+            self.settings_data[CONF_PREHEAT_IGNORES_AWAY] = bool(
+                user_input.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY)
+            )
             return await self.async_step_init()
 
         supported_presets = self._get_supported_presets()
@@ -509,6 +520,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_PREHEAT_ENABLED): BooleanSelector(),
+                vol.Optional(CONF_PREHEAT_IGNORES_AWAY): BooleanSelector(),
                 vol.Optional(CONF_MAX_MINUTES_PREHEAT): NumberSelector(
                     NumberSelectorConfig(
                         min=0, max=720, step=5, unit_of_measurement="min", mode=NumberSelectorMode.BOX

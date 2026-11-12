@@ -18,6 +18,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_OPPORTUNISTIC_HEATING,
     CONF_PREHEAT_ENABLED,
+    CONF_PREHEAT_IGNORES_AWAY,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_ENABLE_SELF_LEARNING,
@@ -25,6 +26,7 @@ from .const import (
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_PREHEAT_ENABLED,
+    DEFAULT_PREHEAT_IGNORES_AWAY,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
 )
@@ -105,6 +107,15 @@ async def async_setup_entry(
             slug_suffix="weather_forecast_preheat",
             default_value=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
             icon="mdi:weather-partly-cloudy",
+        ),
+        SmartClimateSchedulerOptionSwitch(
+            hass,
+            config_entry,
+            option_key=CONF_PREHEAT_IGNORES_AWAY,
+            translation_key="preheat_ignores_away",
+            slug_suffix="preheat_ignores_away",
+            default_value=DEFAULT_PREHEAT_IGNORES_AWAY,
+            icon="mdi:home-clock",
         ),
     ]
     async_add_entities(entities, True)

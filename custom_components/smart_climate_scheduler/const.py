@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "smart_climate_scheduler"
-VERSION = "2.4.5"
+VERSION = "2.4.6"
 
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_ZONE_HOME_ENTITY = "zone_home_entity"
@@ -25,6 +25,7 @@ CONF_HVAC_OFF_ON_TARGET = "hvac_off_on_target"
 CONF_FALLBACK_TOLERANCE = "fallback_tolerance"
 CONF_OPPORTUNISTIC_HEATING = "opportunistic_heating"
 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT = "use_weather_forecast_for_preheat"
+CONF_PREHEAT_IGNORES_AWAY = "preheat_ignores_away"
 
 DEFAULT_FALLBACK_PRESET = "eco"
 DEFAULT_MAX_MINUTES_PREHEAT = 240
@@ -37,6 +38,7 @@ DEFAULT_HVAC_OFF_ON_TARGET = False
 DEFAULT_FALLBACK_TOLERANCE = 0.3
 DEFAULT_OPPORTUNISTIC_HEATING = False
 DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT = False
+DEFAULT_PREHEAT_IGNORES_AWAY = True
 
 # Standard-Defaults für Aufheizrate und Verlustrate in K/h (°C/h)
 DEFAULT_FALLBACK_HEATING_RATE = 1.0

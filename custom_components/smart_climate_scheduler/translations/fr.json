@@ -62,7 +62,8 @@
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Tolérance de réactivation de secours (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
-          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)"
+          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
+          "preheat_ignores_away": "Préchauffer avant l'arrivée en absence (Outrepasse absence et zone proche)"
         }
       },
       "schedule_menu": {
@@ -510,6 +511,9 @@
       },
       "use_weather_forecast_for_preheat": {
         "name": "Prévisions météo pour préchauffage"
+      },
+      "preheat_ignores_away": {
+        "name": "Préchauffage en absence"
       }
     },
     "select": {
