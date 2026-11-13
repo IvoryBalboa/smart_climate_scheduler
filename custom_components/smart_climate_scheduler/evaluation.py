@@ -52,6 +52,7 @@ from .helpers import (
     get_ha_language,
     get_preset_temperature,
     get_resolved_outside_info,
+    is_window_or_door_open,
     parse_time,
     safe_float,
 )
@@ -589,6 +590,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "calculated_cooldown_duration": cooldown.get("duration_minutes", 0) if cooldown else 0,
             "is_preheating_active": is_preheat_needed,
             "is_cooldown_active": is_cooling_down,
+            "window_or_door_open": is_window_or_door_open(climate_state),
             "selected_next_action": next_action,
             "final_state": preset,
         },

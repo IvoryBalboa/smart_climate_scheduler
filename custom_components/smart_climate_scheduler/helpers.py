@@ -781,6 +781,24 @@ def get_target_hvac_mode(climate_state: Any) -> str:
     return "heat"
 
 
+def is_window_or_door_open(climate_state: Any) -> bool:
+    """Prüft, ob am Climate Entity (z. B. Better Thermostat) window_open oder door_open aktiv ist."""
+    if not climate_state:
+        return False
+    attrs = getattr(climate_state, "attributes", None) or {}
+    if not isinstance(attrs, dict):
+        return False
+    for key in ("window_open", "door_open"):
+        val = attrs.get(key)
+        if val is True:
+            return True
+        if isinstance(val, (int, float)) and not isinstance(val, bool) and val == 1:
+            return True
+        if isinstance(val, str) and val.strip().lower() in ("true", "on", "open", "1"):
+            return True
+    return False
+
+
 async def async_sync_entity_registry_disabled(hass: Any, config_entry: Any) -> None:
     """Synchronisiert den Deaktiviert-Status in der Entity Registry basierend auf den Optionen."""
     if not hass or not config_entry:

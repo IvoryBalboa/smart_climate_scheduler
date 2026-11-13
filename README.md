@@ -83,7 +83,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v2.4.6.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v2.4.7.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/

@@ -40,6 +40,7 @@ from .helpers import (
     get_localized_slug_suffix,
     get_preset_temperature,
     get_target_hvac_mode,
+    is_window_or_door_open,
     safe_float as _safe_float,
 )
 
@@ -268,7 +269,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                                                 err,
                                             )
                                 elif cur_t < (tgt_t - tol) or (opportunistic_heating and is_heating_active and cur_t < tgt_t):
-                                    if state_obj.state == "off":
+                                    if state_obj.state == "off" and not is_window_or_door_open(state_obj):
                                         target_mode = get_target_hvac_mode(state_obj)
                                         try:
                                             await self.hass.services.async_call(

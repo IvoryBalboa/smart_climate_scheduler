@@ -42,6 +42,7 @@ from .helpers import (
     get_outside_temperature,
     get_preset_temperature,
     get_target_hvac_mode,
+    is_window_or_door_open,
     normalize_matrix,
     parse_time,
     safe_float as _safe_float,
@@ -481,9 +482,38 @@ async def async_setup_entry(
         current_hvac_action = attrs.get("hvac_action")
         current_hvac_mode = state_obj.state
         kickstart_active = domain_data.get("opportunistic_kickstart", False)
+        window_or_door_open = is_window_or_door_open(state_obj)
+
+        # Kickstart-Abbruch bei geöffnetem Fenster / geöffneter Tür (Better Thermostat Sperre)
+        if kickstart_active and window_or_door_open:
+            domain_data["opportunistic_kickstart"] = False
+            domain_data["is_setting_preset"] = True
+            _LOGGER.info(
+                "Automatik Zweipunkt [%s]: Fenster/Tür geöffnet während Kickstart -> Breche Kickstart sofort ab und stelle Soll-Preset '%s' wieder her",
+                climate_entity,
+                target_preset,
+            )
+            try:
+                await hass.services.async_call(
+                    "climate",
+                    "set_preset_mode",
+                    service_data={"preset_mode": target_preset},
+                    target={"entity_id": climate_entity},
+                    blocking=False,
+                )
+            except Exception as err:
+                _LOGGER.error(
+                    "Smart Climate Scheduler [%s]: Fehler beim Wiederherstellen von Preset '%s' nach Kickstart-Abbruch auf '%s': %s",
+                    entry_name,
+                    target_preset,
+                    climate_entity,
+                    err,
+                )
+            finally:
+                hass.loop.call_later(2, lambda: domain_data.update({"is_setting_preset": False}))
 
         # Kickstart-Abschluss: Sobald das Thermostat hvac_action == "heating" meldet, sofort Soll-Preset wiederherstellen!
-        if kickstart_active and current_hvac_action == "heating":
+        elif kickstart_active and current_hvac_action == "heating":
             domain_data["opportunistic_kickstart"] = False
             domain_data["is_setting_preset"] = True
             _LOGGER.info(
@@ -647,90 +677,99 @@ async def async_setup_entry(
 
                 # Fall 2: Ist < Soll - Toleranz ODER Opportunistisches Mitheizen -> Thermostat wieder einschalten (hvac_mode: heat)
                 elif current_temp < (target_temp - tolerance) or (opportunistic_heating and is_heating_active and current_temp < target_temp):
-                    domain_data["two_point_target_reached"] = False
-                    target_mode = get_target_hvac_mode(state_obj)
+                    if window_or_door_open:
+                        domain_data["opportunistic_kickstart"] = False
+                        _LOGGER.debug(
+                            "Automatik Zweipunkt [%s]: Fenster oder Tür geöffnet (window_open=%s, door_open=%s) -> Pausiere Einschalten auf 'heat' und opportunistisches Mitheizen",
+                            climate_entity,
+                            attrs.get("window_open"),
+                            attrs.get("door_open"),
+                        )
+                    else:
+                        domain_data["two_point_target_reached"] = False
+                        target_mode = get_target_hvac_mode(state_obj)
 
-                    # Opportunistischer Kickstart für Better Thermostat:
-                    # Liegt Ist innerhalb des Hysterese-Totbands (target_temp - tolerance <= current_temp < target_temp)
-                    # und das Thermostat heizt noch nicht (off oder idle)?
-                    is_opp_deadband = (
-                        opportunistic_heating
-                        and is_heating_active
-                        and current_temp < target_temp
-                        and current_temp >= (target_temp - tolerance)
-                    )
+                        # Opportunistischer Kickstart für Better Thermostat:
+                        # Liegt Ist innerhalb des Hysterese-Totbands (target_temp - tolerance <= current_temp < target_temp)
+                        # und das Thermostat heizt noch nicht (off oder idle)?
+                        is_opp_deadband = (
+                            opportunistic_heating
+                            and is_heating_active
+                            and current_temp < target_temp
+                            and current_temp >= (target_temp - tolerance)
+                        )
 
-                    if is_opp_deadband and (current_hvac_mode == "off" or current_hvac_action == "idle"):
-                        if not domain_data.get("opportunistic_kickstart"):
-                            boosted_temp = round(target_temp + tolerance, 1)
-                            domain_data["opportunistic_kickstart"] = True
-                            domain_data["is_setting_hvac"] = True
-                            _LOGGER.info(
-                                "Automatik Zweipunkt [%s]: Opportunistischer Kickstart aktiv (Brenner an, Ist %.1f °C < Soll %.1f °C, Status: %s/%s) -> Schalte '%s' & hebe Temperatur kurzfristig auf %.1f °C an",
-                                climate_entity,
-                                current_temp,
-                                target_temp,
-                                current_hvac_mode,
-                                current_hvac_action,
-                                target_mode,
-                                boosted_temp,
-                            )
-                            try:
-                                if current_hvac_mode == "off":
+                        if is_opp_deadband and (current_hvac_mode == "off" or current_hvac_action == "idle"):
+                            if not domain_data.get("opportunistic_kickstart"):
+                                boosted_temp = round(target_temp + tolerance, 1)
+                                domain_data["opportunistic_kickstart"] = True
+                                domain_data["is_setting_hvac"] = True
+                                _LOGGER.info(
+                                    "Automatik Zweipunkt [%s]: Opportunistischer Kickstart aktiv (Brenner an, Ist %.1f °C < Soll %.1f °C, Status: %s/%s) -> Schalte '%s' & hebe Temperatur kurzfristig auf %.1f °C an",
+                                    climate_entity,
+                                    current_temp,
+                                    target_temp,
+                                    current_hvac_mode,
+                                    current_hvac_action,
+                                    target_mode,
+                                    boosted_temp,
+                                )
+                                try:
+                                    if current_hvac_mode == "off":
+                                        await hass.services.async_call(
+                                            "climate",
+                                            "set_hvac_mode",
+                                            service_data={"hvac_mode": target_mode},
+                                            target={"entity_id": climate_entity},
+                                            blocking=False,
+                                        )
                                     await hass.services.async_call(
                                         "climate",
-                                        "set_hvac_mode",
-                                        service_data={"hvac_mode": target_mode},
+                                        "set_temperature",
+                                        service_data={"temperature": boosted_temp},
                                         target={"entity_id": climate_entity},
                                         blocking=False,
                                     )
+                                except Exception as err:
+                                    _LOGGER.error(
+                                        "Smart Climate Scheduler [%s]: Fehler beim Kickstart (Temperatur %.1f °C) auf '%s': %s",
+                                        entry_name,
+                                        boosted_temp,
+                                        climate_entity,
+                                        err,
+                                    )
+                                finally:
+                                    hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
+
+                        elif current_hvac_mode == "off":
+                            domain_data["is_setting_hvac"] = True
+                            _LOGGER.info(
+                                "Automatik Zweipunkt [%s]: Ist (%.1f °C) < Schwelle (%.1f - %.2f = %.1f °C) -> Schalte Thermostat auf '%s'",
+                                climate_entity,
+                                current_temp,
+                                target_temp,
+                                tolerance,
+                                target_temp - tolerance,
+                                target_mode,
+                            )
+                            try:
                                 await hass.services.async_call(
                                     "climate",
-                                    "set_temperature",
-                                    service_data={"temperature": boosted_temp},
+                                    "set_hvac_mode",
+                                    service_data={"hvac_mode": target_mode},
                                     target={"entity_id": climate_entity},
                                     blocking=False,
                                 )
                             except Exception as err:
                                 _LOGGER.error(
-                                    "Smart Climate Scheduler [%s]: Fehler beim Kickstart (Temperatur %.1f °C) auf '%s': %s",
+                                    "Smart Climate Scheduler [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
                                     entry_name,
-                                    boosted_temp,
+                                    target_mode,
                                     climate_entity,
                                     err,
                                 )
                             finally:
                                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
-
-                    elif current_hvac_mode == "off":
-                        domain_data["is_setting_hvac"] = True
-                        _LOGGER.info(
-                            "Automatik Zweipunkt [%s]: Ist (%.1f °C) < Schwelle (%.1f - %.2f = %.1f °C) -> Schalte Thermostat auf '%s'",
-                            climate_entity,
-                            current_temp,
-                            target_temp,
-                            tolerance,
-                            target_temp - tolerance,
-                            target_mode,
-                        )
-                        try:
-                            await hass.services.async_call(
-                                "climate",
-                                "set_hvac_mode",
-                                service_data={"hvac_mode": target_mode},
-                                target={"entity_id": climate_entity},
-                                blocking=False,
-                            )
-                        except Exception as err:
-                            _LOGGER.error(
-                                "Smart Climate Scheduler [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
-                                entry_name,
-                                target_mode,
-                                climate_entity,
-                                err,
-                            )
-                        finally:
-                            hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
 
     # Apply-Funktion für Switch und andere Module in domain_data registrieren
     domain_data["async_apply_schedule"] = async_apply_schedule_to_climate
