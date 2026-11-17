@@ -141,6 +141,33 @@ UI_TEXT_TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Tijdvak {index}: {from_time} - {to_time} ({preset})",
         "pl": "Przedział {index}: {from_time} - {to_time} ({preset})",
     },
+    "slot_thermal_flags": {
+        "de": "Vorheizen: {preheat} | Auskühlen: {cooldown}",
+        "en": "Preheat: {preheat} | Cooldown: {cooldown}",
+        "es": "Precalentar: {preheat} | Enfriar: {cooldown}",
+        "fr": "Préchauffage: {preheat} | Refroidissement: {cooldown}",
+        "it": "Prerisc.: {preheat} | Raffredd.: {cooldown}",
+        "nl": "Voorverwarmen: {preheat} | Afkoelen: {cooldown}",
+        "pl": "Nagrzewanie: {preheat} | Ochładzanie: {cooldown}",
+    },
+    "state_on": {
+        "de": "An",
+        "en": "On",
+        "es": "Sí",
+        "fr": "Oui",
+        "it": "Sì",
+        "nl": "Aan",
+        "pl": "Wł.",
+    },
+    "state_off": {
+        "de": "Aus",
+        "en": "Off",
+        "es": "No",
+        "fr": "Non",
+        "it": "No",
+        "nl": "Uit",
+        "pl": "Wył.",
+    },
 }
 
 

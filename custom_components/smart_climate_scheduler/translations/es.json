@@ -24,6 +24,7 @@
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
+          "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)"
         }
       }
@@ -62,6 +63,7 @@
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
+          "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
           "preheat_ignores_away": "Precalentar antes de la llegada en ausencia (Anula ausente y cercano)"
         }
@@ -131,7 +133,9 @@
         "data": {
           "start_time": "Hora de inicio",
           "end_time": "Hora de fin",
-          "preset": "Modo preestablecido"
+          "preset": "Modo preestablecido",
+          "preheat": "Precalentar antes del inicio de la franja",
+          "cooldown": "Enfriar antes del fin de la franja"
         }
       },
       "edit_slot": {
@@ -141,7 +145,9 @@
           "action": "Seleccionar acción",
           "start_time": "Hora de inicio",
           "end_time": "Hora de fin",
-          "preset": "Modo preestablecido"
+          "preset": "Modo preestablecido",
+          "preheat": "Precalentar antes del inicio de la franja",
+          "cooldown": "Enfriar antes del fin de la franja"
         }
       }
     },
@@ -404,6 +410,9 @@
           "activity": "Actividad"
         },
         "state_attributes": {
+          "profile": {
+            "name": "Perfil"
+          },
           "active_slot": {
             "name": "Franja activa"
           },
@@ -451,6 +460,9 @@
       "debug": {
         "name": "Diagnóstico",
         "state_attributes": {
+          "profile": {
+            "name": "Perfil"
+          },
           "preset": {
             "name": "Modo activo"
           },

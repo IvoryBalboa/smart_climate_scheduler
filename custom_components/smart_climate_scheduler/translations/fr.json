@@ -24,6 +24,7 @@
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Tolérance de réactivation de secours (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
+          "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
           "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)"
         }
       }
@@ -62,6 +63,7 @@
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Tolérance de réactivation de secours (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
+          "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
           "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
           "preheat_ignores_away": "Préchauffer avant l'arrivée en absence (Outrepasse absence et zone proche)"
         }
@@ -131,7 +133,9 @@
         "data": {
           "start_time": "Heure de début",
           "end_time": "Heure de fin",
-          "preset": "Mode de préréglage"
+          "preset": "Mode de préréglage",
+          "preheat": "Préchauffer avant le début du créneau",
+          "cooldown": "Refroidir avant la fin du créneau"
         }
       },
       "edit_slot": {
@@ -141,7 +145,9 @@
           "action": "Sélectionner une action",
           "start_time": "Heure de début",
           "end_time": "Heure de fin",
-          "preset": "Mode de préréglage"
+          "preset": "Mode de préréglage",
+          "preheat": "Préchauffer avant le début du créneau",
+          "cooldown": "Refroidir avant la fin du créneau"
         }
       }
     },
@@ -404,6 +410,9 @@
           "activity": "Activité"
         },
         "state_attributes": {
+          "profile": {
+            "name": "Profil"
+          },
           "active_slot": {
             "name": "Créneau actif"
           },
@@ -451,6 +460,9 @@
       "debug": {
         "name": "Diagnostic",
         "state_attributes": {
+          "profile": {
+            "name": "Profil"
+          },
           "preset": {
             "name": "Préréglage actif"
           },

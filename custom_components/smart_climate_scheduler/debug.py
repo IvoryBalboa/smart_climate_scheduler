@@ -12,6 +12,7 @@ from .helpers import (
     get_device_info,
     get_ha_language,
     get_localized_slug_suffix,
+    get_profiles_and_active,
 )
 
 
@@ -57,7 +58,10 @@ class SmartClimateSchedulerDebugSensor(SensorEntity):
         if not isinstance(debug_info, dict):
             debug_info = {}
 
+        _, active_profile = get_profiles_and_active(self.config_entry)
+
         return {
+            "profile": active_profile,
             "preset": preset,
             "active_slot": active_slot,
             "next_slot": next_slot,

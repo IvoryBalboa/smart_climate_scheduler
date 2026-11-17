@@ -129,6 +129,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if overrides_pruned:
         await storage.async_save_data({"overrides": active_overrides})
 
+    raw_tol_backup = stored_data.get("tolerance_backup")
+    tolerance_backup = dict(raw_tol_backup) if isinstance(raw_tol_backup, dict) else None
+
     hass.data[DOMAIN][entry.entry_id] = {
         "data": entry.data,
         "automation_enabled": automation_enabled,
@@ -141,6 +144,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "active_session": None,
         "active_cooling_session": None,
         "last_heating_off_time": None,
+        "tolerance_backup": tolerance_backup,
+        "tolerance_kickstart_done": False,
+        "tolerance_kickstart_target": None,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

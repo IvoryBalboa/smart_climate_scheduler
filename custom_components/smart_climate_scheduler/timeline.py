@@ -119,7 +119,7 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
     data = config_entry.data
     default_preset = options.get("default_preset", data.get("default_preset", "sleep"))
 
-    intervals = [{"start": 0, "end": 1440, "preset": default_preset, "is_fallback": True}]
+    intervals = [{"start": 0, "end": 1440, "preset": default_preset, "is_fallback": True, "preheat": True, "cooldown": True}]
 
     parsed_user_slots = []
     for slot in raw_slots:
@@ -137,6 +137,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
                         "start": start_min,
                         "end": end_min,
                         "preset": slot.get("preset", "none"),
+                        "preheat": bool(slot.get("preheat", True)),
+                        "cooldown": bool(slot.get("cooldown", True)),
                         "duration": duration,
                     }
                 )
@@ -147,6 +149,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
         u_start = u_slot["start"]
         u_end = u_slot["end"]
         u_preset = u_slot["preset"]
+        u_preheat = bool(u_slot.get("preheat", True))
+        u_cooldown = bool(u_slot.get("cooldown", True))
 
         new_intervals = []
         for interval in intervals:
@@ -164,6 +168,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
                             "end": overlap_start,
                             "preset": interval["preset"],
                             "is_fallback": interval.get("is_fallback", False),
+                            "preheat": bool(interval.get("preheat", True)),
+                            "cooldown": bool(interval.get("cooldown", True)),
                         }
                     )
 
@@ -173,6 +179,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
                         "end": overlap_end,
                         "preset": u_preset,
                         "is_fallback": False,
+                        "preheat": u_preheat,
+                        "cooldown": u_cooldown,
                     }
                 )
 
@@ -183,6 +191,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
                             "end": i_end,
                             "preset": interval["preset"],
                             "is_fallback": interval.get("is_fallback", False),
+                            "preheat": bool(interval.get("preheat", True)),
+                            "cooldown": bool(interval.get("cooldown", True)),
                         }
                     )
             else:
@@ -207,6 +217,8 @@ def get_day_slots_with_fallbacks(config_entry, check_date) -> list[dict]:
             "from": from_str,
             "to": to_str,
             "preset": interval["preset"],
+            "preheat": bool(interval.get("preheat", True)),
+            "cooldown": bool(interval.get("cooldown", True)),
         }
         if interval.get("is_fallback"):
             slot_dict["is_fallback"] = True
@@ -243,6 +255,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                 "start": start_dt,
                 "end": end_dt,
                 "preset": s.get("preset", "none"),
+                "preheat": bool(s.get("preheat", True)),
+                "cooldown": bool(s.get("cooldown", True)),
                 "is_fallback": s.get("is_fallback", False),
                 "from_str": s["from"][:5],
                 "to_str": s["to"][:5],
@@ -274,6 +288,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                         "start": ov_start,
                         "end": ov_end,
                         "preset": preset,
+                        "preheat": True,
+                        "cooldown": True,
                         "is_override": True,
                         "override_id": o_id,
                         "from_str": ov_start.strftime("%H:%M"),
@@ -306,6 +322,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                             "start": ov_start,
                             "end": ov_end,
                             "preset": preset,
+                            "preheat": True,
+                            "cooldown": True,
                             "is_override": True,
                             "override_id": o_id,
                             "from_str": start_str,
@@ -359,6 +377,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                 not last.get("is_override")
                 and not item.get("is_override")
                 and last["preset"] == item["preset"]
+                and bool(last.get("preheat", True)) == bool(item.get("preheat", True))
+                and bool(last.get("cooldown", True)) == bool(item.get("cooldown", True))
                 and last["end"] == item["start"]
             ):
                 last["end"] = item["end"]
@@ -376,21 +396,19 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
     if active_idx == -1 and timeline:
         active_idx = 0
 
-    profiles, active_profile = get_profiles_and_active(config_entry)
-
     def _build_slot_payload(item: dict) -> dict:
         payload = {
             "from": item["from_str"],
             "to": item["to_str"],
             "preset": item["preset"],
+            "preheat": bool(item.get("preheat", True)),
+            "cooldown": bool(item.get("cooldown", True)),
         }
         if item.get("is_fallback"):
             payload["is_fallback"] = True
         if item.get("is_override"):
             payload["is_override"] = True
             payload["override_id"] = item.get("override_id")
-        else:
-            payload["profile"] = active_profile
         return payload
 
     active_item = timeline[active_idx]

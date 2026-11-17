@@ -9,9 +9,11 @@ from typing import Any
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
+    CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
     CONF_ENABLE_SELF_LEARNING,
     CONF_PREHEAT_ENABLED,
+    CONF_TOLERANCE_ENTITY,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_PREHEAT_ENABLED,
@@ -933,4 +935,251 @@ def async_write_ha_state_if_enabled(entity: Any) -> None:
     if getattr(entity, "enabled", True) is False:
         return
     entity.async_write_ha_state()
+
+
+def get_numeric_entity_value(hass: Any, entity_id: str | None) -> float | None:
+    """Liest den numerischen Zustand einer Entität (z. B. number.* Toleranz-Entität)."""
+    if not hass or not entity_id or not isinstance(entity_id, str):
+        return None
+    states_mgr = getattr(hass, "states", None)
+    if not states_mgr:
+        return None
+    st = states_mgr.get(entity_id)
+    if not st or st.state in ("unavailable", "unknown", "None", None, ""):
+        return None
+    try:
+        val = float(st.state)
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return round(val, 3)
+    except (ValueError, TypeError):
+        return None
+
+
+def resolve_tolerance_entity(hass: Any, config_entry: Any) -> tuple[str | None, str]:
+    """Ermittelt die Better-Thermostat-Toleranz-Entität (manuelle Wahl vor Auto-Discovery via Gerät)."""
+    if not config_entry:
+        return None, "none"
+
+    options = getattr(config_entry, "options", {}) or {}
+    data = getattr(config_entry, "data", {}) or {}
+
+    raw_manual = options.get(CONF_TOLERANCE_ENTITY)
+    if raw_manual is None:
+        raw_manual = data.get(CONF_TOLERANCE_ENTITY)
+    if isinstance(raw_manual, str):
+        manual_entity = raw_manual.strip()
+        if manual_entity and manual_entity.startswith("number."):
+            return manual_entity, "manual"
+
+    climate_entity = (options.get(CONF_CLIMATE_ENTITY) or data.get(CONF_CLIMATE_ENTITY) or "").strip()
+    if not hass or not climate_entity:
+        return None, "none"
+
+    try:
+        from homeassistant.helpers import entity_registry as er
+
+        ent_reg = er.async_get(hass)
+        if not ent_reg:
+            return None, "none"
+        cl_reg = ent_reg.async_get(climate_entity)
+        device_id = getattr(cl_reg, "device_id", None) if cl_reg else None
+        if not isinstance(device_id, str) or not device_id.strip():
+            return None, "none"
+
+        device_entries: list[Any] = []
+        if hasattr(er, "async_entries_for_device"):
+            raw_entries = er.async_entries_for_device(ent_reg, device_id)
+            if isinstance(raw_entries, (list, tuple, set)):
+                device_entries.extend(raw_entries)
+        if not device_entries and isinstance(getattr(ent_reg, "entities", None), dict):
+            for entry in ent_reg.entities.values():
+                if getattr(entry, "device_id", None) == device_id:
+                    device_entries.append(entry)
+
+        best_entity: str | None = None
+        best_score = -1
+        states_mgr = getattr(hass, "states", None)
+
+        for reg_entry in device_entries:
+            ent_id = getattr(reg_entry, "entity_id", None)
+            if not isinstance(ent_id, str) or not ent_id.startswith("number."):
+                continue
+            disabled_by = getattr(reg_entry, "disabled_by", None)
+            if disabled_by is not None and disabled_by is not False:
+                continue
+            if getattr(reg_entry, "disabled", False) is True:
+                continue
+
+            ent_lower = ent_id.lower()
+            t_key = str(getattr(reg_entry, "translation_key", "") or "").lower()
+            u_id = str(getattr(reg_entry, "unique_id", "") or "").lower()
+            o_name = str(getattr(reg_entry, "original_name", "") or "").lower()
+
+            matches = (
+                "tolerance" in ent_lower
+                or "toleranz" in ent_lower
+                or "tolerance" in t_key
+                or "toleranz" in t_key
+                or "tolerance" in u_id
+                or "toleranz" in u_id
+                or "tolerance" in o_name
+                or "toleranz" in o_name
+            )
+            if not matches:
+                continue
+
+            score = 1
+            if t_key == "tolerance":
+                score += 4
+            if ent_lower.endswith("_tolerance") or ent_lower.endswith("_toleranz"):
+                score += 2
+            if states_mgr and states_mgr.get(ent_id) is not None:
+                score += 1
+
+            if score > best_score:
+                best_score = score
+                best_entity = ent_id
+
+        if best_entity:
+            return best_entity, "auto"
+    except Exception as err:
+        _LOGGER.debug("Fehler bei der Auto-Erkennung der Toleranz-Entität für '%s': %s", climate_entity, err)
+
+    return None, "none"
+
+
+async def async_backup_and_zero_tolerance(
+    hass: Any,
+    domain_data: dict,
+    tolerance_entity: str,
+) -> bool:
+    """Sichert die positive Ausgangstoleranz persistent und setzt die Toleranz-Entität auf 0."""
+    if not hass or not isinstance(domain_data, dict) or not tolerance_entity:
+        return False
+
+    st = hass.states.get(tolerance_entity) if getattr(hass, "states", None) else None
+    cur_val = get_numeric_entity_value(hass, tolerance_entity)
+    if st is None or cur_val is None:
+        return False
+
+    attrs = getattr(st, "attributes", None) or {}
+    raw_min = attrs.get("min")
+    if raw_min is not None:
+        try:
+            if float(raw_min) > 0.0:
+                _LOGGER.debug(
+                    "Toleranz-Entität '%s' erlaubt kein 0.0 (min=%s) -> Fallback nutzen",
+                    tolerance_entity,
+                    raw_min,
+                )
+                return False
+        except (ValueError, TypeError):
+            pass
+
+    existing_backup = domain_data.get("tolerance_backup")
+
+    if cur_val <= 0:
+        # Bereits auf 0 -> nur True zurückgeben, falls bereits ein gültiges Backup existiert
+        return bool(
+            isinstance(existing_backup, dict)
+            and existing_backup.get("entity_id") == tolerance_entity
+            and safe_float(existing_backup.get("original_value"), 0.0, allow_zero_or_negative=True) > 0
+        )
+
+    # Nur positiven Wert sichern und bestehendes Backup derselben Entität niemals überschreiben
+    if (
+        not isinstance(existing_backup, dict)
+        or existing_backup.get("entity_id") != tolerance_entity
+        or safe_float(existing_backup.get("original_value"), 0.0, allow_zero_or_negative=True) <= 0
+    ):
+        backup = {
+            "entity_id": tolerance_entity,
+            "original_value": round(cur_val, 3),
+        }
+        domain_data["tolerance_backup"] = backup
+        storage = domain_data.get("storage")
+        if storage and hasattr(storage, "async_save_data"):
+            await storage.async_save_data({"tolerance_backup": backup})
+        _LOGGER.info(
+            "Opportunistisches Mitheizen [%s]: Original-Toleranz %.2f K persistent gesichert -> Setze Toleranz auf 0.0 K",
+            tolerance_entity,
+            cur_val,
+        )
+    else:
+        _LOGGER.info(
+            "Opportunistisches Mitheizen [%s]: Setze Toleranz auf 0.0 K (gesichertes Original: %.2f K)",
+            tolerance_entity,
+            existing_backup["original_value"],
+        )
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        service_data={"value": 0.0},
+        target={"entity_id": tolerance_entity},
+        blocking=False,
+    )
+    return True
+
+
+async def async_restore_tolerance(
+    hass: Any,
+    domain_data: dict,
+    reason: str = "",
+) -> bool:
+    """Stellt die persistent gesicherte Original-Toleranz wieder her und bereinigt das Backup."""
+    if not hass or not isinstance(domain_data, dict):
+        return False
+
+    backup = domain_data.get("tolerance_backup")
+    if not isinstance(backup, dict):
+        return False
+
+    ent_id = backup.get("entity_id")
+    orig_val = safe_float(backup.get("original_value"), 0.0, allow_zero_or_negative=True)
+
+    if not isinstance(ent_id, str) or not ent_id.strip() or orig_val <= 0:
+        domain_data["tolerance_backup"] = None
+        storage = domain_data.get("storage")
+        if storage and hasattr(storage, "async_save_data"):
+            await storage.async_save_data({"tolerance_backup": None})
+        return False
+
+    ent_id = ent_id.strip()
+    st = hass.states.get(ent_id) if getattr(hass, "states", None) else None
+    if st is not None and getattr(st, "attributes", None):
+        attrs = st.attributes
+        try:
+            if attrs.get("min") is not None:
+                orig_val = max(float(attrs["min"]), orig_val)
+            if attrs.get("max") is not None:
+                orig_val = min(float(attrs["max"]), orig_val)
+        except (ValueError, TypeError):
+            pass
+
+    restore_val = round(orig_val, 3)
+
+    # Zuerst Backup lokal + persistent bereinigen, um Doppel-Aufrufe bei Event-Kaskaden auszuschließen
+    domain_data["tolerance_backup"] = None
+    storage = domain_data.get("storage")
+    if storage and hasattr(storage, "async_save_data"):
+        await storage.async_save_data({"tolerance_backup": None})
+
+    _LOGGER.info(
+        "Opportunistisches Mitheizen [%s]: Stelle Original-Toleranz %.2f K wieder her (%s)",
+        ent_id,
+        restore_val,
+        reason or "restore",
+    )
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        service_data={"value": restore_val},
+        target={"entity_id": ent_id},
+        blocking=False,
+    )
+    return True
+
 

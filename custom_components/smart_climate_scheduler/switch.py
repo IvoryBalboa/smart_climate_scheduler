@@ -14,6 +14,7 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
     CONF_ENABLE_SELF_LEARNING,
+    CONF_FALLBACK_TOLERANCE,
     CONF_HEATING_ACTIVE_SENSOR,
     CONF_HVAC_OFF_ON_TARGET,
     CONF_OPPORTUNISTIC_HEATING,
@@ -32,15 +33,18 @@ from .const import (
 )
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
+    async_restore_tolerance,
     async_sync_entity_registry_disabled,
     async_write_ha_state_if_enabled,
     get_config_entry_slug,
     get_device_info,
     get_ha_language,
     get_localized_slug_suffix,
+    get_numeric_entity_value,
     get_preset_temperature,
     get_target_hvac_mode,
     is_window_or_door_open,
+    resolve_tolerance_entity,
     safe_float as _safe_float,
 )
 
@@ -248,7 +252,22 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                             except (ValueError, TypeError):
                                 cur_t = None
                             tgt_t = get_preset_temperature(state_obj, preset)
-                            tol = _safe_float(attrs.get("tolerance"), DEFAULT_FALLBACK_TOLERANCE)
+                            fallback_tol = _safe_float(
+                                self.config_entry.options.get(
+                                    CONF_FALLBACK_TOLERANCE,
+                                    self.config_entry.data.get(CONF_FALLBACK_TOLERANCE),
+                                ),
+                                DEFAULT_FALLBACK_TOLERANCE,
+                            )
+                            resolved_tol_ent, _ = resolve_tolerance_entity(self.hass, self.config_entry)
+                            tol_ent_val = get_numeric_entity_value(self.hass, resolved_tol_ent)
+                            if tol_ent_val is not None:
+                                tol = max(0.0, tol_ent_val)
+                            else:
+                                tol = max(
+                                    0.0,
+                                    _safe_float(attrs.get("tolerance"), fallback_tol, allow_zero_or_negative=True),
+                                )
                             
                             if cur_t is not None and tgt_t is not None:
                                 if cur_t >= tgt_t:
@@ -295,6 +314,9 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = False
         domain_data["two_point_target_reached"] = False
+        domain_data["tolerance_kickstart_done"] = False
+        domain_data["tolerance_kickstart_target"] = None
+        await async_restore_tolerance(self.hass, domain_data, reason="automation_disabled")
         
         # Persistent im Storage speichern (ohne Reload)
         storage = domain_data.get("storage")
@@ -386,6 +408,11 @@ class SmartClimateSchedulerOptionSwitch(SwitchEntity):
         for sensor in self.hass.data.get(f"{DOMAIN}_sensors", []):
             if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == self.config_entry.entry_id:
                 async_write_ha_state_if_enabled(sensor)
+
+        if self._option_key == CONF_OPPORTUNISTIC_HEATING and not target_state:
+            domain_data["tolerance_kickstart_done"] = False
+            domain_data["tolerance_kickstart_target"] = None
+            await async_restore_tolerance(self.hass, domain_data, reason="opportunistic_heating_disabled")
 
         # Bei Hysterese / Opportunistischem Mitheizen direkt Zeitplan anwenden falls Automatik aktiv
         if self._option_key in (CONF_HVAC_OFF_ON_TARGET, CONF_OPPORTUNISTIC_HEATING):

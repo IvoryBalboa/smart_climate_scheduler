@@ -50,10 +50,12 @@ from .cooling_rate import get_effective_cooling_rate
 from .helpers import (
     get_forecast_temperature_for_window,
     get_ha_language,
+    get_numeric_entity_value,
     get_preset_temperature,
     get_resolved_outside_info,
     is_window_or_door_open,
     parse_time,
+    resolve_tolerance_entity,
     safe_float,
 )
 
@@ -155,7 +157,12 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         options.get(CONF_FALLBACK_TOLERANCE, data.get(CONF_FALLBACK_TOLERANCE)),
         DEFAULT_FALLBACK_TOLERANCE,
     )
-    tolerance = _safe_val(attrs.get("tolerance"), fallback_tolerance)
+    resolved_tol_entity, tol_entity_source = resolve_tolerance_entity(hass, config_entry)
+    tol_entity_val = get_numeric_entity_value(hass, resolved_tol_entity)
+    if tol_entity_val is not None:
+        tolerance = max(0.0, tol_entity_val)
+    else:
+        tolerance = max(0.0, _safe_val(attrs.get("tolerance"), fallback_tolerance))
 
     # Außentemperatur ermitteln (Sensor hat Vorrang vor Wetter-Entität; Wetter nutzt Attribut 'temperature')
     outside_sensor = options.get(CONF_OUTSIDE_TEMP_SENSOR, data.get(CONF_OUTSIDE_TEMP_SENSOR))
@@ -189,6 +196,15 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         options.get(CONF_PREHEAT_IGNORES_AWAY, data.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY))
     )
     cooldown_enabled = bool(options.get(CONF_COOLDOWN_ENABLED, data.get(CONF_COOLDOWN_ENABLED, True)))
+
+    next_slot_preheat = bool(next_slot.get("preheat", True)) if next_slot else True
+    active_slot_cooldown = (
+        True
+        if (active_slot and active_slot.get("is_fallback"))
+        else (bool(active_slot.get("cooldown", True)) if active_slot else True)
+    )
+    effective_preheat_enabled = preheat_enabled and next_slot_preheat
+    effective_cooldown_enabled = cooldown_enabled and active_slot_cooldown
 
     max_preheat = int(
         _safe_val(
@@ -227,7 +243,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     is_cooling_down = False
     cooldown_duration = 0
 
-    if cooldown_enabled and next_slot:
+    if effective_cooldown_enabled and next_slot:
         next_from_time_c = parse_time(next_slot.get("from"))
         if next_from_time_c and next_slot.get("date"):
             try:
@@ -307,6 +323,10 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             except Exception as e:
                 _LOGGER.error("Fehler bei Cooldown-Berechnung (V2): %s", e)
 
+    elif isinstance(entry_data, dict):
+        entry_data["cooldown_latched"] = False
+        entry_data["locked_cooldown_duration"] = None
+
     use_weather_forecast = bool(
         options.get(
             CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
@@ -320,7 +340,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     forecast_used = False
     forecast_window_str: str | None = None
 
-    if preheat_enabled and next_slot and use_weather_forecast and outside_weather:
+    if effective_preheat_enabled and next_slot and use_weather_forecast and outside_weather:
         next_from_time_pf = parse_time(next_slot.get("from"))
         if next_from_time_pf and next_slot.get("date"):
             try:
@@ -360,7 +380,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     is_preheat_needed = False
     preheat_duration = 0
 
-    if preheat_enabled and next_slot:
+    if effective_preheat_enabled and next_slot:
         next_from_time = parse_time(next_slot.get("from"))
         if next_from_time and next_slot.get("date"):
             try:
@@ -440,6 +460,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                         preheat_duration = preheat.get("duration_minutes", 0)
             except Exception as e:
                 _LOGGER.error("Fehler bei Preheat-Berechnung (V2): %s", e)
+    elif isinstance(entry_data, dict):
+        entry_data["preheat_latched"] = False
+        entry_data["locked_preheat_duration"] = None
 
     entry_data["was_preheating"] = is_preheat_needed
     entry_data["preheat_target_temp"] = next_temp
@@ -492,7 +515,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     elif next_is_override and is_preheat_needed and next_preset_name and next_preset_name != "none":
         # 2. Nächster Slot ist ein Override und Vorheizen ist aktiv -> Anwesenheit wird umgangen
         preset = next_preset_name
-    elif preheat_enabled and preheat_ignores_away and is_preheat_needed and next_preset_name and next_preset_name != "none":
+    elif effective_preheat_enabled and preheat_ignores_away and is_preheat_needed and next_preset_name and next_preset_name != "none":
         # 3. Vorheizen für geplanten Zeitplan-Slot aktiv: Überstimmt Abwesenheit (sowohl away als auch away_near),
         # damit das Haus bei Feierabend (auch wenn der Arbeitsplatz in away_near liegt) rechtzeitig warm ist!
         preset = next_preset_name
@@ -568,12 +591,16 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "fallback_heating_rate": fallback_rate,
             "fallback_cooling_rate": fallback_cooling_rate,
             "tolerance": tolerance,
+            "tolerance_entity": resolved_tol_entity,
+            "tolerance_entity_source": tol_entity_source,
+            "tolerance_backup": entry_data.get("tolerance_backup") if isinstance(entry_data, dict) else None,
         },
         "settings": {
             "climate_entity": climate_entity,
             "outside_temp_sensor": outside_sensor,
             "outside_weather_entity": outside_weather,
             "heating_active_sensor": options.get(CONF_HEATING_ACTIVE_SENSOR, data.get(CONF_HEATING_ACTIVE_SENSOR)),
+            "tolerance_entity": resolved_tol_entity,
             "max_preheat_minutes": max_preheat,
             "max_cooldown_minutes": max_cooldown,
             "preheat_enabled": preheat_enabled,
@@ -590,6 +617,10 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "calculated_cooldown_duration": cooldown.get("duration_minutes", 0) if cooldown else 0,
             "is_preheating_active": is_preheat_needed,
             "is_cooldown_active": is_cooling_down,
+            "slot_preheat_allowed": next_slot_preheat,
+            "slot_cooldown_allowed": active_slot_cooldown,
+            "effective_preheat_enabled": effective_preheat_enabled,
+            "effective_cooldown_enabled": effective_cooldown_enabled,
             "window_or_door_open": is_window_or_door_open(climate_state),
             "selected_next_action": next_action,
             "final_state": preset,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
+from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
@@ -31,6 +32,25 @@ def _clean_rate(val: any, default: float = DEFAULT_FALLBACK_HEATING_RATE) -> flo
         return default
 
 
+def _clean_tolerance_backup(raw: Any) -> dict | None:
+    """Validiert ein gespeichertes Toleranz-Backup (nur positive Originalwerte > 0)."""
+    if not isinstance(raw, dict):
+        return None
+    entity_id = raw.get("entity_id")
+    if not isinstance(entity_id, str) or not entity_id.strip():
+        return None
+    try:
+        orig_val = float(raw.get("original_value"))
+        if math.isnan(orig_val) or math.isinf(orig_val) or orig_val <= 0:
+            return None
+        return {
+            "entity_id": entity_id.strip(),
+            "original_value": round(orig_val, 3),
+        }
+    except (ValueError, TypeError):
+        return None
+
+
 class ClimateSchedulerStorage:
     """Verwaltet das Laden und Speichern der gelernten Aufheiz- und Abkühlraten-Matrix und Einstellungen."""
 
@@ -55,6 +75,7 @@ class ClimateSchedulerStorage:
                 "cooling_averages": {},
                 "cooling_average": DEFAULT_FALLBACK_COOLING_RATE,
                 "overrides": {},
+                "tolerance_backup": None,
             }
             await self._store.async_save(data)
         else:
@@ -75,6 +96,7 @@ class ClimateSchedulerStorage:
             data["automation_enabled"] = bool(data.get("automation_enabled", False))
             raw_ov = data.get("overrides")
             data["overrides"] = dict(raw_ov) if isinstance(raw_ov, dict) else {}
+            data["tolerance_backup"] = _clean_tolerance_backup(data.get("tolerance_backup"))
 
         self._cached_data = data
         return data
@@ -96,6 +118,8 @@ class ClimateSchedulerStorage:
                 cleaned_patch[k] = normalize_matrix(v)
             elif k == "overrides" and isinstance(v, dict):
                 cleaned_patch[k] = dict(v)
+            elif k == "tolerance_backup":
+                cleaned_patch[k] = _clean_tolerance_backup(v)
             else:
                 cleaned_patch[k] = v
 

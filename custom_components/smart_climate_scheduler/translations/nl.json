@@ -24,6 +24,7 @@
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
           "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)"
         }
       }
@@ -62,6 +63,7 @@
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
           "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
           "preheat_ignores_away": "Voorverwarmen voor aankomst bij afwezigheid (Overschrijft afwezig en nabij)"
         }
@@ -131,7 +133,9 @@
         "data": {
           "start_time": "Starttijd",
           "end_time": "Eindtijd",
-          "preset": "Preset-modus"
+          "preset": "Preset-modus",
+          "preheat": "Voorverwarmen voor start tijdvak",
+          "cooldown": "Afkoelen voor einde tijdvak"
         }
       },
       "edit_slot": {
@@ -141,7 +145,9 @@
           "action": "Selecteer actie",
           "start_time": "Starttijd",
           "end_time": "Eindtijd",
-          "preset": "Preset-modus"
+          "preset": "Preset-modus",
+          "preheat": "Voorverwarmen voor start tijdvak",
+          "cooldown": "Afkoelen voor einde tijdvak"
         }
       }
     },
@@ -404,6 +410,9 @@
           "activity": "Activiteit"
         },
         "state_attributes": {
+          "profile": {
+            "name": "Profiel"
+          },
           "active_slot": {
             "name": "Actief tijdvak"
           },
@@ -451,6 +460,9 @@
       "debug": {
         "name": "Diagnose",
         "state_attributes": {
+          "profile": {
+            "name": "Profiel"
+          },
           "preset": {
             "name": "Actieve preset"
           },

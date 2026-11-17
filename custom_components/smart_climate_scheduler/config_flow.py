@@ -41,6 +41,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_TOLERANCE_ENTITY,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     CONF_PREHEAT_IGNORES_AWAY,
     DAYS,
@@ -96,10 +97,43 @@ def _normalize_schedule(raw_schedule: dict | None) -> dict[str, list[dict]]:
                             "from": slot.get("from", "00:00:00"),
                             "to": slot.get("to", "00:00:00"),
                             "preset": _get_slot_preset(slot),
+                            "preheat": bool(slot.get("preheat", True)),
+                            "cooldown": bool(slot.get("cooldown", True)),
                         }
                     )
         normalized[day] = normalized_day
     return normalized
+
+
+def _format_slot_item_with_flags(idx: int, slot: dict, lang: str) -> str:
+    """Formats a slot line including localized preheat and cooldown status indicators."""
+    p = _get_slot_preset(slot)
+    p_label = _format_preset(p, lang)
+    f = slot.get("from", "00:00:00")[:5]
+    t = slot.get("to", "00:00:00")[:5]
+    base_text = get_localized_ui_text(
+        "slot_item",
+        lang,
+        index=idx + 1,
+        from_time=f,
+        to_time=t,
+        preset=p_label,
+    )
+    preheat_state = get_localized_ui_text(
+        "state_on" if bool(slot.get("preheat", True)) else "state_off",
+        lang,
+    )
+    cooldown_state = get_localized_ui_text(
+        "state_on" if bool(slot.get("cooldown", True)) else "state_off",
+        lang,
+    )
+    flags_text = get_localized_ui_text(
+        "slot_thermal_flags",
+        lang,
+        preheat=preheat_state,
+        cooldown=cooldown_state,
+    )
+    return f"{base_text} [{flags_text}]"
 
 
 class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -133,6 +167,10 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 user_input[CONF_OPPORTUNISTIC_HEATING] = bool(
                     user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
+                )
+                raw_tol_ent = user_input.get(CONF_TOLERANCE_ENTITY)
+                user_input[CONF_TOLERANCE_ENTITY] = (
+                    raw_tol_ent.strip() if isinstance(raw_tol_ent, str) and raw_tol_ent.strip() else None
                 )
                 user_input[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
                     user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
@@ -225,6 +263,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_OPPORTUNISTIC_HEATING, default=DEFAULT_OPPORTUNISTIC_HEATING
                 ): BooleanSelector(),
+                vol.Optional(CONF_TOLERANCE_ENTITY): EntitySelector(
+                    EntitySelectorConfig(domain="number")
+                ),
                 vol.Optional(
                     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, default=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT
                 ): BooleanSelector(),
@@ -360,6 +401,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
                     )
                 ),
+                CONF_TOLERANCE_ENTITY: options.get(
+                    CONF_TOLERANCE_ENTITY, data.get(CONF_TOLERANCE_ENTITY)
+                ),
                 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT: bool(
                     options.get(
                         CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
@@ -470,6 +514,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
                 user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
             )
+            raw_tol_ent = user_input.get(CONF_TOLERANCE_ENTITY)
+            self.settings_data[CONF_TOLERANCE_ENTITY] = (
+                raw_tol_ent.strip() if isinstance(raw_tol_ent, str) and raw_tol_ent.strip() else None
+            )
             self.settings_data[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
                 user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
             )
@@ -539,6 +587,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_OPPORTUNISTIC_HEATING): BooleanSelector(),
+                vol.Optional(CONF_TOLERANCE_ENTITY): EntitySelector(
+                    EntitySelectorConfig(domain="number")
+                ),
                 vol.Optional(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT): BooleanSelector(),
             }
         )
@@ -780,21 +831,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         lang = get_ha_language(getattr(self, "hass", None))
         if slots:
-            slot_lines = []
-            for idx, s in enumerate(slots):
-                p = s.get("preset", "none")
-                p_label = _format_preset(p, lang)
-                f = s.get("from", "00:00:00")[:5]
-                t = s.get("to", "00:00:00")[:5]
-                item_text = get_localized_ui_text(
-                    "slot_item",
-                    lang,
-                    index=idx + 1,
-                    from_time=f,
-                    to_time=t,
-                    preset=p_label,
-                )
-                slot_lines.append(f"• {item_text}")
+            slot_lines = [
+                f"• {_format_slot_item_with_flags(idx, s, lang)}"
+                for idx, s in enumerate(slots)
+            ]
             slots_list_str = "\n" + "\n".join(slot_lines)
         else:
             slots_list_str = "\n" + get_localized_ui_text("no_slots_configured", lang)
@@ -825,21 +865,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 return await self.async_step_edit_slot()
 
         lang = get_ha_language(getattr(self, "hass", None))
-        options = []
-        for idx, slot in enumerate(slots):
-            preset = slot.get("preset", "none")
-            preset_label = _format_preset(preset, lang)
-            from_t = slot.get("from", "00:00:00")
-            to_t = slot.get("to", "00:00:00")
-            label = get_localized_ui_text(
-                "slot_item",
-                lang,
-                index=idx + 1,
-                from_time=from_t[:5],
-                to_time=to_t[:5],
-                preset=preset_label,
-            )
-            options.append({"value": f"slot_{idx}", "label": label})
+        options = [
+            {"value": f"slot_{idx}", "label": _format_slot_item_with_flags(idx, slot, lang)}
+            for idx, slot in enumerate(slots)
+        ]
 
         schema = vol.Schema(
             {
@@ -908,6 +937,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     "from": start_str,
                     "to": end_str,
                     "preset": user_input["preset"],
+                    "preheat": bool(user_input.get("preheat", True)),
+                    "cooldown": bool(user_input.get("cooldown", True)),
                 }
 
                 day_slots = list(self.current_schedule.get(self.selected_day, []))
@@ -929,6 +960,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         options=supported_presets,
                     )
                 ),
+                vol.Optional("preheat", default=True): BooleanSelector(),
+                vol.Optional("cooldown", default=True): BooleanSelector(),
             }
         )
 
@@ -970,6 +1003,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     "from": start_str,
                     "to": end_str,
                     "preset": user_input["preset"],
+                    "preheat": bool(user_input.get("preheat", True)),
+                    "cooldown": bool(user_input.get("cooldown", True)),
                 }
 
                 day_slots[self.selected_slot_index] = updated_slot
@@ -1001,6 +1036,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     options=supported_presets,
                 )
             ),
+            vol.Optional(
+                "preheat", default=bool(current_slot.get("preheat", True))
+            ): BooleanSelector(),
+            vol.Optional(
+                "cooldown", default=bool(current_slot.get("cooldown", True))
+            ): BooleanSelector(),
         }
 
         return self.async_show_form(step_id="edit_slot", data_schema=vol.Schema(edit_schema_dict), errors=errors)
