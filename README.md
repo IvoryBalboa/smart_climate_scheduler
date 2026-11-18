@@ -1,4 +1,4 @@
-# Smart Climate Scheduler (v2.2)
+# Smart Climate Scheduler (v3.0.0)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -63,8 +63,15 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
   * Zeitfenster-Override: z. B. *"Halte bis 23:00 Uhr die Komfort-Temperatur"*.
 * Nach Ablauf der gewählten Zeitspanne kehrt das System automatisch in den regulären Zeitplan zurück.
 
-### 6. 🎚️ Volle Kontrolle: Automatik-Schalter, Options-Flow & Matrix-Pflege
+### 6. 🎨 Eingebettete Lovelace-Karte (24h-Zeitleiste & Drag-&-Drop)
+* **Automatisch integriert**: Die benutzerdefinierte Lovelace-Karte **`smart-climate-scheduler-card`** wird direkt mit der Integration ausgeliefert und automatisch im Home Assistant Frontend registriert – es ist kein HACS-Frontend-Download nötig.
+* **Raumauswahl über `config_entry`**: Im visuellen Karten-Editor wählst du direkt den gewünschten Raum (**Config Entry**) aus – unabhängig von umbenannten Sensor-IDs.
+* **Interaktive 24h-Zeitleiste**: Wochentag-Tabs (Mo–So), farbcodierte Zeitblöcke, neue Slots per Klick anlegen sowie Start-/Endzeiten per Drag-&-Drop im 5-, 15- oder 30-Minuten-Raster anpassen.
+* **Komplette Steuerung auf dem Dashboard**: Vorheizen & Auskühlen pro Slot schalten, Tagespläne mit einem Klick auf Mo–Fr / Sa–So / einzelne Tage kopieren, Profile wechseln oder neu anlegen, Automatik ein-/ausschalten und Schnell-Overrides direkt starten.
+
+### 7. 🎚️ Volle Kontrolle: Automatik-Schalter, Toleranz-Steuerung & Matrix-Pflege
 * **Schalter `switch.<name>_automatic`**: Aktiviert oder pausiert die gesamte Automatik für den Raum bequem vom Dashboard aus.
+* **Better Thermostat Toleranz-Steuerung**: Verknüpft (automatisch per Gerät oder optional gewählt) die Toleranz-Entität (`number.*`), setzt sie bei opportunistischem Mitheizen temporär auf `0` K und stellt den Originalwert beim Heizstart (`heating`) zuverlässig wieder her.
 * **Lernen konfigurieren (Options-Flow)**: Wer feste Aufheiz- oder Abkühlwerte bevorzugt, schaltet das adaptive Lernen in den Integrations-Optionen (*Einstellungen > Geräte & Dienste > Smart Climate Scheduler > Konfigurieren*) ab. Die Vorheizung rechnet dann stabil mit den vorgegebenen Standard-Raten.
 * **Dienste zur Matrix-Pflege**: Einzelne K/h-Werte pro Außentemperatur können jederzeit gezielt per Home Assistant Service eingesehen, manuell gesetzt oder zurückgesetzt werden.
 
@@ -83,7 +90,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v2.5.0.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v3.0.0.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -101,7 +108,25 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
    * **Klimagerät (`climate.*`)**: Wähle dein Better Thermostat (z. B. `climate.better_thermostat_wohnzimmer`).
    * **Außentemperatur**: Wähle deinen Außensensor (`sensor.*_temperature`) oder deinen Wetterdienst (`weather.*`).
    * **Brenner-/Heizaktiv-Sensor (Optional)**: Sensor, der anzeigt, ob der Heizkörper aktiv warm wird.
-   * **Zeitpläne einrichten**: Richte deine Zeitfenster für den ersten Tag ein und nutze die **Kopierfunktion**, um den Plan auf weitere Tage zu übertragen.
+   * **Zeitpläne einrichten**: Richte deine Zeitfenster direkt im Assistenten oder bequem über die integrierte Lovelace-Karte ein.
+
+---
+
+## 🎨 Lovelace-Karte zum Dashboard hinzufügen
+
+Nach der Installation und einem Home Assistant Neustart steht die Karte **„Smart Climate Scheduler Card“** automatisch im Dashboard-Editor (*Karte hinzufügen*) zur Verfügung:
+
+1. Öffne dein Dashboard und wähle **Dashboard bearbeiten > + Karte hinzufügen**.
+2. Suche nach **Smart Climate Scheduler Card** und wähle im visuellen Editor den gewünschten **Raum / Config Entry** aus.
+3. Optional per YAML-Konfiguration einbinden:
+   ```yaml
+   type: custom:smart-climate-scheduler-card
+   config_entry: <DEINE_CONFIG_ENTRY_ID>
+   snap_minutes: 15
+   show_override_bar: true
+   ```
+
+> 💡 **Tipp:** Auf der 24h-Zeitleiste legst du per Klick auf freie Fläche neue Zeit-Slots an, verschiebst oder skalierst Blöcke per Drag-&-Drop an den Rändern und passt im unteren Inspektor Start/Ende, Preset sowie *Vor Start vorheizen* und *Vor Ende auskühlen* an.
 
 ---
 
@@ -178,6 +203,17 @@ Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
   - Automatischer Fallback auf `climate.set_temperature` für Thermostate ohne Home Assistant Preset-Unterstützung (z. B. reine Zigbee-/Z-Wave-TRVs ohne Better Thermostat).
   - Frei konfigurierbare Sollwert-Temperaturen für Presets (`comfort`, `eco`, `sleep`, `away`, `boost`) direkt im Options-Flow, falls kein Better Thermostat vorgeschaltet ist.
   - Erweiterte Heizerkennung bei modulierenden Ventilen ohne `hvac_action` (z. B. über Ventilöffnung > 0 %).
+
+---
+
+## 📝 Changelog
+
+<!-- CURRENT_CHANGELOG_START -->
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.0.0** (*Eingebettete 24h-Timeline Lovelace-Karte & Toleranz-Steuerung*):
+* **Einfache Auswahl per `config_entry`**: Im visuellen Karten-Editor (und per `getStubConfig`) wird direkt das gewünschte **Raum-Config-Entry** ausgewählt – stabil auch bei umbenannten Entitäten.
+* **24h-Zeitleiste & Wochentag-Tabs (Mo–So)**: Farblich nach Preset (`comfort`, `eco`, `home`, `sleep`, `boost`, `away`) abgesetzte Zeitblöcke inklusive Live-Zeitmarker.
+* **Klick & Drag-&-Drop Bearbeitung**: Auf freie Fläche klicken, um neue Slots anzulegen; linke/rechte Ränder ziehen oder Blöcke verschieben (konfigurierbares 5-, 15- oder 30-Minuten-Raster).
+<!-- CURRENT_CHANGELOG_END -->
 
 ---
 

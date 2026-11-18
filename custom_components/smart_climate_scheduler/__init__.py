@@ -21,6 +21,7 @@ from .helpers import (
     safe_float as _safe_float,
 )
 from .evaluation import invalidate_eval_cache
+from .frontend_api import async_register_frontend_and_ws
 
 from .const import (
     CONF_CLIMATE_ENTITY,
@@ -152,6 +153,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_sync_device_registry_version(hass, entry)
     await async_sync_entity_registry_disabled(hass, entry)
+    await async_register_frontend_and_ws(hass)
 
     def _resolve_entry_ids(call_or_data: ServiceCall | dict | str | None) -> list[str]:
         if not hass.data.get(DOMAIN):
@@ -167,13 +169,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         elif isinstance(call_or_data, str):
             data = {"entity_id": call_or_data}
 
-        # 1. Direkte config_entry_id / config_entry
-        raw_entries = data.get("config_entry_id") or data.get("config_entry")
+        # 1. Direkte entry_id / config_entry_id / config_entry
+        raw_entries = data.get("entry_id") or data.get("config_entry_id") or data.get("config_entry")
         if raw_entries:
             if isinstance(raw_entries, str):
                 raw_entries = [raw_entries]
             for ce_id in raw_entries:
-                if ce_id in hass.data[DOMAIN]:
+                if ce_id in hass.data[DOMAIN] and isinstance(hass.data[DOMAIN][ce_id], dict):
                     resolved.add(ce_id)
 
         # 2. device_id aus target oder call data
@@ -590,8 +592,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener when options change."""
     domain_data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
-    if domain_data and domain_data.pop("_updating_from_switch", False):
-        # Optionen wurden durch einen Options-Switch geändert:
+    if domain_data and (
+        domain_data.pop("_updating_from_switch", False)
+        or domain_data.pop("_updating_from_card", False)
+    ):
+        # Optionen wurden durch Options-Switch oder Timeline-Karte geändert:
         # Kein störender Plattform-Reload nötig, sofortiges Update der Sensoren und Schalter
         await async_sync_entity_registry_disabled(hass, entry)
         await _async_update_sensors(hass, entry.entry_id)
