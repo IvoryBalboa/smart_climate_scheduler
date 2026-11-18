@@ -635,7 +635,8 @@ class SmartClimateSchedulerCard extends HTMLElement {
   }
 
   async _saveDaySlots(dayKey, slots) {
-    if (!this._hass || !this._data) return;
+    if (!this._hass || !this._data) return false;
+    let ok = false;
     try {
       const res = await this._hass.callWS({
         type: `${DOMAIN}/save_day_slots`,
@@ -647,10 +648,12 @@ class SmartClimateSchedulerCard extends HTMLElement {
       this._data = res;
       this._error = null;
       this._showToast(this._t().saved);
+      ok = true;
     } catch (err) {
       this._error = err?.message || "Save failed";
     }
     this._render();
+    return ok;
   }
 
   async _handleToggleAuto() {
@@ -823,6 +826,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
     const origStart = parseMinutes(slot.from);
     const origEnd = slot.to?.startsWith("23:59") ? 1440 : parseMinutes(slot.to);
+    const wasSelected = this._selectedSlotIdx === idx;
     this._selectedSlotIdx = idx;
     this._draftSlot = {
       from: formatMinutes(origStart, false),
@@ -835,6 +839,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     this._dragState = {
       idx,
       mode, // 'left' | 'right' | 'move'
+      wasSelected,
       startX: ev.clientX,
       trackWidth: rect.width,
       origStart,
@@ -926,7 +931,11 @@ class SmartClimateSchedulerCard extends HTMLElement {
       setTimeout(() => {
         this._suppressNextTrackClick = false;
       }, 150);
-      this._selectSlot(ds.idx);
+      if (ds.wasSelected) {
+        this._selectSlot(null);
+      } else {
+        this._selectSlot(ds.idx);
+      }
       return;
     }
 
@@ -966,11 +975,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
     };
     slots[this._selectedSlotIdx] = edited;
     slots.sort((a, b) => String(a.from).localeCompare(String(b.from)));
-    await this._saveDaySlots(this._selectedDay, slots);
-    const newIdx = this._getDaySlots().findIndex(
-      (s) => s.from === edited.from && s.to === edited.to && s.preset === edited.preset
-    );
-    this._selectSlot(newIdx >= 0 ? newIdx : 0);
+    const ok = await this._saveDaySlots(this._selectedDay, slots);
+    if (ok) {
+      this._selectSlot(null);
+    }
   }
 
   async _handleDeleteInspector() {
