@@ -19,6 +19,7 @@ Die Integration bringt nun eine **direkt eingebettete Custom Lovelace Card** mit
 - **Toleranz-Entität (`number.*`)**: Automatische Erkennung über das verknüpfte Thermostat-Gerät (oder optionale manuelle Auswahl im Config-/Options-Flow).
 - **Opportunistisches Mitheizen mit 0 K Toleranz**: Bei aktivem Brenner, aktiver Automatik & Mitheizen sowie geschlossenen Fenstern wird der Originalwert der Toleranz persistent gesichert, auf `0` gesetzt und sofort wiederhergestellt, sobald `hvac_action` auf `heating` springt (inkl. Sicherheits-Wiederherstellung bei Brenner-Aus, Fenster-Offen oder Neustart).
 - **Zweipunkt-Regelung**: `tolerance = 0` wird korrekt ausgewertet und Änderungen an der verknüpften Toleranz-Entität lösen unmittelbar eine Neubewertung (inkl. Umschalten auf `heat`) aus.
+- **Vorheiz-Haltephase bei früher Zielerreichung**: Wird während des aktiven Vorheizens die Zieltemperatur bereits vor Slot-Start erreicht, schaltet der Vorheizen-Sensor auf `Aus` und das Lernen endet, das Ziel-Preset wird jedoch sauber bis zum Slot-Beginn gehalten statt auf das vorherige Preset zurückzufallen (inkl. Beachtung von `Vorheizen ignoriert Abwesenheit`).
 
 ## v2.5.0 – Better Thermostat Toleranz-Entität & 0-K-Mitheizen
 

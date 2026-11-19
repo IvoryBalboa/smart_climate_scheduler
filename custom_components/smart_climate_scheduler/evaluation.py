@@ -378,6 +378,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         "forecast_window": forecast_window_str,
     }
     is_preheat_needed = False
+    is_preheat_holding = False
     preheat_duration = 0
 
     if effective_preheat_enabled and next_slot:
@@ -395,8 +396,10 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                     entry_data["locked_slot_key"] = next_slot_key
                     entry_data["locked_preheat_duration"] = None
                     entry_data["preheat_latched"] = False
+                    entry_data["preheat_target_reached"] = False
 
                 is_latched = entry_data.get("preheat_latched", False)
+                is_target_reached_hold = entry_data.get("preheat_target_reached", False)
                 locked_dur = entry_data.get("locked_preheat_duration")
 
                 preheat_result, raw_preheat_needed = calculate_preheat(
@@ -409,11 +412,31 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                     parse_time_func=parse_time,
                 )
 
-                if current_ref_temp >= next_temp:
-                    # Zieltemperatur für den nächsten Slot ist bereits erreicht!
-                    # Preheat ist nicht erforderlich bzw. erfolgreich beendet.
+                if is_latched and (is_target_reached_hold or current_ref_temp >= next_temp):
+                    # Vorheizen war bereits aktiv und Zieltemperatur wurde vor Slot-Start erreicht:
+                    # Vorheizen-Sensor & Lernen beenden, Ziel-Preset aber bis Slot-Start halten!
+                    if now_dt < next_slot_start:
+                        entry_data["preheat_target_reached"] = True
+                        is_preheat_holding = True
+                    else:
+                        entry_data["preheat_latched"] = False
+                        entry_data["preheat_target_reached"] = False
+                        entry_data["locked_preheat_duration"] = None
                     is_preheat_needed = False
+                    preheat = {
+                        "is_preheating": False,
+                        "start_time": None,
+                        "duration_minutes": 0,
+                        "effective_rate_k_h": round(effective_heating_rate, 3),
+                        "target_reached_holding": is_preheat_holding,
+                    }
+                    preheat_duration = 0
+                elif current_ref_temp >= next_temp:
+                    # Zieltemperatur ist bereits vor Vorheiz-Beginn erreicht (Preheat war noch nicht gestartet)
+                    is_preheat_needed = False
+                    is_preheat_holding = False
                     entry_data["preheat_latched"] = False
+                    entry_data["preheat_target_reached"] = False
                     entry_data["locked_preheat_duration"] = None
                     preheat = {
                         "is_preheating": False,
@@ -437,6 +460,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                         preheat_duration = locked_dur
                     else:
                         entry_data["preheat_latched"] = False
+                        entry_data["preheat_target_reached"] = False
                         entry_data["locked_preheat_duration"] = None
                 elif preheat_result and preheat_result.get("duration_minutes", 0) > 0 and next_temp > current_ref_temp:
                     calc_dur = preheat_result.get("duration_minutes")
@@ -444,6 +468,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                     if raw_preheat_needed or preheat_result.get("is_preheating"):
                         entry_data["locked_preheat_duration"] = calc_dur
                         entry_data["preheat_latched"] = True
+                        entry_data["preheat_target_reached"] = False
                         locked_dur = calc_dur
                         is_preheat_needed = True
                         preheat_start = next_slot_start - timedelta(minutes=locked_dur)
@@ -462,7 +487,15 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
                 _LOGGER.error("Fehler bei Preheat-Berechnung (V2): %s", e)
     elif isinstance(entry_data, dict):
         entry_data["preheat_latched"] = False
+        entry_data["preheat_target_reached"] = False
         entry_data["locked_preheat_duration"] = None
+
+    if is_preheat_holding:
+        is_cooling_down = False
+        cooldown_duration = 0
+        if isinstance(cooldown, dict):
+            cooldown["is_cooling_down"] = False
+            cooldown["duration_minutes"] = 0
 
     entry_data["was_preheating"] = is_preheat_needed
     entry_data["preheat_target_temp"] = next_temp
@@ -509,20 +542,22 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
 
     next_is_override = bool(next_slot and next_slot.get("is_override"))
 
+    preheat_controls_preset = is_preheat_needed or is_preheat_holding
+
     if is_active_override:
         # 1. Aktueller Slot ist ein Override -> Anwesenheit wird umgangen
         preset = base_preset
-    elif next_is_override and is_preheat_needed and next_preset_name and next_preset_name != "none":
-        # 2. Nächster Slot ist ein Override und Vorheizen ist aktiv -> Anwesenheit wird umgangen
+    elif next_is_override and preheat_controls_preset and next_preset_name and next_preset_name != "none":
+        # 2. Nächster Slot ist ein Override und Vorheizen (inkl. Haltephase bis Slot-Start) ist aktiv -> Anwesenheit wird umgangen
         preset = next_preset_name
-    elif effective_preheat_enabled and preheat_ignores_away and is_preheat_needed and next_preset_name and next_preset_name != "none":
-        # 3. Vorheizen für geplanten Zeitplan-Slot aktiv: Überstimmt Abwesenheit (sowohl away als auch away_near),
+    elif effective_preheat_enabled and preheat_ignores_away and preheat_controls_preset and next_preset_name and next_preset_name != "none":
+        # 3. Vorheizen (inkl. Haltephase bei früh erreichtem Ziel) für geplanten Zeitplan-Slot aktiv: Überstimmt Abwesenheit (sowohl away als auch away_near),
         # damit das Haus bei Feierabend (auch wenn der Arbeitsplatz in away_near liegt) rechtzeitig warm ist!
         preset = next_preset_name
     elif is_home:
         # 4. Regulär Zuhause
         preset = base_preset
-        if is_preheat_needed and next_preset_name and next_preset_name != "none":
+        if preheat_controls_preset and next_preset_name and next_preset_name != "none":
             preset = next_preset_name
         elif is_cooling_down:
             preset = target_cooldown_preset
@@ -616,6 +651,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "calculated_preheat_duration": preheat.get("duration_minutes", 0) if preheat else 0,
             "calculated_cooldown_duration": cooldown.get("duration_minutes", 0) if cooldown else 0,
             "is_preheating_active": is_preheat_needed,
+            "is_preheat_holding": is_preheat_holding,
             "is_cooldown_active": is_cooling_down,
             "slot_preheat_allowed": next_slot_preheat,
             "slot_cooldown_allowed": active_slot_cooldown,
