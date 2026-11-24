@@ -407,6 +407,39 @@ function getTodayKey() {
   return DAYS[(jsDay + 6) % 7];
 }
 
+function computeGapSegments(daySlots) {
+  const intervals = (Array.isArray(daySlots) ? daySlots : [])
+    .map((slot) => {
+      const s = parseMinutes(slot.from);
+      const e = slot.to?.startsWith("23:59") ? 1440 : parseMinutes(slot.to);
+      return [s, e];
+    })
+    .filter(([s, e]) => e > s)
+    .sort((a, b) => a[0] - b[0]);
+
+  const gaps = [];
+  let cursor = 0;
+  for (const [s, e] of intervals) {
+    if (s > cursor) {
+      gaps.push({ startMin: cursor, endMin: s });
+    }
+    if (e > cursor) {
+      cursor = e;
+    }
+  }
+  if (cursor < 1440) {
+    gaps.push({ startMin: cursor, endMin: 1440 });
+  }
+  return gaps;
+}
+
+const ICONS = {
+  gear: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+  copy: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+  bolt: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+  plus: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+};
+
 class SmartClimateSchedulerCard extends HTMLElement {
   constructor() {
     super();
@@ -486,7 +519,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
   }
 
   getCardSize() {
-    return this._config?.compact ? 4 : 6;
+    return 3;
   }
 
   set hass(hass) {
@@ -1032,9 +1065,32 @@ class SmartClimateSchedulerCard extends HTMLElement {
     else if (live.coolingDown) phaseSuffix = ` (${t.coolingDown})`;
     statusParts.push(`${presetLabel}${phaseSuffix}`);
 
-    const basePresetColor = getPresetColor(d.default_preset || "eco");
-    const baseTemp = this._getPresetTemp(d.default_preset || "eco");
-    const baseText = `${t.baseTrack}: ${this._getPresetLabel(d.default_preset || "eco")}${baseTemp !== undefined ? ` (${Number(baseTemp).toFixed(1)} °C)` : ""}`;
+    const basePresetKey = d.default_preset || "eco";
+    const basePresetColor = getPresetColor(basePresetKey);
+    const basePresetLabel = this._getPresetLabel(basePresetKey);
+    const baseTemp = this._getPresetTemp(basePresetKey);
+    const baseTempText = baseTemp !== undefined ? ` ${Number(baseTemp).toFixed(1).replace(/\.0$/, "")}°` : "";
+    const baseShortText = `${basePresetLabel}${baseTempText}`;
+    const baseTooltip = `${t.baseTrack}: ${basePresetLabel}${baseTemp !== undefined ? ` (${Number(baseTemp).toFixed(1)} °C)` : ""}`;
+
+    const gapBlocksHtml = computeGapSegments(daySlots)
+      .map((gap) => {
+        const leftPct = (gap.startMin / 1440) * 100;
+        const widthPct = ((gap.endMin - gap.startMin) / 1440) * 100;
+        const gapTimeStr = `${formatMinutes(gap.startMin, false)}–${formatMinutes(gap.endMin, false)}`;
+        const showGapText = widthPct >= 11;
+        const showGapLabelOnly = !showGapText && widthPct >= 5.5;
+        return `
+          <div
+            class="gap-block"
+            style="left:${leftPct}%;width:${widthPct}%;background:${basePresetColor.bg}24;border-color:${basePresetColor.border}42;"
+            title="${escapeHtml(`${gapTimeStr} · ${baseTooltip}`)}"
+          >
+            ${showGapText ? `<span class="gap-label">${escapeHtml(baseShortText)}</span>` : showGapLabelOnly ? `<span class="gap-label">${escapeHtml(basePresetLabel)}</span>` : ""}
+          </div>
+        `;
+      })
+      .join("");
 
     const slotBlocksHtml = daySlots
       .map((slot, idx) => {
@@ -1045,9 +1101,9 @@ class SmartClimateSchedulerCard extends HTMLElement {
         const isSel = idx === this._selectedSlotIdx;
         const col = getPresetColor(slot.preset);
         const pLabel = this._getPresetLabel(slot.preset);
-        const timeStr = `${formatMinutes(sMin, false)} - ${formatMinutes(eMin, false)}`;
-        const showFullText = widthPct >= 10;
-        const showLabelOnly = !showFullText && widthPct >= 5;
+        const timeStr = `${formatMinutes(sMin, false)}-${formatMinutes(eMin, false)}`;
+        const showFullText = widthPct >= 9.5;
+        const showLabelOnly = !showFullText && widthPct >= 4.5;
 
         return `
           <div
@@ -1082,19 +1138,21 @@ class SmartClimateSchedulerCard extends HTMLElement {
       `;
     }).join("");
 
-    const inspectorHtml = this._renderInspector(t, presets, daySlots);
+    const inspectorHtml = this._renderInspector(t, presets);
     const panelHtml = this._renderActivePanel(t, presets, profileNames, activeProfile);
 
     this.shadowRoot.innerHTML = `
       <style>${this._getStyles()}</style>
       <ha-card>
         <div class="card-root">
-          <!-- Header -->
+          <!-- Compact Header -->
           <div class="header">
             <div class="header-left">
-              <div class="room-title">${escapeHtml(roomTitle)}</div>
-              <div class="status-line tabular">
-                ${statusParts.map((p) => `<span>${escapeHtml(p)}</span>`).join('<span class="sep">·</span>')}
+              <div class="header-inline">
+                <span class="room-title">${escapeHtml(roomTitle)}</span>
+                <span class="status-line tabular">
+                  ${statusParts.map((p) => `<span>${escapeHtml(p)}</span>`).join('<span class="sep">·</span>')}
+                </span>
               </div>
               ${
                 activeOverrides.length > 0
@@ -1114,7 +1172,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
           <div class="divider"></div>
 
-          <!-- Toolbar -->
+          <!-- Compact Icon Toolbar -->
           <div class="toolbar">
             <div class="profile-group">
               <select id="profile-select" class="ctrl-select" aria-label="${escapeHtml(t.profile)}">
@@ -1125,17 +1183,18 @@ class SmartClimateSchedulerCard extends HTMLElement {
                   )
                   .join("")}
               </select>
-              <button class="btn-icon ${this._activePanel === "profile" ? "active" : ""}" id="btn-profile-manage" type="button" title="${escapeHtml(t.newProfile)}">⚙</button>
+              <button class="btn-icon ${this._activePanel === "profile" ? "active" : ""}" id="btn-profile-manage" type="button" title="${escapeHtml(t.newProfile)}" aria-label="${escapeHtml(t.newProfile)}">${ICONS.gear}</button>
             </div>
 
             <div class="action-buttons">
-              <button class="btn-outline ${this._activePanel === "copy" ? "active" : ""}" id="btn-copy-day" type="button">${escapeHtml(t.copyDay)}</button>
+              ${this._toast ? `<span class="toast-msg">${escapeHtml(this._toast)}</span>` : ""}
+              <button class="btn-icon ${this._activePanel === "copy" ? "active" : ""}" id="btn-copy-day" type="button" title="${escapeHtml(t.copyDay)}" aria-label="${escapeHtml(t.copyDay)}">${ICONS.copy}</button>
               ${
                 this._config?.show_override_bar !== false
-                  ? `<button class="btn-outline ${this._activePanel === "override" ? "active" : ""}" id="btn-override" type="button">${escapeHtml(t.quickOverride)}</button>`
+                  ? `<button class="btn-icon ${this._activePanel === "override" ? "active" : ""}" id="btn-override" type="button" title="${escapeHtml(t.quickOverride)}" aria-label="${escapeHtml(t.quickOverride)}">${ICONS.bolt}</button>`
                   : ""
               }
-              <button class="btn-outline" id="btn-add-slot" type="button">${escapeHtml(t.addSlot)}</button>
+              <button class="btn-icon" id="btn-add-slot" type="button" title="${escapeHtml(t.addSlot)}" aria-label="${escapeHtml(t.addSlot)}">${ICONS.plus}</button>
             </div>
           </div>
 
@@ -1146,7 +1205,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
             ${dayTabsHtml}
           </div>
 
-          <!-- 24h Interactive Timeline -->
+          <!-- Compact 24h Interactive Timeline -->
           <div class="timeline-wrap">
             <div class="timeline-track-shell">
               <div class="drag-tooltip tabular" style="display:none;"></div>
@@ -1158,9 +1217,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
                   : ""
               }
               <div class="timeline-track" role="region" aria-label="24h Timeline">
-                <div class="base-track" style="border-color:${basePresetColor.border}33;">
-                  <span class="base-label">${escapeHtml(baseText)}</span>
-                </div>
+                ${gapBlocksHtml}
                 ${slotBlocksHtml}
               </div>
               <div class="hour-ruler tabular">
@@ -1173,17 +1230,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
                 <span>24</span>
               </div>
             </div>
-            <div class="timeline-hint">
-              <span>${escapeHtml(t.clickHint)}</span>
-              ${this._toast ? `<span class="toast-msg">${escapeHtml(this._toast)}</span>` : ""}
-            </div>
           </div>
 
           ${this._error ? `<div class="error-banner">${escapeHtml(this._error)}</div>` : ""}
 
-          <div class="divider"></div>
-
-          <!-- Inline Slot Inspector or Day Summary -->
           ${inspectorHtml}
         </div>
       </ha-card>
@@ -1274,24 +1324,25 @@ class SmartClimateSchedulerCard extends HTMLElement {
     return "";
   }
 
-  _renderInspector(t, presets, daySlots) {
+  _renderInspector(t, presets) {
     if (this._selectedSlotIdx !== null && this._draftSlot) {
       const ds = this._draftSlot;
       const startVal = ds.from === "24:00" ? "23:59" : ds.from;
       const endVal = ds.to === "24:00" ? "23:59" : ds.to;
       return `
+        <div class="divider"></div>
         <div class="inspector">
           <div class="insp-fields">
             <label class="insp-field">
-              <span>${escapeHtml(t.start)}:</span>
+              <span>${escapeHtml(t.start)}</span>
               <input id="insp-start" class="ctrl-input tabular" type="time" value="${escapeHtml(startVal)}" />
             </label>
             <label class="insp-field">
-              <span>${escapeHtml(t.end)}:</span>
+              <span>${escapeHtml(t.end)}</span>
               <input id="insp-end" class="ctrl-input tabular" type="time" value="${escapeHtml(endVal)}" />
             </label>
             <label class="insp-field">
-              <span>${escapeHtml(t.preset)}:</span>
+              <span>${escapeHtml(t.preset)}</span>
               <select id="insp-preset" class="ctrl-select">
                 ${presets
                   .map((p) => {
@@ -1323,29 +1374,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
       `;
     }
 
-    if (!daySlots.length) {
-      return `<div class="slot-list-empty">${escapeHtml(t.noSlots)}</div>`;
-    }
-
-    return `
-      <div class="slot-summary-list">
-        ${daySlots
-          .map((s, idx) => {
-            const col = getPresetColor(s.preset);
-            const f = String(s.from || "").slice(0, 5);
-            const toRaw = String(s.to || "").slice(0, 5);
-            const to = toRaw === "23:59" ? "24:00" : toRaw;
-            return `
-              <button class="slot-pill-btn" data-select-slot="${idx}" type="button">
-                <span class="swatch" style="background:${col.bg};"></span>
-                <span class="tabular">${escapeHtml(f)}–${escapeHtml(to)}</span>
-                <span>${escapeHtml(this._getPresetLabel(s.preset))}</span>
-              </button>
-            `;
-          })
-          .join("")}
-      </div>
-    `;
+    return "";
   }
 
   _bindEvents() {
@@ -1518,12 +1547,12 @@ class SmartClimateSchedulerCard extends HTMLElement {
         overflow: hidden;
       }
       .card-root {
-        padding: 16px;
+        padding: 10px 12px;
         color: var(--scs-text);
         font-family: var(--ha-font-family-body, system-ui, -apple-system, sans-serif);
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 7px;
       }
       .tabular {
         font-variant-numeric: tabular-nums;
@@ -1531,43 +1560,50 @@ class SmartClimateSchedulerCard extends HTMLElement {
       .divider {
         height: 1px;
         background: var(--scs-border);
-        margin: 0 -16px;
+        margin: 0 -12px;
       }
       .header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 8px;
       }
       .header-left {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
       }
-      .room-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        line-height: 1.25;
-        color: var(--scs-text);
-      }
-      .status-line {
-        font-size: 0.85rem;
-        color: var(--scs-muted);
+      .header-inline {
         display: flex;
         flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 8px;
+        min-width: 0;
+      }
+      .room-title {
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.2;
+        color: var(--scs-text);
+        white-space: nowrap;
+      }
+      .status-line {
+        font-size: 0.78rem;
+        color: var(--scs-muted);
+        display: inline-flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
       }
       .sep {
-        opacity: 0.6;
+        opacity: 0.55;
       }
       .override-banner {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 2px;
-        font-size: 0.78rem;
+        gap: 6px;
+        font-size: 0.74rem;
         color: #fbbf24;
         font-weight: 500;
       }
@@ -1575,15 +1611,15 @@ class SmartClimateSchedulerCard extends HTMLElement {
         background: transparent;
         border: 1px solid rgba(251, 191, 36, 0.45);
         color: #fbbf24;
-        border-radius: 6px;
-        padding: 2px 8px;
-        font-size: 0.75rem;
+        border-radius: 5px;
+        padding: 1px 6px;
+        font-size: 0.7rem;
         cursor: pointer;
       }
       .auto-switch {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         cursor: pointer;
         user-select: none;
         flex-shrink: 0;
@@ -1595,8 +1631,8 @@ class SmartClimateSchedulerCard extends HTMLElement {
         height: 0;
       }
       .switch-track {
-        width: 42px;
-        height: 24px;
+        width: 36px;
+        height: 20px;
         border-radius: 999px;
         background: var(--scs-border);
         position: relative;
@@ -1607,78 +1643,90 @@ class SmartClimateSchedulerCard extends HTMLElement {
       }
       .switch-thumb {
         position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 18px;
-        height: 18px;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: #ffffff;
         transition: transform 150ms ease;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
       }
       .auto-switch input:checked + .switch-track .switch-thumb {
-        transform: translateX(18px);
+        transform: translateX(16px);
       }
       .switch-label {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         font-weight: 500;
       }
       .toolbar {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: 6px;
       }
       .profile-group,
       .action-buttons {
         display: flex;
         align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .profile-group {
+        min-width: 0;
+        flex: 1;
       }
       .ctrl-select,
       .ctrl-input {
         background: var(--scs-surface);
         color: var(--scs-text);
         border: 1px solid var(--scs-border);
-        border-radius: 8px;
-        padding: 7px 10px;
-        font-size: 0.84rem;
+        border-radius: 7px;
+        padding: 3px 8px;
+        font-size: 0.78rem;
         font-family: inherit;
-        min-height: 36px;
+        min-height: 30px;
         box-sizing: border-box;
+        max-width: 100%;
       }
       .ctrl-input.wide {
         flex: 1;
-        min-width: 140px;
+        min-width: 120px;
       }
       .btn-outline,
       .btn-primary,
       .btn-danger,
       .btn-icon {
-        border-radius: 8px;
-        padding: 7px 12px;
-        font-size: 0.84rem;
+        border-radius: 7px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
         font-weight: 500;
         cursor: pointer;
-        min-height: 36px;
+        min-height: 30px;
         white-space: nowrap;
         transition: background 140ms ease, border-color 140ms ease, opacity 140ms ease;
       }
       .btn-icon {
-        padding: 7px 10px;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         background: var(--scs-surface);
         color: var(--scs-muted);
         border: 1px solid var(--scs-border);
+        flex-shrink: 0;
+      }
+      .btn-icon:hover {
+        color: var(--scs-text);
+        border-color: var(--scs-accent);
       }
       .btn-outline {
         background: var(--scs-surface);
         color: var(--scs-text);
         border: 1px solid var(--scs-border);
       }
-      .btn-outline:hover,
-      .btn-icon:hover {
+      .btn-outline:hover {
         border-color: var(--scs-accent);
       }
       .btn-outline.active,
@@ -1715,10 +1763,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
       .day-tabs {
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 4px;
+        gap: 2px;
         background: var(--scs-surface);
-        padding: 4px;
-        border-radius: 10px;
+        padding: 2px;
+        border-radius: 8px;
         border: 1px solid var(--scs-border);
       }
       .day-tab {
@@ -1726,16 +1774,16 @@ class SmartClimateSchedulerCard extends HTMLElement {
         background: transparent;
         color: var(--scs-muted);
         border: 1px solid transparent;
-        border-radius: 7px;
-        min-height: 38px;
-        font-size: 0.84rem;
+        border-radius: 6px;
+        min-height: 27px;
+        font-size: 0.76rem;
         font-weight: 500;
         cursor: pointer;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 2px;
+        gap: 1px;
         transition: all 140ms ease;
       }
       .day-tab:hover {
@@ -1748,7 +1796,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
         font-weight: 600;
       }
       .day-indicator {
-        width: 14px;
+        width: 10px;
         height: 2px;
         border-radius: 2px;
         background: currentColor;
@@ -1757,22 +1805,21 @@ class SmartClimateSchedulerCard extends HTMLElement {
       .timeline-wrap {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding-top: 16px;
+        padding-top: 12px;
       }
       .timeline-track-shell {
         position: relative;
       }
       .drag-tooltip {
         position: absolute;
-        top: -26px;
+        top: -22px;
         transform: translateX(-50%);
         background: #0f172a;
         color: #f8fafc;
         border: 1px solid rgba(245, 158, 11, 0.6);
-        border-radius: 6px;
-        padding: 2px 8px;
-        font-size: 0.75rem;
+        border-radius: 5px;
+        padding: 1px 6px;
+        font-size: 0.7rem;
         font-weight: 600;
         pointer-events: none;
         z-index: 20;
@@ -1780,58 +1827,70 @@ class SmartClimateSchedulerCard extends HTMLElement {
       }
       .now-marker {
         position: absolute;
-        top: -4px;
-        bottom: 22px;
+        top: -2px;
+        bottom: 16px;
         width: 2px;
         background: #f8fafc;
         pointer-events: none;
         z-index: 10;
-        box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
       }
       .now-label {
         position: absolute;
-        top: -18px;
+        top: -14px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.74rem;
+        font-size: 0.68rem;
         font-weight: 600;
         color: var(--scs-text);
         white-space: nowrap;
       }
       .timeline-track {
         position: relative;
-        height: 54px;
-        border-radius: 10px;
-        background: rgba(148, 163, 184, 0.16);
+        height: 38px;
+        border-radius: 8px;
+        background: rgba(148, 163, 184, 0.12);
         border: 1px solid var(--scs-border);
         overflow: hidden;
         cursor: crosshair;
         touch-action: pan-y;
       }
-      .base-track {
+      .gap-block {
         position: absolute;
-        inset: 0;
+        top: 3px;
+        bottom: 3px;
+        border-radius: 6px;
+        border: 1px dashed transparent;
+        box-sizing: border-box;
         display: flex;
         align-items: center;
-        padding: 0 12px;
-        pointer-events: none;
+        justify-content: center;
+        padding: 0 4px;
+        overflow: hidden;
+        cursor: crosshair;
+        user-select: none;
+        z-index: 2;
       }
-      .base-label {
-        font-size: 0.76rem;
+      .gap-label {
+        font-size: 0.68rem;
+        font-weight: 500;
         color: var(--scs-muted);
-        opacity: 0.85;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        pointer-events: none;
       }
       .slot-block {
         position: absolute;
-        top: 4px;
-        bottom: 4px;
-        border-radius: 8px;
+        top: 3px;
+        bottom: 3px;
+        border-radius: 6px;
         border: 1.5px solid transparent;
         box-sizing: border-box;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 8px;
+        padding: 0 6px;
         cursor: grab;
         user-select: none;
         touch-action: none;
@@ -1851,17 +1910,17 @@ class SmartClimateSchedulerCard extends HTMLElement {
         min-width: 0;
         overflow: hidden;
         pointer-events: none;
-        line-height: 1.15;
+        line-height: 1.08;
       }
       .slot-time {
-        font-size: 0.72rem;
+        font-size: 0.65rem;
         font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       .slot-label {
-        font-size: 0.76rem;
+        font-size: 0.7rem;
         font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
@@ -1869,8 +1928,8 @@ class SmartClimateSchedulerCard extends HTMLElement {
       }
       .slot-flags {
         display: flex;
-        gap: 2px;
-        font-size: 0.65rem;
+        gap: 1px;
+        font-size: 0.58rem;
         opacity: 0.85;
         pointer-events: none;
       }
@@ -1878,7 +1937,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
         position: absolute;
         top: -2px;
         bottom: -2px;
-        width: 14px;
+        width: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1887,16 +1946,16 @@ class SmartClimateSchedulerCard extends HTMLElement {
         z-index: 9;
       }
       .drag-handle.left {
-        left: -5px;
+        left: -4px;
       }
       .drag-handle.right {
-        right: -5px;
+        right: -4px;
       }
       .drag-handle span {
-        width: 5px;
-        height: 28px;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.78);
+        width: 4px;
+        height: 22px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.82);
         opacity: 0;
         transition: opacity 120ms ease;
       }
@@ -1907,57 +1966,52 @@ class SmartClimateSchedulerCard extends HTMLElement {
       .hour-ruler {
         display: flex;
         justify-content: space-between;
-        font-size: 0.74rem;
+        font-size: 0.68rem;
         color: var(--scs-muted);
-        margin-top: 4px;
+        margin-top: 2px;
         padding: 0 2px;
-      }
-      .timeline-hint {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.74rem;
-        color: var(--scs-muted);
       }
       .toast-msg {
         color: #10b981;
+        font-size: 0.72rem;
         font-weight: 600;
+        white-space: nowrap;
+        margin-right: 2px;
       }
       .error-banner {
-        font-size: 0.8rem;
+        font-size: 0.76rem;
         color: var(--scs-danger);
         background: rgba(239, 68, 68, 0.1);
         border: 1px solid rgba(239, 68, 68, 0.35);
-        border-radius: 8px;
-        padding: 8px 10px;
+        border-radius: 7px;
+        padding: 6px 8px;
       }
       .popover-panel {
         background: var(--scs-surface);
         border: 1px solid var(--scs-border);
-        border-radius: 10px;
-        padding: 10px 12px;
+        border-radius: 8px;
+        padding: 8px 10px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
       .popover-title {
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 600;
       }
       .chip-row {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
       }
       .day-chip {
         background: transparent;
         color: var(--scs-text);
         border: 1px solid var(--scs-border);
-        border-radius: 7px;
-        padding: 5px 10px;
-        font-size: 0.8rem;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 0.75rem;
         cursor: pointer;
       }
       .day-chip.active {
@@ -1973,17 +2027,17 @@ class SmartClimateSchedulerCard extends HTMLElement {
       .popover-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 8px;
+        gap: 6px;
       }
       .override-controls,
       .profile-manage-row {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
       .unit-label {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: var(--scs-muted);
       }
       .inspector {
@@ -1991,81 +2045,51 @@ class SmartClimateSchedulerCard extends HTMLElement {
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 6px 10px;
       }
       .insp-fields {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
       .insp-field {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.82rem;
+        gap: 4px;
+        font-size: 0.76rem;
         color: var(--scs-muted);
       }
       .insp-flags {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
       }
       .insp-check {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.8rem;
+        gap: 4px;
+        font-size: 0.76rem;
         cursor: pointer;
       }
       .insp-check input {
         accent-color: var(--scs-accent);
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
         cursor: pointer;
       }
       .insp-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         margin-left: auto;
       }
-      .slot-list-empty {
-        font-size: 0.82rem;
-        color: var(--scs-muted);
-        text-align: center;
-        padding: 6px 0;
-      }
-      .slot-summary-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      .slot-pill-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--scs-surface);
-        color: var(--scs-text);
-        border: 1px solid var(--scs-border);
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 0.8rem;
-        cursor: pointer;
-      }
-      .slot-pill-btn:hover {
-        border-color: var(--scs-accent);
-      }
-      .slot-pill-btn .swatch {
-        width: 10px;
-        height: 10px;
-        border-radius: 3px;
-      }
       .empty-card {
-        padding: 24px;
+        padding: 18px;
         text-align: center;
         color: var(--scs-muted);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
       }
     `;
   }
