@@ -4,8 +4,10 @@ from __future__ import annotations
 import json
 import logging
 import math
+import time as time_mod
 from datetime import datetime, time
-from typing import Any
+from typing import Any, Callable
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -18,12 +20,150 @@ from .const import (
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_PREHEAT_ENABLED,
     DOMAIN,
+    STARTUP_GRACE_SECONDS,
     VERSION,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 MAX_MATRIX_ADJUSTMENT_RATIO = 0.15  # Maximal ±15% Korrektur pro Lernschritt
+
+
+def is_hass_starting(hass) -> bool:
+    """Prüft defensiv (auch bei Test-Mocks), ob Home Assistant aktuell noch hochfährt."""
+    if hass is None:
+        return False
+    is_running = getattr(hass, "is_running", None)
+    if isinstance(is_running, bool):
+        return not is_running
+    state = getattr(hass, "state", None)
+    if state is not None:
+        state_str = getattr(state, "value", state)
+        if isinstance(state_str, str) and state_str in ("starting", "not_running"):
+            return True
+    return False
+
+
+def get_startup_grace_state(hass) -> dict[str, Any]:
+    """Liefert bzw. initialisiert den domain-weiten Startup-Karenz-Status."""
+    if hass is None or not isinstance(getattr(hass, "data", None), dict):
+        return {}
+    return hass.data.setdefault(f"{DOMAIN}_startup_state", {})
+
+
+def is_in_startup_grace(hass, now_monotonic: float | None = None) -> bool:
+    """True, solange Home Assistant startet oder die 90s-Start-Karenzzeit noch läuft."""
+    if hass is None:
+        return False
+    if is_hass_starting(hass):
+        return True
+    hass_data = getattr(hass, "data", None)
+    if not isinstance(hass_data, dict):
+        return False
+    grace_state = hass_data.get(f"{DOMAIN}_startup_state")
+    if not isinstance(grace_state, dict):
+        return False
+    grace_until = grace_state.get("grace_until")
+    if isinstance(grace_until, (int, float)):
+        now_val = time_mod.monotonic() if now_monotonic is None else now_monotonic
+        return now_val < grace_until
+    return False
+
+
+def register_startup_grace_callback(
+    hass,
+    entry_id: str,
+    callback: Callable[[], Any],
+) -> None:
+    """Registriert einen Raum-Callback für die Nachprüfung nach Ablauf der 90s-Start-Karenzzeit."""
+    if hass is None or not entry_id:
+        return
+    if not (is_hass_starting(hass) or is_in_startup_grace(hass)):
+        return
+
+    grace_state = get_startup_grace_state(hass)
+    if not isinstance(grace_state, dict):
+        return
+    callbacks = grace_state.setdefault("callbacks", {})
+    callbacks[entry_id] = callback
+
+    async def _run_grace_expired_callbacks() -> None:
+        grace_state["grace_until"] = None
+        grace_state["timer_handle"] = None
+        for cb in list(grace_state.get("callbacks", {}).values()):
+            try:
+                res = cb()
+                if hasattr(res, "__await__"):
+                    await res
+            except Exception as err:
+                _LOGGER.debug("Fehler beim Post-Startup-Check: %s", err)
+
+    def _schedule_post_grace_timer() -> None:
+        old_handle = grace_state.get("timer_handle")
+        if old_handle is not None and hasattr(old_handle, "cancel"):
+            try:
+                old_handle.cancel()
+            except Exception:
+                pass
+            grace_state["timer_handle"] = None
+
+        loop = getattr(hass, "loop", None)
+        call_later = getattr(loop, "call_later", None)
+        if callable(call_later):
+            def _on_timer() -> None:
+                if hasattr(hass, "async_create_task"):
+                    hass.async_create_task(_run_grace_expired_callbacks())
+
+            grace_state["timer_handle"] = call_later(STARTUP_GRACE_SECONDS, _on_timer)
+
+    if is_hass_starting(hass) and not grace_state.get("listener_registered"):
+        grace_state["listener_registered"] = True
+
+        def _on_ha_started(_event=None) -> None:
+            grace_state["grace_until"] = time_mod.monotonic() + STARTUP_GRACE_SECONDS
+            _schedule_post_grace_timer()
+
+        bus = getattr(hass, "bus", None)
+        listen_once = getattr(bus, "async_listen_once", None)
+        if callable(listen_once):
+            grace_state["event_unsub"] = listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
+        else:
+            _on_ha_started()
+    elif is_in_startup_grace(hass) and grace_state.get("grace_until") is not None and not grace_state.get("timer_handle"):
+        _schedule_post_grace_timer()
+
+
+def unregister_startup_grace_callback(hass, entry_id: str) -> None:
+    """Entfernt den Startup-Check-Callback eines entladenen Config Entrys."""
+    if hass is None or not isinstance(getattr(hass, "data", None), dict):
+        return
+    grace_state = hass.data.get(f"{DOMAIN}_startup_state")
+    if not isinstance(grace_state, dict):
+        return
+    callbacks = grace_state.get("callbacks")
+    if isinstance(callbacks, dict):
+        callbacks.pop(entry_id, None)
+
+
+def clear_startup_grace_state(hass) -> None:
+    """Bereinigt Timer und Listener des Startup-Grace-Trackers beim vollständigen Entladen."""
+    if hass is None or not isinstance(getattr(hass, "data", None), dict):
+        return
+    grace_state = hass.data.pop(f"{DOMAIN}_startup_state", None)
+    if not isinstance(grace_state, dict):
+        return
+    timer_handle = grace_state.get("timer_handle")
+    if timer_handle is not None and hasattr(timer_handle, "cancel"):
+        try:
+            timer_handle.cancel()
+        except Exception:
+            pass
+    event_unsub = grace_state.get("event_unsub")
+    if callable(event_unsub):
+        try:
+            event_unsub()
+        except Exception:
+            pass
 
 
 def parse_time(time_str: str | None) -> time | None:

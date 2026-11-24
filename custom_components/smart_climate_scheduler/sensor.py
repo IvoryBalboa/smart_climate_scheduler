@@ -46,11 +46,14 @@ from .helpers import (
     get_preset_temperature,
     get_profiles_and_active,
     get_target_hvac_mode,
+    is_in_startup_grace,
     is_window_or_door_open,
     normalize_matrix,
     parse_time,
+    register_startup_grace_callback,
     resolve_tolerance_entity,
     safe_float as _safe_float,
+    unregister_startup_grace_callback,
 )
 from .const import (
     CONF_CLIMATE_ENTITY,
@@ -508,27 +511,51 @@ async def async_setup_entry(
         )
         is_heating_active = False
         if heating_active_sensor:
+            in_grace = is_in_startup_grace(hass)
             st = hass.states.get(heating_active_sensor)
             if not st:
-                if domain_data.get("_last_burner_missing") != heating_active_sensor:
-                    domain_data["_last_burner_missing"] = heating_active_sensor
-                    _LOGGER.warning(
-                        "Smart Climate Scheduler [%s]: Konfigurierter Heizungs-Sensor '%s' existiert nicht in Home Assistant",
-                        config_entry.title or config_entry.entry_id,
-                        heating_active_sensor,
-                    )
+                if in_grace:
+                    if domain_data.get("_last_burner_debug_missing") != heating_active_sensor:
+                        domain_data["_last_burner_debug_missing"] = heating_active_sensor
+                        _LOGGER.debug(
+                            "Smart Climate Scheduler [%s]: Heizungs-Sensor '%s' während Start-Karenzzeit noch nicht vorhanden",
+                            config_entry.title or config_entry.entry_id,
+                            heating_active_sensor,
+                        )
+                else:
+                    domain_data.pop("_last_burner_debug_missing", None)
+                    if domain_data.get("_last_burner_missing") != heating_active_sensor:
+                        domain_data["_last_burner_missing"] = heating_active_sensor
+                        _LOGGER.warning(
+                            "Smart Climate Scheduler [%s]: Konfigurierter Heizungs-Sensor '%s' existiert nicht in Home Assistant",
+                            config_entry.title or config_entry.entry_id,
+                            heating_active_sensor,
+                        )
             elif st.state in ("unavailable", "unknown"):
-                if domain_data.get("_last_burner_state") != st.state:
-                    domain_data["_last_burner_state"] = st.state
-                    _LOGGER.warning(
-                        "Smart Climate Scheduler [%s]: Heizungs-Sensor '%s' ist nicht verfügbar (Status: '%s')",
-                        config_entry.title or config_entry.entry_id,
-                        heating_active_sensor,
-                        st.state,
-                    )
+                if in_grace:
+                    if domain_data.get("_last_burner_debug_state") != st.state:
+                        domain_data["_last_burner_debug_state"] = st.state
+                        _LOGGER.debug(
+                            "Smart Climate Scheduler [%s]: Heizungs-Sensor '%s' während Start-Karenzzeit noch nicht verfügbar (Status: '%s')",
+                            config_entry.title or config_entry.entry_id,
+                            heating_active_sensor,
+                            st.state,
+                        )
+                else:
+                    domain_data.pop("_last_burner_debug_state", None)
+                    if domain_data.get("_last_burner_state") != st.state:
+                        domain_data["_last_burner_state"] = st.state
+                        _LOGGER.warning(
+                            "Smart Climate Scheduler [%s]: Heizungs-Sensor '%s' ist nicht verfügbar (Status: '%s')",
+                            config_entry.title or config_entry.entry_id,
+                            heating_active_sensor,
+                            st.state,
+                        )
             else:
                 domain_data.pop("_last_burner_state", None)
                 domain_data.pop("_last_burner_missing", None)
+                domain_data.pop("_last_burner_debug_state", None)
+                domain_data.pop("_last_burner_debug_missing", None)
                 if st.state.lower() in ("on", "true", "active", "heat", "heating"):
                     is_heating_active = True
         return hvac_off_on_target, opportunistic_heating, is_heating_active
@@ -548,17 +575,29 @@ async def async_setup_entry(
         state_obj = hass.states.get(climate_entity)
         if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
             cur_state = state_obj.state if state_obj else "nicht gefunden"
-            last_warn = domain_data.get("_last_unavail_warn_state")
-            if last_warn != cur_state:
-                domain_data["_last_unavail_warn_state"] = cur_state
-                _LOGGER.warning(
-                    "Smart Climate Scheduler [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
-                    entry_name,
-                    climate_entity,
-                    cur_state,
-                )
+            if is_in_startup_grace(hass):
+                if domain_data.get("_last_unavail_debug_state") != cur_state:
+                    domain_data["_last_unavail_debug_state"] = cur_state
+                    _LOGGER.debug(
+                        "Smart Climate Scheduler [%s]: Thermostat '%s' während Start-Karenzzeit noch nicht verfügbar (Status: '%s')",
+                        entry_name,
+                        climate_entity,
+                        cur_state,
+                    )
+            else:
+                domain_data.pop("_last_unavail_debug_state", None)
+                last_warn = domain_data.get("_last_unavail_warn_state")
+                if last_warn != cur_state:
+                    domain_data["_last_unavail_warn_state"] = cur_state
+                    _LOGGER.warning(
+                        "Smart Climate Scheduler [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
+                        entry_name,
+                        climate_entity,
+                        cur_state,
+                    )
             return
         domain_data.pop("_last_unavail_warn_state", None)
+        domain_data.pop("_last_unavail_debug_state", None)
 
         resolved_tol_entity, _ = resolve_tolerance_entity(hass, config_entry)
         _ensure_tolerance_entity_tracked(resolved_tol_entity)
@@ -1094,6 +1133,18 @@ async def async_setup_entry(
             await async_restore_tolerance(hass, domain_data, reason="startup_recovery_window_open")
         elif cl_st and cl_st.attributes.get("hvac_action") == "heating":
             await async_restore_tolerance(hass, domain_data, reason="startup_recovery_heating")
+
+    # Nach Ablauf der 90s-Start-Karenzzeit ggf. noch ausstehende Warnungen / Schaltvorgänge prüfen
+    async def _async_post_startup_check():
+        invalidate_eval_cache(domain_data)
+        await async_apply_schedule_to_climate()
+        _async_update_all_entities()
+        _reschedule_target_timer()
+
+    register_startup_grace_callback(hass, config_entry.entry_id, _async_post_startup_check)
+    config_entry.async_on_unload(
+        lambda: unregister_startup_grace_callback(hass, config_entry.entry_id)
+    )
 
     # Initialen Ziel-Timer scharfschalten
     _reschedule_target_timer()

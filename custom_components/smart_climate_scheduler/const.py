@@ -45,6 +45,10 @@ DEFAULT_PREHEAT_IGNORES_AWAY = True
 DEFAULT_FALLBACK_HEATING_RATE = 1.0
 DEFAULT_FALLBACK_COOLING_RATE = 0.2
 
+# Karenzzeit nach dem Start von Home Assistant, in der verzögerte Integrationen (z. B. Better Thermostat)
+# noch initialisieren dürfen, ohne Unverfügbarkeits-Warnungen auszulösen
+STARTUP_GRACE_SECONDS = 90
+
 DAYS = [
     "monday",
     "tuesday",

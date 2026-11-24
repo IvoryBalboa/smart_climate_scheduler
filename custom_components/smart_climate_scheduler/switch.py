@@ -43,6 +43,7 @@ from .helpers import (
     get_numeric_entity_value,
     get_preset_temperature,
     get_target_hvac_mode,
+    is_in_startup_grace,
     is_window_or_door_open,
     resolve_tolerance_entity,
     safe_float as _safe_float,
@@ -193,7 +194,8 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                 entry_name = self.config_entry.title or self.config_entry.entry_id
                 if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
                     cur_state = state_obj.state if state_obj else "nicht gefunden"
-                    _LOGGER.warning(
+                    log_fn = _LOGGER.debug if is_in_startup_grace(self.hass) else _LOGGER.warning
+                    log_fn(
                         "Smart Climate Scheduler Switch [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
                         entry_name,
                         climate_entity,

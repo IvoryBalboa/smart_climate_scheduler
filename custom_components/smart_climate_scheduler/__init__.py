@@ -15,6 +15,7 @@ from .helpers import (
     async_sync_entity_registry_disabled,
     async_write_ha_state_if_enabled,
     calculate_overall_average,
+    clear_startup_grace_state,
     get_profiles_and_active,
     normalize_matrix,
     parse_time,
@@ -577,6 +578,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
         if not hass.data[DOMAIN]:
+            clear_startup_grace_state(hass)
             hass.services.async_remove(DOMAIN, "set_override")
             hass.services.async_remove(DOMAIN, "remove_override")
             hass.services.async_remove(DOMAIN, "set_schedule_profile")
