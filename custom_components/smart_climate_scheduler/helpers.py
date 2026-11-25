@@ -35,14 +35,18 @@ def is_hass_starting(hass) -> bool:
     """Prüft defensiv (auch bei Test-Mocks), ob Home Assistant aktuell noch hochfährt."""
     if hass is None:
         return False
-    is_running = getattr(hass, "is_running", None)
-    if isinstance(is_running, bool):
-        return not is_running
     state = getattr(hass, "state", None)
     if state is not None:
         state_str = getattr(state, "value", state)
-        if isinstance(state_str, str) and state_str in ("starting", "not_running"):
-            return True
+        if isinstance(state_str, str):
+            lower = state_str.lower()
+            if lower in ("starting", "not_running"):
+                return True
+            if lower in ("running", "stopping", "final_write", "stopped"):
+                return False
+    is_running = getattr(hass, "is_running", None)
+    if isinstance(is_running, bool):
+        return not is_running
     return False
 
 
@@ -113,6 +117,7 @@ def register_startup_grace_callback(
         call_later = getattr(loop, "call_later", None)
         if callable(call_later):
             def _on_timer() -> None:
+                grace_state["timer_handle"] = None
                 if hasattr(hass, "async_create_task"):
                     hass.async_create_task(_run_grace_expired_callbacks())
 
@@ -120,15 +125,25 @@ def register_startup_grace_callback(
 
     if is_hass_starting(hass) and not grace_state.get("listener_registered"):
         grace_state["listener_registered"] = True
+        grace_state["started_fired"] = False
 
         def _on_ha_started(_event=None) -> None:
+            # One-time listener is automatically removed by HA when the event fires;
+            # clear event_unsub so clear_startup_grace_state never tries to remove it again.
+            grace_state["started_fired"] = True
+            grace_state["event_unsub"] = None
+            hass_data = getattr(hass, "data", None)
+            if not isinstance(hass_data, dict) or hass_data.get(f"{DOMAIN}_startup_state") is not grace_state:
+                return
             grace_state["grace_until"] = time_mod.monotonic() + STARTUP_GRACE_SECONDS
             _schedule_post_grace_timer()
 
         bus = getattr(hass, "bus", None)
         listen_once = getattr(bus, "async_listen_once", None)
         if callable(listen_once):
-            grace_state["event_unsub"] = listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
+            event_unsub = listen_once(EVENT_HOMEASSISTANT_STARTED, _on_ha_started)
+            if not grace_state.get("started_fired"):
+                grace_state["event_unsub"] = event_unsub
         else:
             _on_ha_started()
     elif is_in_startup_grace(hass) and grace_state.get("grace_until") is not None and not grace_state.get("timer_handle"):
@@ -154,17 +169,21 @@ def clear_startup_grace_state(hass) -> None:
     grace_state = hass.data.pop(f"{DOMAIN}_startup_state", None)
     if not isinstance(grace_state, dict):
         return
-    timer_handle = grace_state.get("timer_handle")
+    timer_handle = grace_state.pop("timer_handle", None)
     if timer_handle is not None and hasattr(timer_handle, "cancel"):
         try:
             timer_handle.cancel()
         except Exception:
             pass
-    event_unsub = grace_state.get("event_unsub")
-    if callable(event_unsub):
+    event_unsub = grace_state.pop("event_unsub", None)
+    if (
+        callable(event_unsub)
+        and not grace_state.get("started_fired")
+        and is_hass_starting(hass)
+    ):
         try:
             event_unsub()
-        except Exception:
+        except (ValueError, Exception):
             pass
 
 
