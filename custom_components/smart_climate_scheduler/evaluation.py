@@ -27,6 +27,8 @@ from .const import (
     CONF_OPPORTUNISTIC_HEATING,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     CONF_PREHEAT_IGNORES_AWAY,
+    CONF_AWAY_PRESET,
+    CONF_AWAY_NEAR_PRESET,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -38,6 +40,8 @@ from .const import (
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_PREHEAT_IGNORES_AWAY,
+    DEFAULT_AWAY_PRESET,
+    DEFAULT_AWAY_NEAR_PRESET,
     DOMAIN,
 )
 from .zones import evaluate_zones
@@ -544,6 +548,17 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
 
     preheat_controls_preset = is_preheat_needed or is_preheat_holding
 
+    away_preset = (
+        options.get(CONF_AWAY_PRESET)
+        or data.get(CONF_AWAY_PRESET)
+        or DEFAULT_AWAY_PRESET
+    )
+    away_near_preset = (
+        options.get(CONF_AWAY_NEAR_PRESET)
+        or data.get(CONF_AWAY_NEAR_PRESET)
+        or DEFAULT_AWAY_NEAR_PRESET
+    )
+
     if is_active_override:
         # 1. Aktueller Slot ist ein Override -> Anwesenheit wird umgangen
         preset = base_preset
@@ -562,14 +577,11 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         elif is_cooling_down:
             preset = target_cooldown_preset
     elif is_away_near:
-        # 5. Nahe Abwesenheit
-        if active_slot and active_slot.get("is_fallback"):
-            preset = "sleep"
-        else:
-            preset = "eco"
+        # 5. Nahe Abwesenheit (konfigurierbares Preset, Standard: eco)
+        preset = away_near_preset
     else:
-        # 6. Vollständige Abwesenheit
-        preset = "away"
+        # 6. Vollständige Abwesenheit (konfigurierbares Preset, Standard: away)
+        preset = away_preset
 
     lang = get_ha_language(hass)
     next_action = calculate_next_action(
@@ -642,6 +654,8 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "cooldown_enabled": cooldown_enabled,
             "self_learning_enabled": self_learning_enabled,
             "near_distance": near_distance,
+            "away_preset": away_preset,
+            "away_near_preset": away_near_preset,
             "hvac_off_on_target": bool(options.get(CONF_HVAC_OFF_ON_TARGET, data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET))),
             "fallback_tolerance": fallback_tolerance,
             "opportunistic_heating": bool(options.get(CONF_OPPORTUNISTIC_HEATING, data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING))),

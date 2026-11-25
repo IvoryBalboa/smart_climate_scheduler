@@ -44,9 +44,13 @@ from .const import (
     CONF_TOLERANCE_ENTITY,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     CONF_PREHEAT_IGNORES_AWAY,
+    CONF_AWAY_PRESET,
+    CONF_AWAY_NEAR_PRESET,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_FALLBACK_PRESET,
+    DEFAULT_AWAY_PRESET,
+    DEFAULT_AWAY_NEAR_PRESET,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -236,6 +240,22 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         options=DEFAULT_PRESETS,
                     )
                 ),
+                vol.Optional(
+                    CONF_AWAY_NEAR_PRESET, default=DEFAULT_AWAY_NEAR_PRESET
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset",
+                        options=DEFAULT_PRESETS,
+                    )
+                ),
+                vol.Optional(
+                    CONF_AWAY_PRESET, default=DEFAULT_AWAY_PRESET
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset",
+                        options=DEFAULT_PRESETS,
+                    )
+                ),
                 vol.Optional(CONF_PREHEAT_ENABLED, default=DEFAULT_PREHEAT_ENABLED): BooleanSelector(),
                 vol.Optional(
                     CONF_MAX_MINUTES_PREHEAT, default=DEFAULT_MAX_MINUTES_PREHEAT
@@ -351,6 +371,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 CONF_DEFAULT_PRESET: options.get(
                     CONF_DEFAULT_PRESET, data.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)
+                ),
+                CONF_AWAY_NEAR_PRESET: options.get(
+                    CONF_AWAY_NEAR_PRESET, data.get(CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET)
+                ),
+                CONF_AWAY_PRESET: options.get(
+                    CONF_AWAY_PRESET, data.get(CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET)
                 ),
                 CONF_PREHEAT_ENABLED: bool(
                     options.get(
@@ -505,6 +531,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 user_input.get(CONF_NEAR_DISTANCE), DEFAULT_NEAR_DISTANCE
             )
             self.settings_data[CONF_DEFAULT_PRESET] = user_input.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)
+            self.settings_data[CONF_AWAY_NEAR_PRESET] = user_input.get(CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET)
+            self.settings_data[CONF_AWAY_PRESET] = user_input.get(CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET)
             self.settings_data[CONF_PREHEAT_ENABLED] = bool(user_input.get(CONF_PREHEAT_ENABLED, DEFAULT_PREHEAT_ENABLED))
             self.settings_data[CONF_COOLDOWN_ENABLED] = bool(user_input.get(CONF_COOLDOWN_ENABLED, DEFAULT_COOLDOWN_ENABLED))
             self.settings_data[CONF_MAX_MINUTES_PREHEAT] = int(
@@ -570,6 +598,18 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_DEFAULT_PRESET): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset",
+                        options=supported_presets,
+                    )
+                ),
+                vol.Optional(CONF_AWAY_NEAR_PRESET): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset",
+                        options=supported_presets,
+                    )
+                ),
+                vol.Optional(CONF_AWAY_PRESET): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="preset",
                         options=supported_presets,

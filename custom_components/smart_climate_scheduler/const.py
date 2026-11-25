@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "smart_climate_scheduler"
-VERSION = "3.0.1"
+VERSION = "3.1.0"
 
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_ZONE_HOME_ENTITY = "zone_home_entity"
@@ -27,8 +27,12 @@ CONF_OPPORTUNISTIC_HEATING = "opportunistic_heating"
 CONF_TOLERANCE_ENTITY = "tolerance_entity"
 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT = "use_weather_forecast_for_preheat"
 CONF_PREHEAT_IGNORES_AWAY = "preheat_ignores_away"
+CONF_AWAY_PRESET = "away_preset"
+CONF_AWAY_NEAR_PRESET = "away_near_preset"
 
 DEFAULT_FALLBACK_PRESET = "eco"
+DEFAULT_AWAY_PRESET = "away"
+DEFAULT_AWAY_NEAR_PRESET = "eco"
 DEFAULT_MAX_MINUTES_PREHEAT = 240
 DEFAULT_MAX_MINUTES_COOLDOWN = 120
 DEFAULT_NEAR_DISTANCE = 0.5

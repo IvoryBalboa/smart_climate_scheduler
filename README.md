@@ -1,4 +1,4 @@
-# Smart Climate Scheduler (v3.0.1)
+# Smart Climate Scheduler (v3.1.0)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -90,7 +90,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v3.0.1.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v3.1.0.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -209,10 +209,10 @@ Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
 ## 📝 Changelog
 
 <!-- CURRENT_CHANGELOG_START -->
-Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.0.1** (*Home Assistant 2026.12 Kompatibilität & OptionsFlow-Fix*):
-* **Kompatibilität mit Home Assistant 2026.10–2026.12 (`DeviceEntry.config_entry_id`)**: Bei der Auflösung von `device_id`- und `area_id`-Service-Zielen wird ausschließlich `device.config_entry_id` genutzt, sobald das Attribut existiert (auch wenn es `None` ist) – das abgekündigte Property `DeviceEntry.config_entries` wird nicht mehr berührt.
-* **Kein Doppel-Reload im Options-Flow**: Beim Speichern über den Options-Flow wird `entry.data` nur noch bei tatsächlichen Änderungen aktualisiert und ein verfrühter Zwischen-Reload im `update_listener` unterdrückt, sodass genau ein sauberer Integrations-Reload erfolgt.
-* **Bereinigung für Home Assistant 2025.1+**: Die Mindestversion in `hacs.json` wurde auf `2025.1.0` angehoben und der entfernte `hass.http.register_static_path`-Fallback zugunsten von `async_register_static_paths` entfernt.
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.1.0** (*Konfigurierbare Abwesenheits-Presets, Live-Thermik-Vorschau & Multi-Raum-Übersicht*):
+* **Konfigurierbares `away`- und `away_near`-Preset pro Raum**: Im Config- und Options-Flow lassen sich nun getrennte Ziel-Presets für „Unterwegs (nah)“ (`away_near_preset`, Standard `eco`) und „Abwesend“ (`away_preset`, Standard `away`) je Raum festlegen und live über `debug_info.settings` einsehen.
+* **Live-Vorschau für Vorheizen & Auskühlen auf der 24h-Zeitleiste**: Für den heutigen Tag stellt die Timeline-Karte berechnete Vorheiz- und Auskühl-Fenster direkt als gestreifte Vorschau-Segmente inklusive Tooltip auf der Zeitleiste dar (über den Karten-Editor ein-/ausschaltbar).
+* **Neue Multi-Raum-Übersichtskarte (`custom:smart-climate-scheduler-overview-card`)**: Eigenständige Lovelace-Karte mit Raumauswahl (leer = alle Räume), Ist-/Soll-Temperatur, aktivem Preset, Phasen-Badge, kompakter 24h-Mini-Zeitleiste, direktem Automatik-Schalter sowie per Klick aufklappbarer Mini-Steuerung (nächste Aktion, Profilwechsel & Schnell-Override).
 <!-- CURRENT_CHANGELOG_END -->
 
 ---

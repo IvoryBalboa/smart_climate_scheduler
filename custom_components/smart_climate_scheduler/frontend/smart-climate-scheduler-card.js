@@ -1,11 +1,13 @@
 /**
- * Smart Climate Scheduler Card (v3.0.0)
- * Embedded interactive 24h timeline Lovelace card for Home Assistant.
+ * Smart Climate Scheduler Card (v3.1.0)
+ * Embedded interactive 24h timeline & multi-room overview Lovelace cards for Home Assistant.
  * Self-contained ES module with Shadow DOM & zero external dependencies.
  */
 
 const CARD_TAG = "smart-climate-scheduler-card";
 const EDITOR_TAG = "smart-climate-scheduler-card-editor";
+const OVERVIEW_CARD_TAG = "smart-climate-scheduler-overview-card";
+const OVERVIEW_EDITOR_TAG = "smart-climate-scheduler-overview-card-editor";
 const DOMAIN = "smart_climate_scheduler";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const DEFAULT_PRESETS = ["none", "home", "away", "boost", "comfort", "eco", "sleep", "activity"];
@@ -57,6 +59,16 @@ const I18N = {
     editorName: "Anzeigename (optional)",
     editorSnap: "Zeitraster beim Ziehen",
     editorShowOverride: "Schnell-Override-Leiste anzeigen",
+    editorShowThermal: "Vorheiz- & Auskühl-Vorschau auf Zeitleiste",
+    preheatPreview: "Vorheiz-Vorschau",
+    cooldownPreview: "Auskühl-Vorschau",
+    nextAction: "Nächste Aktion",
+    overviewDefaultTitle: "Heizungs-Übersicht",
+    overviewAllRoomsHint: "Keine Auswahl = alle Räume automatisch anzeigen",
+    overviewEditorTitle: "Überschrift (optional)",
+    overviewEditorRooms: "Räume auswählen (leer = alle Räume)",
+    overviewEditorMiniTimeline: "Kompakte 24h-Mini-Zeitleiste anzeigen",
+    noRoomsConfigured: "Keine Smart Climate Scheduler Räume gefunden.",
     minutes: "Min",
   },
   en: {
@@ -105,6 +117,16 @@ const I18N = {
     editorName: "Display name (optional)",
     editorSnap: "Drag snap grid",
     editorShowOverride: "Show quick override controls",
+    editorShowThermal: "Show preheat & cooldown preview on timeline",
+    preheatPreview: "Preheat preview",
+    cooldownPreview: "Cooldown preview",
+    nextAction: "Next action",
+    overviewDefaultTitle: "Climate Overview",
+    overviewAllRoomsHint: "None selected = show all rooms automatically",
+    overviewEditorTitle: "Card title (optional)",
+    overviewEditorRooms: "Select rooms (empty = all rooms)",
+    overviewEditorMiniTimeline: "Show compact 24h mini timeline",
+    noRoomsConfigured: "No Smart Climate Scheduler rooms found.",
     minutes: "min",
   },
   fr: {
@@ -153,6 +175,16 @@ const I18N = {
     editorName: "Nom affiché (optionnel)",
     editorSnap: "Grille temporelle",
     editorShowOverride: "Afficher la dérogation rapide",
+    editorShowThermal: "Afficher l'aperçu préchauffage / refroidissement",
+    preheatPreview: "Aperçu préchauffage",
+    cooldownPreview: "Aperçu refroidissement",
+    nextAction: "Prochaine action",
+    overviewDefaultTitle: "Aperçu chauffage",
+    overviewAllRoomsHint: "Aucune sélection = toutes les pièces",
+    overviewEditorTitle: "Titre (optionnel)",
+    overviewEditorRooms: "Pièces (vide = toutes)",
+    overviewEditorMiniTimeline: "Afficher la mini-chronologie 24h",
+    noRoomsConfigured: "Aucune pièce Smart Climate Scheduler trouvée.",
     minutes: "min",
   },
   es: {
@@ -201,6 +233,16 @@ const I18N = {
     editorName: "Nombre (opcional)",
     editorSnap: "Intervalo de ajuste",
     editorShowOverride: "Mostrar anulación rápida",
+    editorShowThermal: "Mostrar vista previa de precalentamiento/enfriamiento",
+    preheatPreview: "Vista previa precalentamiento",
+    cooldownPreview: "Vista previa enfriamiento",
+    nextAction: "Próxima acción",
+    overviewDefaultTitle: "Resumen de clima",
+    overviewAllRoomsHint: "Sin selección = mostrar todas las habitaciones",
+    overviewEditorTitle: "Título (opcional)",
+    overviewEditorRooms: "Habitaciones (vacío = todas)",
+    overviewEditorMiniTimeline: "Mostrar mini línea temporal 24h",
+    noRoomsConfigured: "No se encontraron habitaciones.",
     minutes: "min",
   },
   it: {
@@ -249,6 +291,16 @@ const I18N = {
     editorName: "Nome visualizzato (opzionale)",
     editorSnap: "Griglia di trascinamento",
     editorShowOverride: "Mostra override rapido",
+    editorShowThermal: "Mostra anteprima preriscaldamento/raffreddamento",
+    preheatPreview: "Anteprima preriscaldamento",
+    cooldownPreview: "Anteprima raffreddamento",
+    nextAction: "Prossima azione",
+    overviewDefaultTitle: "Panoramica clima",
+    overviewAllRoomsHint: "Nessuna selezione = mostra tutte le stanze",
+    overviewEditorTitle: "Titolo (opzionale)",
+    overviewEditorRooms: "Stanze (vuoto = tutte)",
+    overviewEditorMiniTimeline: "Mostra mini timeline 24h",
+    noRoomsConfigured: "Nessuna stanza trovata.",
     minutes: "min",
   },
   nl: {
@@ -297,6 +349,16 @@ const I18N = {
     editorName: "Weergavenaam (optioneel)",
     editorSnap: "Sleep-raster",
     editorShowOverride: "Toon snelle override",
+    editorShowThermal: "Toon voorverwarm- & afkoelvoorbeeld",
+    preheatPreview: "Voorverwarmvoorbeeld",
+    cooldownPreview: "Afkoelvoorbeeld",
+    nextAction: "Volgende actie",
+    overviewDefaultTitle: "Klimaatoverzicht",
+    overviewAllRoomsHint: "Geen selectie = toon alle kamers",
+    overviewEditorTitle: "Titel (optioneel)",
+    overviewEditorRooms: "Kamers selecteren (leeg = alle)",
+    overviewEditorMiniTimeline: "Toon compacte 24u-tijdlijn",
+    noRoomsConfigured: "Geen kamers gevonden.",
     minutes: "min",
   },
   pl: {
@@ -345,6 +407,16 @@ const I18N = {
     editorName: "Nazwa (opcjonalnie)",
     editorSnap: "Siatka czasu",
     editorShowOverride: "Pokaż szybki override",
+    editorShowThermal: "Pokaż podgląd nagrzewania i ochładzania",
+    preheatPreview: "Podgląd nagrzewania",
+    cooldownPreview: "Podgląd ochładzania",
+    nextAction: "Następna akcja",
+    overviewDefaultTitle: "Przegląd klimatu",
+    overviewAllRoomsHint: "Brak wyboru = pokaż wszystkie pokoje",
+    overviewEditorTitle: "Tytuł (opcjonalnie)",
+    overviewEditorRooms: "Pokoje (puste = wszystkie)",
+    overviewEditorMiniTimeline: "Pokaż mini oś czasu 24h",
+    noRoomsConfigured: "Nie znaleziono pokoi.",
     minutes: "min",
   },
 };
@@ -433,11 +505,68 @@ function computeGapSegments(daySlots) {
   return gaps;
 }
 
+function getLocalDateKey(offsetDays = 0) {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + offsetDays);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function computeThermalPreviewSegments(data, isToday) {
+  if (!isToday || !data) return [];
+  const todayStr = getLocalDateKey(0);
+  const tomorrowStr = getLocalDateKey(1);
+  const nextSlot = data.next_slot;
+  if (!nextSlot || !nextSlot.from) return [];
+
+  const nextDate = nextSlot.date || todayStr;
+  if (nextDate !== todayStr && nextDate !== tomorrowStr) return [];
+
+  const nextFromMin = parseMinutes(nextSlot.from);
+  const segments = [];
+
+  const addPhase = (kind, phase, targetPreset) => {
+    if (!phase || !(Number(phase.duration_minutes) > 0) || !phase.start_time) return;
+    const dur = Number(phase.duration_minutes);
+    const sMin = parseMinutes(phase.start_time);
+    let drawStart = null;
+    let drawEnd = null;
+    if (nextDate === todayStr) {
+      drawEnd = nextFromMin === 0 ? 1440 : nextFromMin;
+      drawStart = Math.max(0, Math.min(drawEnd, sMin));
+    } else if (nextDate === tomorrowStr && dur > nextFromMin) {
+      drawStart = sMin;
+      drawEnd = 1440;
+    }
+    if (drawStart !== null && drawEnd !== null && drawEnd > drawStart) {
+      segments.push({
+        kind,
+        startMin: drawStart,
+        endMin: drawEnd,
+        durationMinutes: dur,
+        active: Boolean(kind === "preheat" ? phase.is_preheating : phase.is_cooling_down),
+        targetPreset: targetPreset || "comfort",
+      });
+    }
+  };
+
+  if (data.preheat && Number(data.preheat.duration_minutes) > 0) {
+    addPhase("preheat", data.preheat, nextSlot.preset);
+  }
+  if (data.cooldown && Number(data.cooldown.duration_minutes) > 0) {
+    addPhase("cooldown", data.cooldown, data.cooldown.target_preset || nextSlot.preset);
+  }
+  return segments;
+}
+
 const ICONS = {
   gear: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
   copy: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
   bolt: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
   plus: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+  chevron: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>',
 };
 
 class SmartClimateSchedulerCard extends HTMLElement {
@@ -494,6 +623,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
       config_entry: firstConfigEntry,
       snap_minutes: 15,
       show_override_bar: true,
+      show_thermal_preview: true,
     };
   }
 
@@ -504,6 +634,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     this._config = {
       snap_minutes: 15,
       show_override_bar: true,
+      show_thermal_preview: true,
       compact: false,
       ...config,
     };
@@ -1092,6 +1223,30 @@ class SmartClimateSchedulerCard extends HTMLElement {
       })
       .join("");
 
+    const showThermal = this._config?.show_thermal_preview !== false;
+    const thermalPreviewHtml = showThermal
+      ? computeThermalPreviewSegments(d, isToday)
+          .map((seg) => {
+            const leftPct = (seg.startMin / 1440) * 100;
+            const widthPct = Math.max(0.8, ((seg.endMin - seg.startMin) / 1440) * 100);
+            const col = getPresetColor(seg.targetPreset);
+            const pLabel = this._getPresetLabel(seg.targetPreset);
+            const kindLabel = seg.kind === "preheat" ? t.preheatPreview : t.cooldownPreview;
+            const timeStr = `${formatMinutes(seg.startMin, false)}–${formatMinutes(seg.endMin, false)}`;
+            const marker = seg.kind === "preheat" ? "▲" : "▼";
+            return `
+              <div
+                class="thermal-preview ${seg.kind} ${seg.active ? "active" : ""}"
+                style="left:${leftPct}%;width:${widthPct}%;--tp-color:${col.bg};--tp-border:${col.border};"
+                title="${escapeHtml(`${kindLabel}: ${timeStr} (${seg.durationMinutes} ${t.minutes} → ${pLabel})`)}"
+              >
+                ${widthPct >= 2.2 ? `<span class="thermal-preview-badge">${marker}</span>` : ""}
+              </div>
+            `;
+          })
+          .join("")
+      : "";
+
     const slotBlocksHtml = daySlots
       .map((slot, idx) => {
         const sMin = parseMinutes(slot.from);
@@ -1219,6 +1374,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
               <div class="timeline-track" role="region" aria-label="24h Timeline">
                 ${gapBlocksHtml}
                 ${slotBlocksHtml}
+                ${thermalPreviewHtml}
               </div>
               <div class="hour-ruler tabular">
                 <span>00</span>
@@ -1880,6 +2036,38 @@ class SmartClimateSchedulerCard extends HTMLElement {
         text-overflow: ellipsis;
         pointer-events: none;
       }
+      .thermal-preview {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        border-radius: 5px;
+        border: 1.5px dashed var(--tp-border, #fbbf24);
+        background: repeating-linear-gradient(
+          -45deg,
+          color-mix(in srgb, var(--tp-color, #f59e0b) 32%, transparent),
+          color-mix(in srgb, var(--tp-color, #f59e0b) 32%, transparent) 4px,
+          transparent 4px,
+          transparent 8px
+        );
+        box-sizing: border-box;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 1px 3px;
+        pointer-events: none;
+        z-index: 6;
+        opacity: 0.88;
+      }
+      .thermal-preview.active {
+        opacity: 1;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+      }
+      .thermal-preview-badge {
+        font-size: 0.56rem;
+        line-height: 1;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      }
       .slot-block {
         position: absolute;
         top: 3px;
@@ -2108,6 +2296,7 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     this._config = {
       snap_minutes: 15,
       show_override_bar: true,
+      show_thermal_preview: true,
       ...config,
     };
     this._render();
@@ -2192,6 +2381,7 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     const nameVal = this._config?.name || "";
     const snapVal = Number(this._config?.snap_minutes || 15);
     const showOv = this._config?.show_override_bar !== false;
+    const showThermal = this._config?.show_thermal_preview !== false;
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -2255,6 +2445,10 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
           </select>
         </label>
         <label class="inline">
+          <input id="ed-thermal" type="checkbox" ${showThermal ? "checked" : ""} />
+          <span>${escapeHtml(t.editorShowThermal)}</span>
+        </label>
+        <label class="inline">
           <input id="ed-ov" type="checkbox" ${showOv ? "checked" : ""} />
           <span>${escapeHtml(t.editorShowOverride)}</span>
         </label>
@@ -2276,7 +2470,931 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     this.shadowRoot.querySelector("#ed-snap")?.addEventListener("change", (ev) => {
       this._emitChange({ snap_minutes: parseInt(ev.target.value, 10) || 15 });
     });
+    this.shadowRoot.querySelector("#ed-thermal")?.addEventListener("change", (ev) => {
+      this._emitChange({ show_thermal_preview: ev.target.checked });
+    });
     this.shadowRoot.querySelector("#ed-ov")?.addEventListener("change", (ev) => {
+      this._emitChange({ show_override_bar: ev.target.checked });
+    });
+  }
+}
+
+class SmartClimateSchedulerOverviewCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = null;
+    this._roomsData = [];
+    this._loading = false;
+    this._error = null;
+    this._expandedRoomId = null;
+    this._overridePresets = {};
+    this._overrideDurations = {};
+    this._lastStateSig = null;
+    this._fetchPending = false;
+    this._refreshTimer = null;
+  }
+
+  static getConfigElement() {
+    return document.createElement(OVERVIEW_EDITOR_TAG);
+  }
+
+  static getStubConfig() {
+    return {
+      title: "",
+      rooms: [],
+      show_mini_timeline: true,
+      show_thermal_preview: true,
+      show_override_bar: true,
+    };
+  }
+
+  setConfig(config) {
+    if (!config) {
+      throw new Error("Invalid configuration");
+    }
+    this._config = {
+      title: "",
+      rooms: [],
+      show_mini_timeline: true,
+      show_thermal_preview: true,
+      show_override_bar: true,
+      ...config,
+    };
+    this._lastStateSig = null;
+    if (this._hass) {
+      this._fetchAllRooms(true);
+    } else {
+      this._render();
+    }
+  }
+
+  getCardSize() {
+    return Math.max(2, Math.min(8, 1 + (this._roomsData.length || 2)));
+  }
+
+  set hass(hass) {
+    const prevHass = this._hass;
+    this._hass = hass;
+    if (!hass) return;
+
+    if (this._roomsData.length === 0 && !this._fetchPending) {
+      this._fetchAllRooms(true);
+      return;
+    }
+
+    if (this._roomsData.length > 0) {
+      const sig = this._roomsData
+        .map((d) => {
+          const ids = [
+            d.schedule_entity_id,
+            d.climate_entity,
+            d.automation_switch_entity_id,
+            d.profile_select_entity_id,
+          ].filter(Boolean);
+          return ids
+            .map((id) => {
+              const st = hass.states?.[id];
+              if (!st) return `${id}:missing`;
+              const attrs = st.attributes || {};
+              return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}`;
+            })
+            .join(",");
+        })
+        .join("|");
+
+      if (sig !== this._lastStateSig) {
+        this._lastStateSig = sig;
+        if (prevHass) {
+          this._scheduleRefresh();
+        } else {
+          this._render();
+        }
+      }
+    }
+  }
+
+  _scheduleRefresh() {
+    if (this._refreshTimer) clearTimeout(this._refreshTimer);
+    this._refreshTimer = setTimeout(() => {
+      this._refreshTimer = null;
+      this._fetchAllRooms(false);
+    }, 300);
+  }
+
+  async _fetchAllRooms(showLoading = false) {
+    if (!this._hass || this._fetchPending) return;
+    this._fetchPending = true;
+    if (showLoading && this._roomsData.length === 0) {
+      this._loading = true;
+      this._render();
+    }
+    try {
+      const listRes = await this._hass.callWS({ type: `${DOMAIN}/list_entries` });
+      const allEntries = Array.isArray(listRes?.entries) ? listRes.entries : [];
+      const configuredIds = Array.isArray(this._config?.rooms)
+        ? this._config.rooms.filter(Boolean)
+        : [];
+      const targetEntries = configuredIds.length > 0
+        ? configuredIds
+            .map((id) => allEntries.find((e) => e.entry_id === id))
+            .filter(Boolean)
+        : allEntries;
+
+      const results = await Promise.all(
+        targetEntries.map((entry) =>
+          this._hass
+            .callWS({ type: `${DOMAIN}/get_schedule`, config_entry: entry.entry_id })
+            .catch(() => null)
+        )
+      );
+      this._roomsData = results.filter(Boolean);
+      this._error = null;
+    } catch (err) {
+      this._error = err?.message || String(err || "Error loading rooms");
+    } finally {
+      this._loading = false;
+      this._fetchPending = false;
+      this._render();
+    }
+  }
+
+  _getLang() {
+    return this._roomsData[0]?.language || this._hass?.language || "de";
+  }
+
+  _t() {
+    return getTexts(this._getLang());
+  }
+
+  _getRoomLive(d) {
+    const st = this._hass?.states || {};
+    const clSt = d.climate_entity ? st[d.climate_entity] : null;
+    const swSt = d.automation_switch_entity_id ? st[d.automation_switch_entity_id] : null;
+    const schSt = d.schedule_entity_id ? st[d.schedule_entity_id] : null;
+
+    const automationOn = swSt ? swSt.state === "on" : Boolean(d.automation_enabled);
+    const curTemp = clSt?.attributes?.current_temperature ?? d.current_temperature;
+    const tgtTemp = d.target_temperature ?? clSt?.attributes?.temperature;
+    const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
+    const preheating = Boolean(d.preheat?.is_preheating);
+    const coolingDown = Boolean(d.cooldown?.is_cooling_down);
+    const activeOverrides = Object.entries(d.overrides || {});
+
+    return {
+      automationOn,
+      curTemp,
+      tgtTemp,
+      activePreset,
+      preheating,
+      coolingDown,
+      activeOverrides,
+    };
+  }
+
+  _getPresetLabel(d, preset) {
+    const labels = d?.preset_labels || {};
+    if (labels[preset]) return labels[preset];
+    const lower = String(preset || "").toLowerCase();
+    return labels[lower] || preset || "Eco";
+  }
+
+  async _toggleAuto(entryId) {
+    const room = this._roomsData.find((r) => r.entry_id === entryId);
+    if (!this._hass || !room?.automation_switch_entity_id) return;
+    const { automationOn } = this._getRoomLive(room);
+    await this._hass.callService("switch", automationOn ? "turn_off" : "turn_on", {
+      entity_id: room.automation_switch_entity_id,
+    });
+    setTimeout(() => this._fetchAllRooms(false), 250);
+  }
+
+  async _switchProfile(entryId, profileName) {
+    if (!this._hass) return;
+    try {
+      const updated = await this._hass.callWS({
+        type: `${DOMAIN}/manage_profile`,
+        entry_id: entryId,
+        action: "switch",
+        profile: profileName,
+      });
+      this._roomsData = this._roomsData.map((r) => (r.entry_id === entryId ? updated : r));
+      this._render();
+    } catch (err) {
+      this._error = err?.message || "Profile switch failed";
+      this._render();
+    }
+  }
+
+  async _startOverride(entryId) {
+    if (!this._hass) return;
+    const preset = this._overridePresets[entryId] || "boost";
+    const minutes = Number(this._overrideDurations[entryId] || 60);
+    try {
+      await this._hass.callService(DOMAIN, "set_override", {
+        entry_id: entryId,
+        preset,
+        duration: { minutes },
+      });
+      setTimeout(() => this._fetchAllRooms(false), 250);
+    } catch (err) {
+      this._error = err?.message || "Override failed";
+      this._render();
+    }
+  }
+
+  async _cancelOverride(entryId, overrideId) {
+    if (!this._hass) return;
+    try {
+      const data = { entry_id: entryId };
+      if (overrideId) data.override_id = overrideId;
+      await this._hass.callService(DOMAIN, "remove_override", data);
+      setTimeout(() => this._fetchAllRooms(false), 250);
+    } catch (err) {
+      this._error = err?.message || "Remove override failed";
+      this._render();
+    }
+  }
+
+  _renderMiniTimeline(d, t) {
+    const todayKey = getTodayKey();
+    const activeProfile = d.active_profile || "Standard";
+    const daySlots = d.profiles?.[activeProfile]?.[todayKey] || [];
+    const baseColor = getPresetColor(d.default_preset || "eco");
+    const nowDt = new Date();
+    const nowPct = ((nowDt.getHours() * 60 + nowDt.getMinutes()) / 1440) * 100;
+
+    const slotsHtml = daySlots
+      .map((slot) => {
+        const sMin = parseMinutes(slot.from);
+        const eMin = slot.to?.startsWith("23:59") ? 1440 : parseMinutes(slot.to);
+        const leftPct = (sMin / 1440) * 100;
+        const widthPct = Math.max(1, ((eMin - sMin) / 1440) * 100);
+        const col = getPresetColor(slot.preset);
+        return `<div class="ov-mini-slot" style="left:${leftPct}%;width:${widthPct}%;background:${col.bg};"></div>`;
+      })
+      .join("");
+
+    const thermalHtml = this._config?.show_thermal_preview !== false
+      ? computeThermalPreviewSegments(d, true)
+          .map((seg) => {
+            const leftPct = (seg.startMin / 1440) * 100;
+            const widthPct = Math.max(0.8, ((seg.endMin - seg.startMin) / 1440) * 100);
+            const col = getPresetColor(seg.targetPreset);
+            return `<div class="ov-mini-thermal" style="left:${leftPct}%;width:${widthPct}%;--tp-color:${col.bg};--tp-border:${col.border};"></div>`;
+          })
+          .join("")
+      : "";
+
+    return `
+      <div class="ov-mini-track" title="${escapeHtml(activeProfile)}">
+        <div class="ov-mini-base" style="background:${baseColor.bg}24;"></div>
+        ${slotsHtml}
+        ${thermalHtml}
+        <div class="ov-mini-now" style="left:${nowPct}%;"></div>
+      </div>
+    `;
+  }
+
+  _render() {
+    if (!this.shadowRoot) return;
+    const t = this._t();
+
+    if (this._loading && this._roomsData.length === 0) {
+      this.shadowRoot.innerHTML = `
+        <style>${this._getStyles()}</style>
+        <ha-card><div class="ov-empty">${escapeHtml(t.loading)}</div></ha-card>
+      `;
+      return;
+    }
+
+    if (this._roomsData.length === 0) {
+      this.shadowRoot.innerHTML = `
+        <style>${this._getStyles()}</style>
+        <ha-card><div class="ov-empty">${escapeHtml(this._error || t.noRoomsConfigured)}</div></ha-card>
+      `;
+      return;
+    }
+
+    const titleText = String(this._config?.title || "").trim();
+    const showMini = this._config?.show_mini_timeline !== false;
+    const showOv = this._config?.show_override_bar !== false;
+
+    const roomsHtml = this._roomsData
+      .map((d) => {
+        const live = this._getRoomLive(d);
+        const expanded = this._expandedRoomId === d.entry_id;
+        const presetCol = getPresetColor(live.activePreset);
+        const presetLabel = this._getPresetLabel(d, live.activePreset);
+        const profileNames = Object.keys(d.profiles || { Standard: {} });
+        const activeProfile = d.active_profile || "Standard";
+        const presets = Array.from(new Set([...(d.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS])).filter(
+          (p) => p !== "none"
+        );
+        const selOvPreset = this._overridePresets[d.entry_id] || "boost";
+        const selOvDur = Number(this._overrideDurations[d.entry_id] || 60);
+
+        let phaseBadge = "";
+        if (live.activeOverrides.length > 0) {
+          phaseBadge = `<span class="ov-phase ov-phase-warn">${escapeHtml(t.overrideActive)}</span>`;
+        } else if (live.preheating) {
+          phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.preheating)}</span>`;
+        } else if (live.coolingDown) {
+          phaseBadge = `<span class="ov-phase ov-phase-cool">${escapeHtml(t.coolingDown)}</span>`;
+        }
+
+        const tempStr = [
+          live.curTemp !== null && live.curTemp !== undefined ? `${Number(live.curTemp).toFixed(1)}°` : null,
+          live.tgtTemp !== null && live.tgtTemp !== undefined ? `→ ${Number(live.tgtTemp).toFixed(1)}°` : null,
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        const nextAct = d.next_action;
+        const nextActionLine = nextAct?.action && nextAct?.time
+          ? `${t.nextAction}: ${nextAct.action} (${nextAct.time})`
+          : "";
+
+        return `
+          <div class="ov-room ${expanded ? "expanded" : ""}" data-room-id="${escapeHtml(d.entry_id)}">
+            <div class="ov-row" data-toggle-expand="${escapeHtml(d.entry_id)}">
+              <div class="ov-row-main">
+                <div class="ov-row-top">
+                  <span class="ov-room-name">${escapeHtml(d.room_name || d.entry_id)}</span>
+                  <span class="ov-preset-dot" style="background:${presetCol.bg};border-color:${presetCol.border};color:${presetCol.text};">${escapeHtml(presetLabel)}</span>
+                  ${phaseBadge}
+                  <span class="ov-temps tabular">${escapeHtml(tempStr)}</span>
+                </div>
+                ${showMini ? this._renderMiniTimeline(d, t) : ""}
+              </div>
+              <div class="ov-row-actions">
+                <label class="auto-switch" title="${escapeHtml(t.automatic)}" data-stop-expand="1">
+                  <input class="ov-auto-input" data-auto-entry="${escapeHtml(d.entry_id)}" type="checkbox" ${live.automationOn ? "checked" : ""} />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </label>
+                <span class="ov-chevron ${expanded ? "open" : ""}">${ICONS.chevron}</span>
+              </div>
+            </div>
+
+            ${
+              expanded
+                ? `<div class="ov-drawer">
+                    ${nextActionLine ? `<div class="ov-next-action tabular">${escapeHtml(nextActionLine)}</div>` : ""}
+                    <div class="ov-drawer-controls">
+                      <label class="ov-ctrl-group">
+                        <span>${escapeHtml(t.profile)}</span>
+                        <select class="ctrl-select ov-prof-select" data-prof-entry="${escapeHtml(d.entry_id)}">
+                          ${profileNames
+                            .map(
+                              (pn) =>
+                                `<option value="${escapeHtml(pn)}" ${pn === activeProfile ? "selected" : ""}>${escapeHtml(pn)}</option>`
+                            )
+                            .join("")}
+                        </select>
+                      </label>
+
+                      ${
+                        showOv
+                          ? live.activeOverrides.length > 0
+                            ? `<button type="button" class="btn-outline danger" data-ov-cancel="${escapeHtml(d.entry_id)}" data-ov-id="${escapeHtml(live.activeOverrides[0][0])}">${escapeHtml(t.cancelOverride)}</button>`
+                            : `<div class="ov-quick-ov">
+                                <select class="ctrl-select ov-ov-preset" data-ov-preset-entry="${escapeHtml(d.entry_id)}">
+                                  ${presets
+                                    .map(
+                                      (p) =>
+                                        `<option value="${escapeHtml(p)}" ${p === selOvPreset ? "selected" : ""}>${escapeHtml(this._getPresetLabel(d, p))}</option>`
+                                    )
+                                    .join("")}
+                                </select>
+                                <div class="chip-row">
+                                  ${[30, 60, 120, 240]
+                                    .map(
+                                      (mins) =>
+                                        `<button type="button" class="day-chip ${selOvDur === mins ? "active" : ""}" data-ov-dur-entry="${escapeHtml(d.entry_id)}" data-ov-dur-min="${mins}">${mins >= 60 ? `${mins / 60}h` : `${mins}m`}</button>`
+                                    )
+                                    .join("")}
+                                </div>
+                                <button type="button" class="btn-primary" data-ov-start="${escapeHtml(d.entry_id)}">${escapeHtml(t.startOverride)}</button>
+                              </div>`
+                          : ""
+                      }
+                    </div>
+                  </div>`
+                : ""
+            }
+          </div>
+        `;
+      })
+      .join("");
+
+    this.shadowRoot.innerHTML = `
+      <style>${this._getStyles()}</style>
+      <ha-card>
+        <div class="ov-root">
+          ${titleText ? `<div class="ov-header">${escapeHtml(titleText)}</div>` : ""}
+          ${this._error ? `<div class="ov-error">${escapeHtml(this._error)}</div>` : ""}
+          <div class="ov-list">
+            ${roomsHtml}
+          </div>
+        </div>
+      </ha-card>
+    `;
+
+    this._bindEvents();
+  }
+
+  _bindEvents() {
+    const root = this.shadowRoot;
+    if (!root) return;
+
+    root.querySelectorAll("[data-toggle-expand]").forEach((row) => {
+      row.addEventListener("click", (ev) => {
+        if (ev.target.closest("[data-stop-expand]")) return;
+        const entryId = row.dataset.toggleExpand;
+        this._expandedRoomId = this._expandedRoomId === entryId ? null : entryId;
+        this._render();
+      });
+    });
+
+    root.querySelectorAll(".ov-auto-input").forEach((inp) => {
+      inp.addEventListener("change", () => this._toggleAuto(inp.dataset.autoEntry));
+    });
+
+    root.querySelectorAll(".ov-prof-select").forEach((sel) => {
+      sel.addEventListener("change", (ev) => this._switchProfile(sel.dataset.profEntry, ev.target.value));
+    });
+
+    root.querySelectorAll(".ov-ov-preset").forEach((sel) => {
+      sel.addEventListener("change", (ev) => {
+        this._overridePresets[sel.dataset.ovPresetEntry] = ev.target.value;
+      });
+    });
+
+    root.querySelectorAll("[data-ov-dur-entry]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this._overrideDurations[btn.dataset.ovDurEntry] = parseInt(btn.dataset.ovDurMin, 10) || 60;
+        this._render();
+      });
+    });
+
+    root.querySelectorAll("[data-ov-start]").forEach((btn) => {
+      btn.addEventListener("click", () => this._startOverride(btn.dataset.ovStart));
+    });
+
+    root.querySelectorAll("[data-ov-cancel]").forEach((btn) => {
+      btn.addEventListener("click", () => this._cancelOverride(btn.dataset.ovCancel, btn.dataset.ovId));
+    });
+  }
+
+  _getStyles() {
+    return `
+      :host {
+        display: block;
+        --scs-accent: #f59e0b;
+        --scs-accent-hover: #d97706;
+        --scs-surface: var(--secondary-background-color, rgba(255, 255, 255, 0.04));
+        --scs-border: var(--divider-color, rgba(255, 255, 255, 0.1));
+        --scs-text: var(--primary-text-color, #f1f5f9);
+        --scs-muted: var(--secondary-text-color, #94a3b8);
+        --scs-danger: #ef4444;
+      }
+      .ov-root {
+        padding: 10px 12px;
+        color: var(--scs-text);
+        font-family: var(--ha-font-family-body, system-ui, -apple-system, sans-serif);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tabular {
+        font-variant-numeric: tabular-nums;
+      }
+      .ov-header {
+        font-size: 0.96rem;
+        font-weight: 600;
+      }
+      .ov-error {
+        font-size: 0.76rem;
+        color: var(--scs-danger);
+      }
+      .ov-empty {
+        padding: 16px;
+        text-align: center;
+        color: var(--scs-muted);
+        font-size: 0.85rem;
+      }
+      .ov-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .ov-room {
+        border: 1px solid var(--scs-border);
+        background: var(--scs-surface);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .ov-room.expanded {
+        border-color: rgba(245, 158, 11, 0.55);
+      }
+      .ov-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 7px 9px;
+        cursor: pointer;
+      }
+      .ov-row-main {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .ov-row-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px 7px;
+      }
+      .ov-room-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .ov-preset-dot {
+        font-size: 0.68rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        padding: 1px 6px;
+        line-height: 1.3;
+      }
+      .ov-phase {
+        font-size: 0.68rem;
+        font-weight: 600;
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .ov-phase-heat {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+      }
+      .ov-phase-cool {
+        background: rgba(56, 189, 248, 0.18);
+        color: #38bdf8;
+      }
+      .ov-phase-warn {
+        background: rgba(234, 88, 12, 0.22);
+        color: #fb923c;
+      }
+      .ov-temps {
+        font-size: 0.78rem;
+        color: var(--scs-muted);
+        margin-left: auto;
+      }
+      .ov-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .ov-chevron {
+        color: var(--scs-muted);
+        display: inline-flex;
+        transition: transform 150ms ease;
+      }
+      .ov-chevron.open {
+        transform: rotate(180deg);
+        color: var(--scs-accent);
+      }
+      .ov-mini-track {
+        position: relative;
+        height: 7px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(148, 163, 184, 0.16);
+      }
+      .ov-mini-base {
+        position: absolute;
+        inset: 0;
+      }
+      .ov-mini-slot {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        opacity: 0.88;
+      }
+      .ov-mini-thermal {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          -45deg,
+          color-mix(in srgb, var(--tp-color, #f59e0b) 75%, transparent),
+          color-mix(in srgb, var(--tp-color, #f59e0b) 75%, transparent) 2px,
+          transparent 2px,
+          transparent 4px
+        );
+        border-left: 1px solid var(--tp-border, #fbbf24);
+      }
+      .ov-mini-now {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #ffffff;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+      }
+      .ov-drawer {
+        border-top: 1px solid var(--scs-border);
+        padding: 7px 9px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        background: rgba(0, 0, 0, 0.12);
+      }
+      .ov-next-action {
+        font-size: 0.74rem;
+        color: var(--scs-muted);
+      }
+      .ov-drawer-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      .ov-ctrl-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.74rem;
+        color: var(--scs-muted);
+      }
+      .ov-quick-ov {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+      }
+      .auto-switch {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+      .auto-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .switch-track {
+        width: 34px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--scs-border);
+        position: relative;
+        transition: background 150ms ease;
+      }
+      .auto-switch input:checked + .switch-track {
+        background: var(--scs-accent);
+      }
+      .switch-thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ffffff;
+        transition: transform 150ms ease;
+      }
+      .auto-switch input:checked + .switch-track .switch-thumb {
+        transform: translateX(16px);
+      }
+      .ctrl-select {
+        background: var(--scs-surface);
+        color: var(--scs-text);
+        border: 1px solid var(--scs-border);
+        border-radius: 7px;
+        padding: 3px 8px;
+        font-size: 0.76rem;
+        min-height: 28px;
+      }
+      .chip-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .day-chip {
+        background: transparent;
+        color: var(--scs-text);
+        border: 1px solid var(--scs-border);
+        border-radius: 6px;
+        padding: 2px 7px;
+        font-size: 0.72rem;
+        cursor: pointer;
+      }
+      .day-chip.active {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: var(--scs-accent);
+        color: var(--scs-accent);
+        font-weight: 600;
+      }
+      .btn-primary,
+      .btn-outline {
+        border-radius: 7px;
+        padding: 3px 9px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        min-height: 28px;
+      }
+      .btn-primary {
+        background: var(--scs-accent);
+        color: #111827;
+        border: 1px solid var(--scs-accent);
+      }
+      .btn-outline.danger {
+        background: transparent;
+        color: var(--scs-danger);
+        border: 1px solid rgba(239, 68, 68, 0.45);
+      }
+    `;
+  }
+}
+
+class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = null;
+    this._rooms = [];
+  }
+
+  setConfig(config) {
+    this._config = {
+      title: "",
+      rooms: [],
+      show_mini_timeline: true,
+      show_thermal_preview: true,
+      show_override_bar: true,
+      ...config,
+    };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._loadRooms();
+  }
+
+  async _loadRooms() {
+    if (!this._hass) return;
+    try {
+      const res = await this._hass.callWS({ type: `${DOMAIN}/list_entries` });
+      if (Array.isArray(res?.entries)) {
+        this._rooms = res.entries;
+      }
+    } catch {
+      this._rooms = [];
+    }
+    this._render();
+  }
+
+  _emitChange(updated) {
+    const nextConfig = { ...this._config, ...updated };
+    Object.keys(nextConfig).forEach((k) => {
+      if (nextConfig[k] === undefined) delete nextConfig[k];
+    });
+    this._config = nextConfig;
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  _render() {
+    if (!this.shadowRoot) return;
+    const t = getTexts(this._hass?.language || "de");
+    const selectedRooms = new Set(Array.isArray(this._config?.rooms) ? this._config.rooms : []);
+    const titleVal = this._config?.title || "";
+    const showMini = this._config?.show_mini_timeline !== false;
+    const showThermal = this._config?.show_thermal_preview !== false;
+    const showOv = this._config?.show_override_bar !== false;
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        .ed-root {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 8px 0;
+          color: var(--primary-text-color, #f1f5f9);
+          font-family: var(--ha-font-family-body, sans-serif);
+        }
+        .field-title {
+          font-size: 0.85rem;
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+        input[type="text"] {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 10px;
+          border-radius: 8px;
+          border: 1px solid var(--divider-color, rgba(255,255,255,0.2));
+          background: var(--secondary-background-color, rgba(255,255,255,0.05));
+          color: var(--primary-text-color, #f1f5f9);
+          font-size: 0.9rem;
+        }
+        .room-checks {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding: 8px 10px;
+          border-radius: 8px;
+          border: 1px solid var(--divider-color, rgba(255,255,255,0.14));
+        }
+        label.inline {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.85rem;
+          cursor: pointer;
+        }
+        .hint {
+          font-size: 0.76rem;
+          color: var(--secondary-text-color, #94a3b8);
+        }
+      </style>
+      <div class="ed-root">
+        <div>
+          <div class="field-title">${escapeHtml(t.overviewEditorTitle)}</div>
+          <input id="oved-title" type="text" value="${escapeHtml(titleVal)}" placeholder="${escapeHtml(t.overviewDefaultTitle)}" />
+        </div>
+        <div>
+          <div class="field-title">${escapeHtml(t.overviewEditorRooms)}</div>
+          <div class="room-checks">
+            ${
+              this._rooms.length > 0
+                ? this._rooms
+                    .map(
+                      (r) => `
+                        <label class="inline">
+                          <input type="checkbox" class="oved-room" value="${escapeHtml(r.entry_id)}" ${selectedRooms.has(r.entry_id) ? "checked" : ""} />
+                          <span>${escapeHtml(r.name)}</span>
+                        </label>
+                      `
+                    )
+                    .join("")
+                : `<div class="hint">${escapeHtml(t.overviewAllRoomsHint)}</div>`
+            }
+          </div>
+        </div>
+        <label class="inline">
+          <input id="oved-mini" type="checkbox" ${showMini ? "checked" : ""} />
+          <span>${escapeHtml(t.overviewEditorMiniTimeline)}</span>
+        </label>
+        <label class="inline">
+          <input id="oved-thermal" type="checkbox" ${showThermal ? "checked" : ""} />
+          <span>${escapeHtml(t.editorShowThermal)}</span>
+        </label>
+        <label class="inline">
+          <input id="oved-ov" type="checkbox" ${showOv ? "checked" : ""} />
+          <span>${escapeHtml(t.editorShowOverride)}</span>
+        </label>
+      </div>
+    `;
+
+    this.shadowRoot.querySelector("#oved-title")?.addEventListener("change", (ev) => {
+      const val = ev.target.value.trim();
+      this._emitChange({ title: val });
+    });
+    this.shadowRoot.querySelectorAll(".oved-room").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const chosen = Array.from(this.shadowRoot.querySelectorAll(".oved-room"))
+          .filter((el) => el.checked)
+          .map((el) => el.value);
+        this._emitChange({ rooms: chosen });
+      });
+    });
+    this.shadowRoot.querySelector("#oved-mini")?.addEventListener("change", (ev) => {
+      this._emitChange({ show_mini_timeline: ev.target.checked });
+    });
+    this.shadowRoot.querySelector("#oved-thermal")?.addEventListener("change", (ev) => {
+      this._emitChange({ show_thermal_preview: ev.target.checked });
+    });
+    this.shadowRoot.querySelector("#oved-ov")?.addEventListener("change", (ev) => {
       this._emitChange({ show_override_bar: ev.target.checked });
     });
   }
@@ -2288,6 +3406,12 @@ if (!customElements.get(CARD_TAG)) {
 if (!customElements.get(EDITOR_TAG)) {
   customElements.define(EDITOR_TAG, SmartClimateSchedulerCardEditor);
 }
+if (!customElements.get(OVERVIEW_CARD_TAG)) {
+  customElements.define(OVERVIEW_CARD_TAG, SmartClimateSchedulerOverviewCard);
+}
+if (!customElements.get(OVERVIEW_EDITOR_TAG)) {
+  customElements.define(OVERVIEW_EDITOR_TAG, SmartClimateSchedulerOverviewCardEditor);
+}
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === CARD_TAG)) {
@@ -2295,6 +3419,14 @@ if (!window.customCards.some((c) => c.type === CARD_TAG)) {
     type: CARD_TAG,
     name: "Smart Climate Scheduler Card",
     description: "Interaktive 24h-Zeitleiste zur Bearbeitung von Heiz-Slots, Profilen & Overrides.",
+    preview: true,
+  });
+}
+if (!window.customCards.some((c) => c.type === OVERVIEW_CARD_TAG)) {
+  window.customCards.push({
+    type: OVERVIEW_CARD_TAG,
+    name: "Smart Climate Scheduler Overview Card",
+    description: "Kompakte Multi-Raum-Übersicht mit Mini-Zeitleiste, Automatik-Schalter & aufklappbarer Steuerung.",
     preview: true,
   });
 }

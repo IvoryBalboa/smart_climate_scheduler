@@ -2,6 +2,12 @@
 
 Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen Changelog-Eintrag. Dieser wird beim Build automatisch für HACS (`README.md`) und das GitHub Release übernommen.
 
+## v3.1.0 – Konfigurierbare Abwesenheits-Presets, Live-Thermik-Vorschau & Multi-Raum-Übersicht
+
+- **Konfigurierbares `away`- und `away_near`-Preset pro Raum**: Im Config- und Options-Flow lassen sich nun getrennte Ziel-Presets für „Unterwegs (nah)“ (`away_near_preset`, Standard `eco`) und „Abwesend“ (`away_preset`, Standard `away`) je Raum festlegen und live über `debug_info.settings` einsehen.
+- **Live-Vorschau für Vorheizen & Auskühlen auf der 24h-Zeitleiste**: Für den heutigen Tag stellt die Timeline-Karte berechnete Vorheiz- und Auskühl-Fenster direkt als gestreifte Vorschau-Segmente inklusive Tooltip auf der Zeitleiste dar (über den Karten-Editor ein-/ausschaltbar).
+- **Neue Multi-Raum-Übersichtskarte (`custom:smart-climate-scheduler-overview-card`)**: Eigenständige Lovelace-Karte mit Raumauswahl (leer = alle Räume), Ist-/Soll-Temperatur, aktivem Preset, Phasen-Badge, kompakter 24h-Mini-Zeitleiste, direktem Automatik-Schalter sowie per Klick aufklappbarer Mini-Steuerung (nächste Aktion, Profilwechsel & Schnell-Override).
+
 ## v3.0.1 – Home Assistant 2026.12 Kompatibilität & OptionsFlow-Fix
 
 - **Kompatibilität mit Home Assistant 2026.10–2026.12 (`DeviceEntry.config_entry_id`)**: Bei der Auflösung von `device_id`- und `area_id`-Service-Zielen wird ausschließlich `device.config_entry_id` genutzt, sobald das Attribut existiert (auch wenn es `None` ist) – das abgekündigte Property `DeviceEntry.config_entries` wird nicht mehr berührt.
