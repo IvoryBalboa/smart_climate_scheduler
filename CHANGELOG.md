@@ -2,6 +2,12 @@
 
 Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen Changelog-Eintrag. Dieser wird beim Build automatisch für HACS (`README.md`) und das GitHub Release übernommen.
 
+## v3.0.1 – Home Assistant 2026.12 Kompatibilität & OptionsFlow-Fix
+
+- **Kompatibilität mit Home Assistant 2026.10–2026.12 (`DeviceEntry.config_entry_id`)**: Bei der Auflösung von `device_id`- und `area_id`-Service-Zielen wird ausschließlich `device.config_entry_id` genutzt, sobald das Attribut existiert (auch wenn es `None` ist) – das abgekündigte Property `DeviceEntry.config_entries` wird nicht mehr berührt.
+- **Kein Doppel-Reload im Options-Flow**: Beim Speichern über den Options-Flow wird `entry.data` nur noch bei tatsächlichen Änderungen aktualisiert und ein verfrühter Zwischen-Reload im `update_listener` unterdrückt, sodass genau ein sauberer Integrations-Reload erfolgt.
+- **Bereinigung für Home Assistant 2025.1+**: Die Mindestversion in `hacs.json` wurde auf `2025.1.0` angehoben und der entfernte `hass.http.register_static_path`-Fallback zugunsten von `async_register_static_paths` entfernt.
+
 ## v3.0.0 – Eingebettete 24h-Timeline Lovelace-Karte & Toleranz-Steuerung
 
 ### 🎨 Neue interaktive 24h-Timeline Lovelace-Karte (`custom:smart-climate-scheduler-card`)

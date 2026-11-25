@@ -194,9 +194,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             if len(identifier) == 2 and identifier[0] == DOMAIN:
                                 if identifier[1] in hass.data[DOMAIN]:
                                     resolved.add(identifier[1])
-                        ce_id = getattr(device, "config_entry_id", None)
-                        if ce_id:
-                            if ce_id in hass.data[DOMAIN]:
+                        if hasattr(device, "config_entry_id"):
+                            ce_id = device.config_entry_id
+                            if ce_id and ce_id in hass.data[DOMAIN]:
                                 resolved.add(ce_id)
                         else:
                             for old_ce_id in getattr(device, "config_entries", ()):
@@ -219,9 +219,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             if len(identifier) == 2 and identifier[0] == DOMAIN:
                                 if identifier[1] in hass.data[DOMAIN]:
                                     resolved.add(identifier[1])
-                        ce_id = getattr(device, "config_entry_id", None)
-                        if ce_id:
-                            if ce_id in hass.data[DOMAIN]:
+                        if hasattr(device, "config_entry_id"):
+                            ce_id = device.config_entry_id
+                            if ce_id and ce_id in hass.data[DOMAIN]:
                                 resolved.add(ce_id)
                         else:
                             for old_ce_id in getattr(device, "config_entries", ()):
@@ -594,6 +594,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener when options change."""
     domain_data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if domain_data and domain_data.pop("_updating_from_options_data", False):
+        # Zwischenschritt beim Speichern im OptionsFlow (entry.data-Sync vor async_create_entry):
+        # Kein verfrühter Reload nötig, da direkt anschließend das finale Options-Update lädt.
+        return
     if domain_data and (
         domain_data.pop("_updating_from_switch", False)
         or domain_data.pop("_updating_from_card", False)

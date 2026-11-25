@@ -444,20 +444,28 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 if self.profiles is not None and self.current_schedule is not None:
                     self.profiles[self.active_profile] = copy.deepcopy(self.current_schedule)
 
+                new_options = {
+                    "schedule": self.current_schedule,
+                    "profiles": self.profiles,
+                    "active_profile": self.active_profile,
+                    **self.settings_data,
+                }
                 new_data = dict(self.config_entry.data)
                 new_data.update(self.settings_data)
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry, data=new_data
-                )
+                data_changed = new_data != dict(self.config_entry.data)
+                options_changed = new_options != dict(self.config_entry.options)
+                if data_changed:
+                    if options_changed:
+                        domain_data = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
+                        if isinstance(domain_data, dict):
+                            domain_data["_updating_from_options_data"] = True
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, data=new_data
+                    )
 
                 return self.async_create_entry(
                     title="",
-                    data={
-                        "schedule": self.current_schedule,
-                        "profiles": self.profiles,
-                        "active_profile": self.active_profile,
-                        **self.settings_data,
-                    },
+                    data=new_options,
                 )
 
         schema = vol.Schema(

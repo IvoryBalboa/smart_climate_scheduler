@@ -1,4 +1,4 @@
-# Smart Climate Scheduler (v3.0.0)
+# Smart Climate Scheduler (v3.0.1)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -90,7 +90,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v3.0.0.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v3.0.1.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -209,10 +209,10 @@ Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
 ## 📝 Changelog
 
 <!-- CURRENT_CHANGELOG_START -->
-Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.0.0** (*Eingebettete 24h-Timeline Lovelace-Karte & Toleranz-Steuerung*):
-* **Einfache Auswahl per `config_entry`**: Im visuellen Karten-Editor (und per `getStubConfig`) wird direkt das gewünschte **Raum-Config-Entry** ausgewählt – stabil auch bei umbenannten Entitäten.
-* **24h-Zeitleiste & Wochentag-Tabs (Mo–So)**: Farblich nach Preset (`comfort`, `eco`, `home`, `sleep`, `boost`, `away`) abgesetzte Zeitblöcke inklusive Live-Zeitmarker.
-* **Klick & Drag-&-Drop Bearbeitung**: Auf freie Fläche klicken, um neue Slots anzulegen; linke/rechte Ränder ziehen oder Blöcke verschieben (konfigurierbares 5-, 15- oder 30-Minuten-Raster).
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.0.1** (*Home Assistant 2026.12 Kompatibilität & OptionsFlow-Fix*):
+* **Kompatibilität mit Home Assistant 2026.10–2026.12 (`DeviceEntry.config_entry_id`)**: Bei der Auflösung von `device_id`- und `area_id`-Service-Zielen wird ausschließlich `device.config_entry_id` genutzt, sobald das Attribut existiert (auch wenn es `None` ist) – das abgekündigte Property `DeviceEntry.config_entries` wird nicht mehr berührt.
+* **Kein Doppel-Reload im Options-Flow**: Beim Speichern über den Options-Flow wird `entry.data` nur noch bei tatsächlichen Änderungen aktualisiert und ein verfrühter Zwischen-Reload im `update_listener` unterdrückt, sodass genau ein sauberer Integrations-Reload erfolgt.
+* **Bereinigung für Home Assistant 2025.1+**: Die Mindestversion in `hacs.json` wurde auf `2025.1.0` angehoben und der entfernte `hass.http.register_static_path`-Fallback zugunsten von `async_register_static_paths` entfernt.
 <!-- CURRENT_CHANGELOG_END -->
 
 ---

@@ -521,21 +521,14 @@ async def async_register_frontend_and_ws(hass: Any) -> None:
     frontend_dir = Path(__file__).parent / "frontend"
     card_url = get_card_js_url(VERSION)
 
-    # 1. Serve embedded Lovelace card directory over Home Assistant HTTP
+    # 1. Serve embedded Lovelace card directory over Home Assistant HTTP (HA 2025.1+)
     try:
         if hasattr(hass, "http") and hass.http is not None:
-            try:
-                from homeassistant.components.http import StaticPathConfig
+            from homeassistant.components.http import StaticPathConfig
 
-                if hasattr(hass.http, "async_register_static_paths"):
-                    await hass.http.async_register_static_paths(
-                        [StaticPathConfig(FRONTEND_URL_BASE, str(frontend_dir), False)]
-                    )
-                elif hasattr(hass.http, "register_static_path"):
-                    hass.http.register_static_path(FRONTEND_URL_BASE, str(frontend_dir), False)
-            except ImportError:
-                if hasattr(hass.http, "register_static_path"):
-                    hass.http.register_static_path(FRONTEND_URL_BASE, str(frontend_dir), False)
+            await hass.http.async_register_static_paths(
+                [StaticPathConfig(FRONTEND_URL_BASE, str(frontend_dir), False)]
+            )
     except Exception as err:
         _LOGGER.warning("Konnte statischen Frontend-Pfad '%s' nicht registrieren: %s", FRONTEND_URL_BASE, err)
 
