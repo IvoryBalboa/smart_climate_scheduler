@@ -27,7 +27,9 @@
           "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
           "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
-          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)"
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
+          "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
+          "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
           "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
           "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
-          "preheat_ignores_away": "Voorverwarmen voor aankomst bij afwezigheid (Overschrijft afwezig en nabij)"
+          "preheat_ignores_away": "Voorverwarmen voor aankomst bij afwezigheid (Overschrijft afwezig en nabij)",
+          "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
+          "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Doel-preset"
           }
         }
+      },
+      "anomaly": {
+        "name": "Anomalie- & hardwarebewaking",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Primaire afwijking"
+          },
+          "anomalies": {
+            "name": "Gedetecteerde afwijkingen"
+          },
+          "detected_since": {
+            "name": "Gedetecteerd sinds"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Drempel zonder opwarming (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Actieve verwarming zonder stijging (min)"
+          },
+          "temp_delta": {
+            "name": "Temperatuurverandering"
+          },
+          "unchanged_minutes": {
+            "name": "Sensor ongewijzigd sinds (min)"
+          },
+          "burner_configured": {
+            "name": "Brandersensor geconfigureerd"
+          },
+          "burner_active": {
+            "name": "Brander actief"
+          },
+          "thermostat_heating": {
+            "name": "Thermostaat verwarmt"
+          },
+          "window_open": {
+            "name": "Raam of deur open"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Afkoelen details"
+          },
+          "anomaly": {
+            "name": "Anomaliebewaking details"
           },
           "timestamp": {
             "name": "Tijdstempel"

@@ -27,7 +27,9 @@
           "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
           "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
           "tolerance_entity": "Entità tolleranza (Opzionale - Rilevamento automatico dal dispositivo se vuota)",
-          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)"
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
+          "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
+          "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
           "tolerance_entity": "Entità tolleranza (Opzionale - Rilevamento automatico dal dispositivo se vuota)",
           "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
-          "preheat_ignores_away": "Preriscalda prima dell'arrivo in assenza (Ignora assenza e zona vicina)"
+          "preheat_ignores_away": "Preriscalda prima dell'arrivo in assenza (Ignora assenza e zona vicina)",
+          "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
+          "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Preset di destinazione"
           }
         }
+      },
+      "anomaly": {
+        "name": "Controllo anomalie e hardware",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Anomalia principale"
+          },
+          "anomalies": {
+            "name": "Anomalie rilevate"
+          },
+          "detected_since": {
+            "name": "Rilevata da"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Soglia mancato riscaldamento (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Riscaldamento attivo senza aumento (min)"
+          },
+          "temp_delta": {
+            "name": "Variazione temperatura"
+          },
+          "unchanged_minutes": {
+            "name": "Sensore invariato da (min)"
+          },
+          "burner_configured": {
+            "name": "Sensore bruciatore configurato"
+          },
+          "burner_active": {
+            "name": "Bruciatore attivo"
+          },
+          "thermostat_heating": {
+            "name": "Termostato in riscaldamento"
+          },
+          "window_open": {
+            "name": "Finestra o porta aperta"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Dettagli raffreddamento"
+          },
+          "anomaly": {
+            "name": "Dettagli controllo anomalie"
           },
           "timestamp": {
             "name": "Timestamp"

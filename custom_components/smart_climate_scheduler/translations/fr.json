@@ -27,7 +27,9 @@
           "fallback_tolerance": "Tolérance de réactivation de secours (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
           "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
-          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)"
+          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
+          "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
+          "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
           "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
           "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
-          "preheat_ignores_away": "Préchauffer avant l'arrivée en absence (Outrepasse absence et zone proche)"
+          "preheat_ignores_away": "Préchauffer avant l'arrivée en absence (Outrepasse absence et zone proche)",
+          "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
+          "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Préréglage cible"
           }
         }
+      },
+      "anomaly": {
+        "name": "Surveillance anomalies & matériel",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Anomalie principale"
+          },
+          "anomalies": {
+            "name": "Anomalies détectées"
+          },
+          "detected_since": {
+            "name": "Détectée depuis"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Seuil sans chauffe (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Chauffe active sans hausse (min)"
+          },
+          "temp_delta": {
+            "name": "Variation de température"
+          },
+          "unchanged_minutes": {
+            "name": "Capteur figé depuis (min)"
+          },
+          "burner_configured": {
+            "name": "Capteur brûleur configuré"
+          },
+          "burner_active": {
+            "name": "Brûleur actif"
+          },
+          "thermostat_heating": {
+            "name": "Thermostat en chauffe"
+          },
+          "window_open": {
+            "name": "Fenêtre ou porte ouverte"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Détails du refroidissement"
+          },
+          "anomaly": {
+            "name": "Détails surveillance anomalies"
           },
           "timestamp": {
             "name": "Horodatage"

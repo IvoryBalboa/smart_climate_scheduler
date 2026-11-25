@@ -27,7 +27,9 @@
           "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
           "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
           "tolerance_entity": "Toleranz-Entität (Optional – Automatische Erkennung über Gerät wenn leer)",
-          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)"
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
+          "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
+          "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
           "tolerance_entity": "Toleranz-Entität (Optional – Automatische Erkennung über Gerät wenn leer)",
           "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
-          "preheat_ignores_away": "Vorheizen vor Ankunft trotz Abwesenheit (Überstimmt Abwesend & Nahbereich)"
+          "preheat_ignores_away": "Vorheizen vor Ankunft trotz Abwesenheit (Überstimmt Abwesend & Nahbereich)",
+          "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
+          "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Ziel-Preset"
           }
         }
+      },
+      "anomaly": {
+        "name": "Anomalie- & Hardware-Wächter",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Haupt-Anomalie"
+          },
+          "anomalies": {
+            "name": "Erkannte Anomalien"
+          },
+          "detected_since": {
+            "name": "Erkannt seit"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Schwelle ohne Erwärmung (Min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Heizdauer ohne Anstieg (Min)"
+          },
+          "temp_delta": {
+            "name": "Temperaturänderung"
+          },
+          "unchanged_minutes": {
+            "name": "Sensor unverändert seit (Min)"
+          },
+          "burner_configured": {
+            "name": "Brenner-Sensor konfiguriert"
+          },
+          "burner_active": {
+            "name": "Brenner aktiv"
+          },
+          "thermostat_heating": {
+            "name": "Thermostat heizt"
+          },
+          "window_open": {
+            "name": "Fenster oder Tür offen"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Auskühlen Details"
+          },
+          "anomaly": {
+            "name": "Anomalie-Wächter Details"
           },
           "timestamp": {
             "name": "Zeitstempel"

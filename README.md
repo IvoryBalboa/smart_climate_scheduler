@@ -1,4 +1,4 @@
-# Smart Climate Scheduler (v3.2.0)
+# Smart Climate Scheduler (v3.3.0)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -90,7 +90,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v3.2.0.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v3.3.0.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -209,10 +209,10 @@ Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
 ## 📝 Changelog
 
 <!-- CURRENT_CHANGELOG_START -->
-Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.2.0** (*Multi-Raum Sammelaktionen, Filter & Sortierung*):
-* **Filter- & Sortierleiste in der Multi-Raum-Übersichtskarte (`custom:smart-climate-scheduler-overview-card`)**: Räume lassen sich direkt über Schnellfilter mit Live-Zählern (**Alle**, **Automatik An**, **Heizt / Thermik**, **Override**) eingrenzen sowie nach **Name (A–Z)**, **Aktive Phase zuerst** oder **Größte Abweichung (ΔT)** sortieren (Standard-Filter und -Sortierung auch im Karten-Editor konfigurierbar).
-* **Sammelaktionen für gefilterte Räume**: Direkt aus dem Kartenkopf lassen sich **Alle Automatik An/Aus**, **Sammel-Override** (Preset + Dauer), **Aktive Overrides stoppen** sowie **gemeinsame Zeitplan-Profile** auf alle aktuell angezeigten Räume gleichzeitig anwenden.
-* **Robuste Entity-Registry-Auflösung & `entry_id`-Steuerung**: Automatik-Schalter, Zeitplan-Sensor und Profil-Auswahl werden per `unique_id` aus der Home-Assistant-Entity-Registry aufgelöst und Einzel- sowie Sammel-Schaltungen der Automatik laufen direkt über `entry_id` (`smart_climate_scheduler/set_automation`), sodass auch umbenannte Entitäten jederzeit zuverlässig funktionieren.
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.3.0** (*Anomalie- & Hardware-Wächter (brenner-sensitiv)*):
+* **Brenner-sensitive Heizüberwachung („Keine Erwärmung“)**: Erkennt automatisch, wenn ein Thermostat über den konfigurierbaren Schwellwert (Standard: **45 Minuten**, 0–240 Min. im Config- & Options-Flow anpassbar) aktiv heizt, die Temperatur jedoch nicht um mindestens `+0,15 °C` steigt – bei konfiguriertem zentralem Brenner-Sensor (`heating_active_sensor`) strikt erst dann, wenn auch der Brenner tatsächlich aktiv ist (bei Nachtabsenkung/Brenner-Aus erfolgt kein Fehlalarm, ebenso bei geöffnetem Fenster).
+* **Thermostat-Ausfall & eingefrorener Temperatursensor**: Meldet `unavailable`/`unknown` am Thermostat (nach Ablauf der 90s-Start-Karenzzeit) sowie eingefrorene Sensoren (`>= 180 Min.` unveränderte Temperatur bei Heizbedarf bzw. `last_updated`, oder `>= 360 Min.` im Leerlauf).
+* **Neuer Diagnose-Problem-Sensor (`BinarySensorDeviceClass.PROBLEM`)**: Stellt pro Raum eine lokalisierte Diagnose-Entität (`_anomaly` / `_anomalie`) inklusive Brenner-Kontext, Heizdauer ohne Anstieg, `ΔT` und Entity-Registry-Synchronisation bereit.
 <!-- CURRENT_CHANGELOG_END -->
 
 ---

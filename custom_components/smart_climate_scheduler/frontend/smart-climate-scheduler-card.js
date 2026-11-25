@@ -1,5 +1,5 @@
 /**
- * Smart Climate Scheduler Card (v3.2.0)
+ * Smart Climate Scheduler Card (v3.3.0)
  * Embedded interactive 24h timeline & multi-room overview Lovelace cards for Home Assistant.
  * Self-contained ES module with Shadow DOM & zero external dependencies.
  */
@@ -90,6 +90,15 @@ const I18N = {
     roomsCount: "Räume",
     noRoomsConfigured: "Keine Smart Climate Scheduler Räume gefunden.",
     minutes: "Min",
+    anomalyWarning: "Heiz- & Hardware-Warnung",
+    anomalyThermostatOffline: "Thermostat nicht verfügbar",
+    anomalyNoHeating: "Keine Erwärmung trotz aktivem Ventil & Brenner",
+    anomalyNoHeatingValve: "Keine Erwärmung trotz heizendem Thermostat",
+    anomalySensorFrozen: "Temperatursensor eingefroren",
+    anomalyBurnerActive: "Brenner aktiv",
+    anomalyBurnerOff: "Brenner aus",
+    anomalyUnchangedSince: "Unverändert seit",
+    filterAnomaly: "Warnungen",
   },
   en: {
     daysShort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -168,6 +177,15 @@ const I18N = {
     roomsCount: "rooms",
     noRoomsConfigured: "No Smart Climate Scheduler rooms found.",
     minutes: "min",
+    anomalyWarning: "Heating & hardware warning",
+    anomalyThermostatOffline: "Thermostat unavailable",
+    anomalyNoHeating: "No warming despite active valve & burner",
+    anomalyNoHeatingValve: "No warming despite heating thermostat",
+    anomalySensorFrozen: "Temperature sensor frozen",
+    anomalyBurnerActive: "Burner active",
+    anomalyBurnerOff: "Burner off",
+    anomalyUnchangedSince: "Unchanged for",
+    filterAnomaly: "Warnings",
   },
   fr: {
     daysShort: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -246,6 +264,15 @@ const I18N = {
     roomsCount: "pièces",
     noRoomsConfigured: "Aucune pièce Smart Climate Scheduler trouvée.",
     minutes: "min",
+    anomalyWarning: "Alerte chauffage & matériel",
+    anomalyThermostatOffline: "Thermostat indisponible",
+    anomalyNoHeating: "Aucune chauffe malgré vanne et brûleur actifs",
+    anomalyNoHeatingValve: "Aucune chauffe malgré thermostat en chauffe",
+    anomalySensorFrozen: "Capteur de température figé",
+    anomalyBurnerActive: "Brûleur actif",
+    anomalyBurnerOff: "Brûleur arrêté",
+    anomalyUnchangedSince: "Inchangé depuis",
+    filterAnomaly: "Alertes",
   },
   es: {
     daysShort: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -324,6 +351,15 @@ const I18N = {
     roomsCount: "salas",
     noRoomsConfigured: "No se encontraron habitaciones.",
     minutes: "min",
+    anomalyWarning: "Alerta de calefacción y hardware",
+    anomalyThermostatOffline: "Termostato no disponible",
+    anomalyNoHeating: "Sin calentamiento pese a válvula y caldera activas",
+    anomalyNoHeatingValve: "Sin calentamiento pese a termostato activo",
+    anomalySensorFrozen: "Sensor de temperatura congelado",
+    anomalyBurnerActive: "Caldera activa",
+    anomalyBurnerOff: "Caldera apagada",
+    anomalyUnchangedSince: "Sin cambios desde",
+    filterAnomaly: "Alertas",
   },
   it: {
     daysShort: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -402,6 +438,15 @@ const I18N = {
     roomsCount: "stanze",
     noRoomsConfigured: "Nessuna stanza trovata.",
     minutes: "min",
+    anomalyWarning: "Avviso riscaldamento e hardware",
+    anomalyThermostatOffline: "Termostato non disponibile",
+    anomalyNoHeating: "Nessun riscaldamento nonostante valvola e caldaia attive",
+    anomalyNoHeatingValve: "Nessun riscaldamento nonostante termostato attivo",
+    anomalySensorFrozen: "Sensore temperatura bloccato",
+    anomalyBurnerActive: "Caldaia attiva",
+    anomalyBurnerOff: "Caldaia spenta",
+    anomalyUnchangedSince: "Invariato da",
+    filterAnomaly: "Avvisi",
   },
   nl: {
     daysShort: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -480,6 +525,15 @@ const I18N = {
     roomsCount: "kamers",
     noRoomsConfigured: "Geen kamers gevonden.",
     minutes: "min",
+    anomalyWarning: "Verwarmings- & hardwarewaarschuwing",
+    anomalyThermostatOffline: "Thermostaat niet beschikbaar",
+    anomalyNoHeating: "Geen opwarming ondanks actief ventiel & brander",
+    anomalyNoHeatingValve: "Geen opwarming ondanks verwarmende thermostaat",
+    anomalySensorFrozen: "Temperatuursensor bevroren",
+    anomalyBurnerActive: "Brander actief",
+    anomalyBurnerOff: "Brander uit",
+    anomalyUnchangedSince: "Ongewijzigd sinds",
+    filterAnomaly: "Waarschuwingen",
   },
   pl: {
     daysShort: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
@@ -558,6 +612,15 @@ const I18N = {
     roomsCount: "pokoi",
     noRoomsConfigured: "Nie znaleziono pokoi.",
     minutes: "min",
+    anomalyWarning: "Ostrzeżenie ogrzewania i sprzętu",
+    anomalyThermostatOffline: "Termostat niedostępny",
+    anomalyNoHeating: "Brak nagrzewania mimo aktywnego zaworu i palnika",
+    anomalyNoHeatingValve: "Brak nagrzewania mimo grzejącego termostatu",
+    anomalySensorFrozen: "Czujnik temperatury zamrożony",
+    anomalyBurnerActive: "Palnik aktywny",
+    anomalyBurnerOff: "Palnik wyłączony",
+    anomalyUnchangedSince: "Bez zmian od",
+    filterAnomaly: "Ostrzeżenia",
   },
 };
 
@@ -617,6 +680,89 @@ function getTodayKey() {
   // JS getDay(): 0=Sun..6=Sat -> map to DAYS index (0=monday..6=sunday)
   const jsDay = new Date().getDay();
   return DAYS[(jsDay + 6) % 7];
+}
+
+function resolveLiveAnomaly(d, hassStates) {
+  const base = d?.anomaly && typeof d.anomaly === "object" ? d.anomaly : {};
+  const anSt = d?.anomaly_entity_id ? hassStates?.[d.anomaly_entity_id] : null;
+  if (anSt && !["unknown", "unavailable"].includes(anSt.state)) {
+    const attrs = anSt.attributes || {};
+    return {
+      ...base,
+      enabled: base.enabled !== false,
+      active: anSt.state === "on",
+      primary_type: attrs.primary_type ?? base.primary_type ?? null,
+      anomalies: Array.isArray(attrs.anomalies) ? attrs.anomalies : (base.anomalies || []),
+      detected_since: attrs.detected_since ?? base.detected_since ?? null,
+      no_heat_threshold_minutes: attrs.no_heat_threshold_minutes ?? base.no_heat_threshold_minutes ?? 45,
+      heating_watch_minutes: attrs.heating_watch_minutes ?? base.heating_watch_minutes ?? 0,
+      temp_delta: attrs.temp_delta !== undefined ? attrs.temp_delta : base.temp_delta,
+      unchanged_minutes: attrs.unchanged_minutes ?? base.unchanged_minutes ?? 0,
+      burner_configured: attrs.burner_configured !== undefined ? attrs.burner_configured : Boolean(base.burner_configured),
+      burner_active: attrs.burner_active !== undefined ? attrs.burner_active : Boolean(base.burner_active),
+      thermostat_heating: attrs.thermostat_heating !== undefined ? attrs.thermostat_heating : Boolean(base.thermostat_heating),
+      window_open: attrs.window_open !== undefined ? attrs.window_open : Boolean(base.window_open),
+      climate_state: attrs.climate_state ?? base.climate_state ?? null,
+    };
+  }
+  return {
+    enabled: base.enabled !== false,
+    active: Boolean(base.active),
+    primary_type: base.primary_type || null,
+    anomalies: Array.isArray(base.anomalies) ? base.anomalies : [],
+    detected_since: base.detected_since || null,
+    no_heat_threshold_minutes: base.no_heat_threshold_minutes ?? 45,
+    heating_watch_minutes: base.heating_watch_minutes ?? 0,
+    temp_delta: base.temp_delta ?? null,
+    unchanged_minutes: base.unchanged_minutes ?? 0,
+    burner_configured: Boolean(base.burner_configured),
+    burner_active: Boolean(base.burner_active),
+    thermostat_heating: Boolean(base.thermostat_heating),
+    window_open: Boolean(base.window_open),
+    climate_state: base.climate_state || null,
+  };
+}
+
+function formatAnomalySummary(anomaly, t) {
+  if (!anomaly || !anomaly.active) {
+    return { badgeText: "", detailText: "" };
+  }
+  const pType = anomaly.primary_type || (Array.isArray(anomaly.anomalies) && anomaly.anomalies[0]) || "";
+  if (pType === "thermostat_unavailable") {
+    const stateSuffix = anomaly.climate_state ? ` (${anomaly.climate_state})` : "";
+    return {
+      badgeText: t.anomalyThermostatOffline,
+      detailText: `${t.anomalyThermostatOffline}${stateSuffix}`,
+    };
+  }
+  if (pType === "no_heating_response") {
+    const title = anomaly.burner_configured ? t.anomalyNoHeating : t.anomalyNoHeatingValve;
+    const watchMin = Math.round(Number(anomaly.heating_watch_minutes || 0));
+    const threshMin = Number(anomaly.no_heat_threshold_minutes || 45);
+    const parts = [`${title} (${watchMin}/${threshMin} ${t.minutes})`];
+    if (anomaly.burner_configured) {
+      parts.push(anomaly.burner_active ? t.anomalyBurnerActive : t.anomalyBurnerOff);
+    }
+    if (anomaly.temp_delta !== null && anomaly.temp_delta !== undefined) {
+      const sign = Number(anomaly.temp_delta) > 0 ? "+" : "";
+      parts.push(`ΔT ${sign}${Number(anomaly.temp_delta).toFixed(2)} °C`);
+    }
+    return {
+      badgeText: title,
+      detailText: parts.join(" · "),
+    };
+  }
+  if (pType === "sensor_frozen") {
+    const unchMin = Math.round(Number(anomaly.unchanged_minutes || 0));
+    return {
+      badgeText: t.anomalySensorFrozen,
+      detailText: `${t.anomalySensorFrozen} · ${t.anomalyUnchangedSince} ${unchMin} ${t.minutes}`,
+    };
+  }
+  return {
+    badgeText: t.anomalyWarning,
+    detailText: t.anomalyWarning,
+  };
 }
 
 function computeGapSegments(daySlots) {
@@ -731,6 +877,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     this._suppressNextTrackClick = false;
     this._lastStateSig = null;
     this._fetchPending = false;
+    this._anomalyDetailsOpen = false;
     this._boundPointerMove = (ev) => this._onPointerMove(ev);
     this._boundPointerUp = (ev) => this._onPointerUp(ev);
   }
@@ -810,6 +957,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
         this._data.climate_entity,
         this._data.automation_switch_entity_id,
         this._data.profile_select_entity_id,
+        this._data.anomaly_entity_id,
       ].filter(Boolean);
 
       const sig = watchedIds
@@ -817,7 +965,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
           const st = hass.states?.[id];
           if (!st) return `${id}:missing`;
           const attrs = st.attributes || {};
-          return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.preset_mode}`;
+          return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.preset_mode}:${attrs.primary_type}:${attrs.heating_watch_minutes}`;
         })
         .join("|");
 
@@ -926,6 +1074,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
     const hvacAction = clSt?.attributes?.hvac_action ?? d.hvac_action;
+    const anomaly = resolveLiveAnomaly(d, st);
 
     return {
       automationOn,
@@ -935,6 +1084,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
       preheating,
       coolingDown,
       hvacAction,
+      anomaly,
     };
   }
 
@@ -1346,6 +1496,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     if (live.preheating) phaseSuffix = ` (${t.preheating})`;
     else if (live.coolingDown) phaseSuffix = ` (${t.coolingDown})`;
     statusParts.push(`${presetLabel}${phaseSuffix}`);
+    const anomalySummary = formatAnomalySummary(live.anomaly, t);
 
     const basePresetKey = d.default_preset || "eco";
     const basePresetColor = getPresetColor(basePresetKey);
@@ -1468,6 +1619,11 @@ class SmartClimateSchedulerCard extends HTMLElement {
                     </div>`
                   : ""
               }
+              ${
+                live.anomaly?.active
+                  ? `<button type="button" id="btn-anomaly-toggle" class="anomaly-badge ${this._anomalyDetailsOpen ? "open" : ""}" title="${escapeHtml(anomalySummary.detailText)}">⚠️ ${escapeHtml(anomalySummary.badgeText)}</button>`
+                  : ""
+              }
             </div>
             <label class="auto-switch" title="${escapeHtml(t.automatic)}">
               <input id="auto-toggle" type="checkbox" ${live.automationOn ? "checked" : ""} />
@@ -1475,6 +1631,11 @@ class SmartClimateSchedulerCard extends HTMLElement {
               <span class="switch-label">${escapeHtml(t.automatic)}</span>
             </label>
           </div>
+          ${
+            live.anomaly?.active && this._anomalyDetailsOpen
+              ? `<div class="anomaly-banner">⚠️ <strong>${escapeHtml(t.anomalyWarning)}:</strong> ${escapeHtml(anomalySummary.detailText)}</div>`
+              : ""
+          }
 
           <div class="divider"></div>
 
@@ -1689,6 +1850,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
     if (!root) return;
 
     root.querySelector("#auto-toggle")?.addEventListener("change", () => this._handleToggleAuto());
+    root.querySelector("#btn-anomaly-toggle")?.addEventListener("click", () => {
+      this._anomalyDetailsOpen = !this._anomalyDetailsOpen;
+      this._render();
+    });
 
     root.querySelector("#profile-select")?.addEventListener("change", (ev) => {
       this._handleSwitchProfile(ev.target.value);
@@ -1922,6 +2087,35 @@ class SmartClimateSchedulerCard extends HTMLElement {
         padding: 1px 6px;
         font-size: 0.7rem;
         cursor: pointer;
+      }
+      .anomaly-badge {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(239, 68, 68, 0.16);
+        border: 1px solid rgba(239, 68, 68, 0.48);
+        color: color-mix(in srgb, #ef4444 75%, var(--scs-text));
+        border-radius: 6px;
+        padding: 2px 7px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 2px;
+      }
+      .anomaly-badge.open,
+      .anomaly-badge:hover {
+        background: rgba(239, 68, 68, 0.25);
+        border-color: rgba(239, 68, 68, 0.75);
+      }
+      .anomaly-banner {
+        font-size: 0.74rem;
+        color: color-mix(in srgb, #ef4444 75%, var(--scs-text));
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 7px;
+        padding: 6px 8px;
+        line-height: 1.35;
       }
       .auto-switch {
         display: inline-flex;
@@ -2717,13 +2911,14 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
             d.climate_entity,
             d.automation_switch_entity_id,
             d.profile_select_entity_id,
+            d.anomaly_entity_id,
           ].filter(Boolean);
           return ids
             .map((id) => {
               const st = hass.states?.[id];
               if (!st) return `${id}:missing`;
               const attrs = st.attributes || {};
-              return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}`;
+              return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.primary_type}`;
             })
             .join(",");
         })
@@ -2812,6 +3007,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       curTemp !== null && curTemp !== undefined && tgtTemp !== null && tgtTemp !== undefined
         ? Number(tgtTemp) - Number(curTemp)
         : -999;
+    const anomaly = resolveLiveAnomaly(d, st);
 
     return {
       automationOn,
@@ -2824,10 +3020,14 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       hvacAction,
       isHeating,
       activeOverrides,
+      anomaly,
+      anomalyActive: Boolean(anomaly.active),
+      anomalyType: anomaly.primary_type || null,
     };
   }
 
   _matchesFilter(room, live, filterMode) {
+    if (filterMode === "anomaly") return live.anomalyActive;
     if (filterMode === "auto_on") return live.automationOn;
     if (filterMode === "heating") return live.isHeating || live.preheating || live.coolingDown;
     if (filterMode === "override") return live.activeOverrides.length > 0;
@@ -2844,6 +3044,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
 
     const filtered = enriched.filter(({ room, live }) => this._matchesFilter(room, live, filterMode));
     const phaseWeight = (live) => {
+      if (live.anomalyActive) return 6;
       if (live.activeOverrides.length > 0) return 5;
       if (live.preheating) return 4;
       if (live.isHeating) return 3;
@@ -3130,6 +3331,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const countAutoOn = allEnriched.filter((x) => x.live.automationOn).length;
     const countHeating = allEnriched.filter((x) => x.live.isHeating || x.live.preheating || x.live.coolingDown).length;
     const countOverride = allEnriched.filter((x) => x.live.activeOverrides.length > 0).length;
+    const countAnomaly = allEnriched.filter((x) => x.live.anomalyActive).length;
     const visibleWithOverrides = visibleEntries.filter((x) => x.live.activeOverrides.length > 0).length;
 
     const allProfileNames = Array.from(
@@ -3145,6 +3347,9 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       { key: "heating", label: `${t.filterHeating} (${countHeating})` },
       { key: "override", label: `${t.filterOverride} (${countOverride})` },
     ];
+    if (countAnomaly > 0 || filterMode === "anomaly") {
+      filterChips.push({ key: "anomaly", label: `⚠️ ${t.filterAnomaly} (${countAnomaly})` });
+    }
 
     const roomsHtml = visibleEntries
       .map(({ room: d, live }) => {
@@ -3170,6 +3375,11 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.heatingActive)}</span>`;
         }
 
+        const anomalySummary = formatAnomalySummary(live.anomaly, t);
+        const anomalyBadge = live.anomalyActive
+          ? `<span class="ov-phase ov-phase-alert" title="${escapeHtml(anomalySummary.detailText)}">⚠️ ${escapeHtml(anomalySummary.badgeText)}</span>`
+          : "";
+
         const tempStr = [
           live.curTemp !== null && live.curTemp !== undefined ? `${Number(live.curTemp).toFixed(1)}°` : null,
           live.tgtTemp !== null && live.tgtTemp !== undefined ? `→ ${Number(live.tgtTemp).toFixed(1)}°` : null,
@@ -3183,13 +3393,14 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           : "";
 
         return `
-          <div class="ov-room ${expanded ? "expanded" : ""}" data-room-id="${escapeHtml(d.entry_id)}">
+          <div class="ov-room ${expanded ? "expanded" : ""} ${live.anomalyActive ? "has-anomaly" : ""}" data-room-id="${escapeHtml(d.entry_id)}">
             <div class="ov-row" data-toggle-expand="${escapeHtml(d.entry_id)}">
               <div class="ov-row-main">
                 <div class="ov-row-top">
                   <span class="ov-room-name">${escapeHtml(d.room_name || d.entry_id)}</span>
                   <span class="ov-preset-dot" style="background:${presetCol.bg};border-color:${presetCol.border};color:${presetCol.text};">${escapeHtml(presetLabel)}</span>
                   ${phaseBadge}
+                  ${anomalyBadge}
                   <span class="ov-temps tabular">${escapeHtml(tempStr)}</span>
                 </div>
                 ${showMini ? this._renderMiniTimeline(d, t) : ""}
@@ -3206,6 +3417,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
             ${
               expanded
                 ? `<div class="ov-drawer">
+                    ${live.anomalyActive ? `<div class="ov-anomaly-detail">⚠️ <strong>${escapeHtml(t.anomalyWarning)}:</strong> ${escapeHtml(anomalySummary.detailText)}</div>` : ""}
                     ${nextActionLine ? `<div class="ov-next-action tabular">${escapeHtml(nextActionLine)}</div>` : ""}
                     <div class="ov-drawer-controls">
                       <label class="ov-ctrl-group">
@@ -3604,6 +3816,23 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         background: rgba(234, 88, 12, 0.22);
         color: #fb923c;
       }
+      .ov-phase-alert {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.48);
+        color: color-mix(in srgb, #ef4444 75%, var(--scs-text));
+      }
+      .ov-room.has-anomaly {
+        border-color: rgba(239, 68, 68, 0.45);
+      }
+      .ov-anomaly-detail {
+        font-size: 0.74rem;
+        color: color-mix(in srgb, #ef4444 75%, var(--scs-text));
+        background: rgba(239, 68, 68, 0.14);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        border-radius: 6px;
+        padding: 5px 8px;
+        line-height: 1.35;
+      }
       .ov-temps {
         font-size: 0.78rem;
         color: var(--scs-muted);
@@ -3934,6 +4163,7 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
               <option value="auto_on" ${defaultFilter === "auto_on" ? "selected" : ""}>${escapeHtml(t.filterAutoOn)}</option>
               <option value="heating" ${defaultFilter === "heating" ? "selected" : ""}>${escapeHtml(t.filterHeating)}</option>
               <option value="override" ${defaultFilter === "override" ? "selected" : ""}>${escapeHtml(t.filterOverride)}</option>
+              <option value="anomaly" ${defaultFilter === "anomaly" ? "selected" : ""}>${escapeHtml(t.filterAnomaly)}</option>
             </select>
           </div>
           <div>

@@ -11,11 +11,13 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
+    CONF_ANOMALY_DETECTION_ENABLED,
     CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
     CONF_ENABLE_SELF_LEARNING,
     CONF_PREHEAT_ENABLED,
     CONF_TOLERANCE_ENTITY,
+    DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_PREHEAT_ENABLED,
@@ -344,6 +346,15 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "afkoelen",
         "pl": "ochladzanie",
     },
+    "binary_anomaly": {
+        "de": "anomalie",
+        "en": "anomaly",
+        "es": "anomalia",
+        "fr": "anomalie",
+        "it": "anomalia",
+        "nl": "afwijking",
+        "pl": "anomalia",
+    },
     # Debug sensor
     "diagnostics": {
         "de": "diagnose",
@@ -381,6 +392,7 @@ ENTITY_SLUG_KEY_ALIASES: dict[str, str] = {
     "naechste_aktion": "next_action",
     "binary_vorheizen": "binary_preheat",
     "binary_abkuehlen": "binary_cooldown",
+    "binary_anomalie": "binary_anomaly",
     "diagnose": "diagnostics",
     "zeitplan_profil": "schedule_profile",
 }
@@ -990,6 +1002,15 @@ async def async_sync_entity_registry_disabled(hass: Any, config_entry: Any) -> N
         )
         _sync_entity("sensor", f"{config_entry.entry_id}_heating_rate", learning_on)
         _sync_entity("sensor", f"{config_entry.entry_id}_cooling_rate", learning_on)
+
+        # 4. Anomalie- & Hardware-Wächter (binary_sensor.<entry_id>_anomaly)
+        anomaly_on = bool(
+            config_entry.options.get(
+                CONF_ANOMALY_DETECTION_ENABLED,
+                config_entry.data.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED),
+            )
+        )
+        _sync_entity("binary_sensor", f"{config_entry.entry_id}_anomaly", anomaly_on)
     except Exception as err:
         _LOGGER.debug("Fehler beim Synchronisieren der Entity-Registry Deaktivierung: %s", err)
 

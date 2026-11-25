@@ -660,6 +660,8 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "fallback_tolerance": fallback_tolerance,
             "opportunistic_heating": bool(options.get(CONF_OPPORTUNISTIC_HEATING, data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING))),
             "use_weather_forecast_for_preheat": use_weather_forecast,
+            "anomaly_detection_enabled": bool(options.get("anomaly_detection_enabled", data.get("anomaly_detection_enabled", True))),
+            "anomaly_no_heat_minutes": int(options.get("anomaly_no_heat_minutes", data.get("anomaly_no_heat_minutes", 45)) or 0),
         },
         "evaluation": {
             "calculated_preheat_duration": preheat.get("duration_minutes", 0) if preheat else 0,

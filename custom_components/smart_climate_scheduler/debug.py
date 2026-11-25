@@ -6,6 +6,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from .anomaly import get_anomaly_snapshot
+from .const import DOMAIN
 from .evaluation import evaluate_state
 from .helpers import (
     get_config_entry_slug,
@@ -51,14 +53,21 @@ class SmartClimateSchedulerDebugSensor(SensorEntity):
     @property
     def extra_state_attributes(self) -> dict:
         """Gibt alle Detail- und Debug-Informationen sowie die vollständigen Preheat/Cooldown-Dicts zurück."""
+        hass_obj = self.main_sensor.hass
         preset, preheat, cooldown, active_slot, next_slot, next_action, debug_info = evaluate_state(
-            self.main_sensor.hass, self.config_entry
+            hass_obj, self.config_entry
         )
 
         if not isinstance(debug_info, dict):
             debug_info = {}
 
         _, active_profile = get_profiles_and_active(self.config_entry)
+        domain_data = (
+            hass_obj.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
+            if (hass_obj and isinstance(getattr(hass_obj, "data", None), dict))
+            else None
+        )
+        anomaly_snap = get_anomaly_snapshot(hass_obj, self.config_entry, domain_data)
 
         return {
             "profile": active_profile,
@@ -68,5 +77,6 @@ class SmartClimateSchedulerDebugSensor(SensorEntity):
             "next_action": next_action,
             "preheat": preheat,
             "cooldown": cooldown,
+            "anomaly": anomaly_snap,
             **debug_info,
         }

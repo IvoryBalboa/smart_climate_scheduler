@@ -46,11 +46,15 @@ from .const import (
     CONF_PREHEAT_IGNORES_AWAY,
     CONF_AWAY_PRESET,
     CONF_AWAY_NEAR_PRESET,
+    CONF_ANOMALY_DETECTION_ENABLED,
+    CONF_ANOMALY_NO_HEAT_MINUTES,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_FALLBACK_PRESET,
     DEFAULT_AWAY_PRESET,
     DEFAULT_AWAY_NEAR_PRESET,
+    DEFAULT_ANOMALY_DETECTION_ENABLED,
+    DEFAULT_ANOMALY_NO_HEAT_MINUTES,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -179,6 +183,21 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
                     user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
                 )
+                user_input[CONF_ANOMALY_DETECTION_ENABLED] = bool(
+                    user_input.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED)
+                )
+                user_input[CONF_ANOMALY_NO_HEAT_MINUTES] = max(
+                    0,
+                    min(
+                        240,
+                        int(
+                            _safe_float(
+                                user_input.get(CONF_ANOMALY_NO_HEAT_MINUTES),
+                                DEFAULT_ANOMALY_NO_HEAT_MINUTES,
+                            )
+                        ),
+                    ),
+                )
 
                 default_schedule = {day: [] for day in DAYS}
                 return self.async_create_entry(
@@ -289,6 +308,16 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, default=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT
                 ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ANOMALY_DETECTION_ENABLED, default=DEFAULT_ANOMALY_DETECTION_ENABLED
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ANOMALY_NO_HEAT_MINUTES, default=DEFAULT_ANOMALY_NO_HEAT_MINUTES
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=240, step=5, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
             }
         )
 
@@ -442,6 +471,21 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         data.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY),
                     )
                 ),
+                CONF_ANOMALY_DETECTION_ENABLED: bool(
+                    options.get(
+                        CONF_ANOMALY_DETECTION_ENABLED,
+                        data.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED),
+                    )
+                ),
+                CONF_ANOMALY_NO_HEAT_MINUTES: int(
+                    _safe_float(
+                        options.get(
+                            CONF_ANOMALY_NO_HEAT_MINUTES,
+                            data.get(CONF_ANOMALY_NO_HEAT_MINUTES),
+                        ),
+                        DEFAULT_ANOMALY_NO_HEAT_MINUTES,
+                    )
+                ),
             }
 
     def _get_supported_presets(self) -> list[str]:
@@ -560,6 +604,18 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_PREHEAT_IGNORES_AWAY] = bool(
                 user_input.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY)
             )
+            self.settings_data[CONF_ANOMALY_DETECTION_ENABLED] = bool(
+                user_input.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED)
+            )
+            raw_anom_mins = user_input.get(CONF_ANOMALY_NO_HEAT_MINUTES)
+            if raw_anom_mins is None:
+                anom_mins = DEFAULT_ANOMALY_NO_HEAT_MINUTES
+            else:
+                try:
+                    anom_mins = max(0, min(240, int(round(float(raw_anom_mins)))))
+                except (ValueError, TypeError):
+                    anom_mins = DEFAULT_ANOMALY_NO_HEAT_MINUTES
+            self.settings_data[CONF_ANOMALY_NO_HEAT_MINUTES] = anom_mins
             return await self.async_step_init()
 
         supported_presets = self._get_supported_presets()
@@ -639,6 +695,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     EntitySelectorConfig(domain="number")
                 ),
                 vol.Optional(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT): BooleanSelector(),
+                vol.Optional(CONF_ANOMALY_DETECTION_ENABLED): BooleanSelector(),
+                vol.Optional(CONF_ANOMALY_NO_HEAT_MINUTES): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=240, step=5, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
             }
         )
 

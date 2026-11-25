@@ -18,6 +18,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
 
+from .anomaly import evaluate_and_update_anomaly
 from .debug import SmartClimateSchedulerDebugSensor
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .cooling_rate import (
@@ -1078,6 +1079,7 @@ async def async_setup_entry(
             await async_refresh_forecast(event)
         await async_check_heating_session(event)
         await async_apply_schedule_to_climate(event)
+        evaluate_and_update_anomaly(hass, config_entry, domain_data)
         _async_update_all_entities()
         _reschedule_target_timer()
 
@@ -1145,6 +1147,7 @@ async def async_setup_entry(
     async def _async_post_startup_check():
         invalidate_eval_cache(domain_data)
         await async_apply_schedule_to_climate()
+        evaluate_and_update_anomaly(hass, config_entry, domain_data)
         _async_update_all_entities()
         _reschedule_target_timer()
 
@@ -1152,6 +1155,31 @@ async def async_setup_entry(
     config_entry.async_on_unload(
         lambda: unregister_startup_grace_callback(hass, config_entry.entry_id)
     )
+
+    # Minütliche Überwachung des Anomalie- & Hardware-Wächters (erkennt Zeitüberschreitungen ohne neue Events)
+    async def _async_anomaly_tick(now_dt=None):
+        prev_snap = domain_data.get("anomaly_state", {}).get("snapshot") or {}
+        prev_key = (
+            bool(prev_snap.get("active", False)),
+            prev_snap.get("primary_type"),
+            tuple(prev_snap.get("anomalies", [])),
+        )
+        new_snap = evaluate_and_update_anomaly(hass, config_entry, domain_data)
+        new_key = (
+            bool(new_snap.get("active", False)),
+            new_snap.get("primary_type"),
+            tuple(new_snap.get("anomalies", [])),
+        )
+        if new_key != prev_key or new_snap.get("active"):
+            anomaly_ent = domain_data.get("anomaly_binary_sensor")
+            if anomaly_ent is not None:
+                async_write_ha_state_if_enabled(anomaly_ent)
+            async_write_ha_state_if_enabled(debug_sensor)
+
+    config_entry.async_on_unload(
+        async_track_time_interval(hass, _async_anomaly_tick, timedelta(minutes=1))
+    )
+    evaluate_and_update_anomaly(hass, config_entry, domain_data)
 
     # Initialen Ziel-Timer scharfschalten
     _reschedule_target_timer()

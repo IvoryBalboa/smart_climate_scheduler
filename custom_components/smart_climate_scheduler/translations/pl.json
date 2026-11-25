@@ -27,7 +27,9 @@
           "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
           "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
           "tolerance_entity": "Encja tolerancji (Opcjonalnie - Automatyczne wykrywanie z urządzenia, jeśli puste)",
-          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)"
+          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
+          "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
+          "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
           "tolerance_entity": "Encja tolerancji (Opcjonalnie - Automatyczne wykrywanie z urządzenia, jeśli puste)",
           "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
-          "preheat_ignores_away": "Wstępne nagrzewanie przed przyjazdem podczas nieobecności (Zastępuje nieobecność i strefę bliską)"
+          "preheat_ignores_away": "Wstępne nagrzewanie przed przyjazdem podczas nieobecności (Zastępuje nieobecność i strefę bliską)",
+          "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
+          "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Tryb docelowy"
           }
         }
+      },
+      "anomaly": {
+        "name": "Strażnik anomalii i sprzętu",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Główna anomalia"
+          },
+          "anomalies": {
+            "name": "Wykryte anomalie"
+          },
+          "detected_since": {
+            "name": "Wykryto od"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Próg braku nagrzewania (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Aktywne grzanie bez wzrostu (min)"
+          },
+          "temp_delta": {
+            "name": "Zmiana temperatury"
+          },
+          "unchanged_minutes": {
+            "name": "Czujnik bez zmian od (min)"
+          },
+          "burner_configured": {
+            "name": "Skonfigurowano czujnik palnika"
+          },
+          "burner_active": {
+            "name": "Palnik aktywny"
+          },
+          "thermostat_heating": {
+            "name": "Termostat grzeje"
+          },
+          "window_open": {
+            "name": "Okno lub drzwi otwarte"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Szczegóły chłodzenia"
+          },
+          "anomaly": {
+            "name": "Szczegóły strażnika anomalii"
           },
           "timestamp": {
             "name": "Znacznik czasu"

@@ -27,7 +27,9 @@
           "fallback_tolerance": "Re-activation tolerance fallback (K)",
           "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
           "tolerance_entity": "Tolerance Entity (Optional - Auto-detected from device if empty)",
-          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)"
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
+          "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
+          "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
           "tolerance_entity": "Tolerance Entity (Optional - Auto-detected from device if empty)",
           "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
-          "preheat_ignores_away": "Preheat ahead of scheduled arrival even while away (Overrides away and near presence)"
+          "preheat_ignores_away": "Preheat ahead of scheduled arrival even while away (Overrides away and near presence)",
+          "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
+          "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Target Preset"
           }
         }
+      },
+      "anomaly": {
+        "name": "Anomaly & Hardware Guard",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Primary Anomaly"
+          },
+          "anomalies": {
+            "name": "Detected Anomalies"
+          },
+          "detected_since": {
+            "name": "Detected Since"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "No-Warming Threshold (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Active Heating Without Rise (min)"
+          },
+          "temp_delta": {
+            "name": "Temperature Change"
+          },
+          "unchanged_minutes": {
+            "name": "Sensor Unchanged Duration (min)"
+          },
+          "burner_configured": {
+            "name": "Burner Sensor Configured"
+          },
+          "burner_active": {
+            "name": "Burner Active"
+          },
+          "thermostat_heating": {
+            "name": "Thermostat Heating"
+          },
+          "window_open": {
+            "name": "Window or Door Open"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Cooldown Details"
+          },
+          "anomaly": {
+            "name": "Anomaly Guard Details"
           },
           "timestamp": {
             "name": "Timestamp"

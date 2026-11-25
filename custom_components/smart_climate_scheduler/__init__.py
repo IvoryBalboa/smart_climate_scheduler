@@ -149,6 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "tolerance_backup": tolerance_backup,
         "tolerance_kickstart_done": False,
         "tolerance_kickstart_target": None,
+        "anomaly_state": {},
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

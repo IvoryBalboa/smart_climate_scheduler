@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .actions import PRESET_TRANSLATIONS
+from .anomaly import evaluate_and_update_anomaly
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_DEFAULT_PRESET,
@@ -173,6 +174,14 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         "schedule_profile",
         runtime_key="profile_select",
     )
+    anomaly_entity_id = resolve_entry_entity_id(
+        hass,
+        entry_obj,
+        "binary_sensor",
+        "anomaly",
+        fallback_suffix="binary_anomaly",
+        runtime_key="anomaly_binary_sensor",
+    )
 
     profiles, active_profile = _normalize_all_profiles(entry_obj)
 
@@ -251,6 +260,8 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
                 }
             )
 
+    anomaly_snap = evaluate_and_update_anomaly(hass, entry_obj, domain_data)
+
     return {
         "entry_id": entry_obj.entry_id,
         "room_name": entry_obj.title or entry_obj.data.get("name") or entry_obj.entry_id,
@@ -266,6 +277,8 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         "schedule_entity_id": schedule_entity_id,
         "automation_switch_entity_id": automation_switch_entity_id,
         "profile_select_entity_id": profile_select_entity_id,
+        "anomaly_entity_id": anomaly_entity_id,
+        "anomaly": anomaly_snap,
         "automation_enabled": automation_enabled,
         "current_temperature": current_temp,
         "target_temperature": target_temp,

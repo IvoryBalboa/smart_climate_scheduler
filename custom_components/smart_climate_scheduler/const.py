@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "smart_climate_scheduler"
-VERSION = "3.2.0"
+VERSION = "3.3.0"
 
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_ZONE_HOME_ENTITY = "zone_home_entity"
@@ -29,6 +29,8 @@ CONF_USE_WEATHER_FORECAST_FOR_PREHEAT = "use_weather_forecast_for_preheat"
 CONF_PREHEAT_IGNORES_AWAY = "preheat_ignores_away"
 CONF_AWAY_PRESET = "away_preset"
 CONF_AWAY_NEAR_PRESET = "away_near_preset"
+CONF_ANOMALY_DETECTION_ENABLED = "anomaly_detection_enabled"
+CONF_ANOMALY_NO_HEAT_MINUTES = "anomaly_no_heat_minutes"
 
 DEFAULT_FALLBACK_PRESET = "eco"
 DEFAULT_AWAY_PRESET = "away"
@@ -44,6 +46,12 @@ DEFAULT_FALLBACK_TOLERANCE = 0.3
 DEFAULT_OPPORTUNISTIC_HEATING = False
 DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT = False
 DEFAULT_PREHEAT_IGNORES_AWAY = True
+DEFAULT_ANOMALY_DETECTION_ENABLED = True
+DEFAULT_ANOMALY_NO_HEAT_MINUTES = 45
+
+ANOMALY_MIN_TEMP_RISE = 0.15
+ANOMALY_FROZEN_DEMAND_MINUTES = 180
+ANOMALY_FROZEN_IDLE_MINUTES = 360
 
 # Standard-Defaults für Aufheizrate und Verlustrate in K/h (°C/h)
 DEFAULT_FALLBACK_HEATING_RATE = 1.0

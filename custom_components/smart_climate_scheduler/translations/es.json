@@ -27,7 +27,9 @@
           "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
           "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
-          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)"
+          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
+          "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
+          "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
         }
       }
     },
@@ -69,7 +71,9 @@
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
           "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
-          "preheat_ignores_away": "Precalentar antes de la llegada en ausencia (Anula ausente y cercano)"
+          "preheat_ignores_away": "Precalentar antes de la llegada en ausencia (Anula ausente y cercano)",
+          "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
+          "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
         }
       },
       "schedule_menu": {
@@ -398,6 +402,44 @@
             "name": "Modo objetivo"
           }
         }
+      },
+      "anomaly": {
+        "name": "Supervisor de anomalías y hardware",
+        "state_attributes": {
+          "primary_type": {
+            "name": "Anomalía principal"
+          },
+          "anomalies": {
+            "name": "Anomalías detectadas"
+          },
+          "detected_since": {
+            "name": "Detectado desde"
+          },
+          "no_heat_threshold_minutes": {
+            "name": "Umbral sin calentamiento (min)"
+          },
+          "heating_watch_minutes": {
+            "name": "Calefacción activa sin subida (min)"
+          },
+          "temp_delta": {
+            "name": "Cambio de temperatura"
+          },
+          "unchanged_minutes": {
+            "name": "Sensor sin cambios (min)"
+          },
+          "burner_configured": {
+            "name": "Sensor de quemador configurado"
+          },
+          "burner_active": {
+            "name": "Quemador activo"
+          },
+          "thermostat_heating": {
+            "name": "Termostato calentando"
+          },
+          "window_open": {
+            "name": "Ventana o puerta abierta"
+          }
+        }
       }
     },
     "sensor": {
@@ -484,6 +526,9 @@
           },
           "cooldown": {
             "name": "Detalles de enfriamiento"
+          },
+          "anomaly": {
+            "name": "Detalles del supervisor de anomalías"
           },
           "timestamp": {
             "name": "Marca de tiempo"
