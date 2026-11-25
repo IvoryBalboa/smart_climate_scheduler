@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 DOMAIN = "smart_climate_scheduler"
-VERSION = "3.1.0"
+VERSION = "3.2.0"
 
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_ZONE_HOME_ENTITY = "zone_home_entity"

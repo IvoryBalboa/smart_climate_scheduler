@@ -1,5 +1,5 @@
 /**
- * Smart Climate Scheduler Card (v3.1.0)
+ * Smart Climate Scheduler Card (v3.2.0)
  * Embedded interactive 24h timeline & multi-room overview Lovelace cards for Home Assistant.
  * Self-contained ES module with Shadow DOM & zero external dependencies.
  */
@@ -68,6 +68,26 @@ const I18N = {
     overviewEditorTitle: "Überschrift (optional)",
     overviewEditorRooms: "Räume auswählen (leer = alle Räume)",
     overviewEditorMiniTimeline: "Kompakte 24h-Mini-Zeitleiste anzeigen",
+    overviewEditorShowBulk: "Filter- & Sammelaktionen-Leiste anzeigen",
+    overviewEditorDefaultFilter: "Standard-Filter",
+    overviewEditorDefaultSort: "Standard-Sortierung",
+    filterAll: "Alle",
+    filterAutoOn: "Automatik An",
+    filterHeating: "Heizt / Thermik",
+    filterOverride: "Override",
+    filterEmpty: "Keine Räume entsprechen dem aktuellen Filter.",
+    resetFilter: "Filter zurücksetzen",
+    sortName: "Name (A–Z)",
+    sortPhase: "Aktive Phase zuerst",
+    sortDelta: "Größte Abweichung",
+    bulkAutoOn: "Alle An",
+    bulkAutoOff: "Alle Aus",
+    bulkOverride: "Sammel-Override",
+    bulkStopOverrides: "Overrides aus",
+    bulkProfile: "Profil (alle)",
+    bulkApply: "Auf Räume anwenden",
+    heatingActive: "Heizt",
+    roomsCount: "Räume",
     noRoomsConfigured: "Keine Smart Climate Scheduler Räume gefunden.",
     minutes: "Min",
   },
@@ -126,6 +146,26 @@ const I18N = {
     overviewEditorTitle: "Card title (optional)",
     overviewEditorRooms: "Select rooms (empty = all rooms)",
     overviewEditorMiniTimeline: "Show compact 24h mini timeline",
+    overviewEditorShowBulk: "Show filter & bulk actions bar",
+    overviewEditorDefaultFilter: "Default filter",
+    overviewEditorDefaultSort: "Default sort",
+    filterAll: "All",
+    filterAutoOn: "Auto On",
+    filterHeating: "Heating / Thermal",
+    filterOverride: "Override",
+    filterEmpty: "No rooms match the selected filter.",
+    resetFilter: "Reset filter",
+    sortName: "Name (A–Z)",
+    sortPhase: "Active phase first",
+    sortDelta: "Largest delta",
+    bulkAutoOn: "All On",
+    bulkAutoOff: "All Off",
+    bulkOverride: "Bulk override",
+    bulkStopOverrides: "Stop overrides",
+    bulkProfile: "Profile (all)",
+    bulkApply: "Apply to rooms",
+    heatingActive: "Heating",
+    roomsCount: "rooms",
     noRoomsConfigured: "No Smart Climate Scheduler rooms found.",
     minutes: "min",
   },
@@ -184,6 +224,26 @@ const I18N = {
     overviewEditorTitle: "Titre (optionnel)",
     overviewEditorRooms: "Pièces (vide = toutes)",
     overviewEditorMiniTimeline: "Afficher la mini-chronologie 24h",
+    overviewEditorShowBulk: "Afficher filtres et actions groupées",
+    overviewEditorDefaultFilter: "Filtre par défaut",
+    overviewEditorDefaultSort: "Tri par défaut",
+    filterAll: "Toutes",
+    filterAutoOn: "Auto activé",
+    filterHeating: "Chauffe / Thermique",
+    filterOverride: "Dérogation",
+    filterEmpty: "Aucune pièce ne correspond au filtre.",
+    resetFilter: "Réinitialiser",
+    sortName: "Nom (A–Z)",
+    sortPhase: "Phase active en premier",
+    sortDelta: "Plus grand écart",
+    bulkAutoOn: "Tout activer",
+    bulkAutoOff: "Tout couper",
+    bulkOverride: "Dérogation groupée",
+    bulkStopOverrides: "Arrêter dérogations",
+    bulkProfile: "Profil (toutes)",
+    bulkApply: "Appliquer aux pièces",
+    heatingActive: "Chauffe",
+    roomsCount: "pièces",
     noRoomsConfigured: "Aucune pièce Smart Climate Scheduler trouvée.",
     minutes: "min",
   },
@@ -242,6 +302,26 @@ const I18N = {
     overviewEditorTitle: "Título (opcional)",
     overviewEditorRooms: "Habitaciones (vacío = todas)",
     overviewEditorMiniTimeline: "Mostrar mini línea temporal 24h",
+    overviewEditorShowBulk: "Mostrar barra de filtros y acciones",
+    overviewEditorDefaultFilter: "Filtro predeterminado",
+    overviewEditorDefaultSort: "Orden predeterminado",
+    filterAll: "Todas",
+    filterAutoOn: "Auto activo",
+    filterHeating: "Calentando / Térmica",
+    filterOverride: "Anulación",
+    filterEmpty: "Ninguna habitación coincide con el filtro.",
+    resetFilter: "Restablecer",
+    sortName: "Nombre (A–Z)",
+    sortPhase: "Fase activa primero",
+    sortDelta: "Mayor diferencia",
+    bulkAutoOn: "Activar todo",
+    bulkAutoOff: "Apagar todo",
+    bulkOverride: "Anulación grupal",
+    bulkStopOverrides: "Detener anulaciones",
+    bulkProfile: "Perfil (todas)",
+    bulkApply: "Aplicar a salas",
+    heatingActive: "Calentando",
+    roomsCount: "salas",
     noRoomsConfigured: "No se encontraron habitaciones.",
     minutes: "min",
   },
@@ -300,6 +380,26 @@ const I18N = {
     overviewEditorTitle: "Titolo (opzionale)",
     overviewEditorRooms: "Stanze (vuoto = tutte)",
     overviewEditorMiniTimeline: "Mostra mini timeline 24h",
+    overviewEditorShowBulk: "Mostra filtri e azioni di gruppo",
+    overviewEditorDefaultFilter: "Filtro predefinito",
+    overviewEditorDefaultSort: "Ordinamento predefinito",
+    filterAll: "Tutte",
+    filterAutoOn: "Auto attivo",
+    filterHeating: "Riscaldamento / Termica",
+    filterOverride: "Override",
+    filterEmpty: "Nessuna stanza corrisponde al filtro.",
+    resetFilter: "Reimposta",
+    sortName: "Nome (A–Z)",
+    sortPhase: "Fase attiva prima",
+    sortDelta: "Differenza maggiore",
+    bulkAutoOn: "Attiva tutte",
+    bulkAutoOff: "Disattiva tutte",
+    bulkOverride: "Override di gruppo",
+    bulkStopOverrides: "Ferma override",
+    bulkProfile: "Profilo (tutte)",
+    bulkApply: "Applica alle stanze",
+    heatingActive: "Riscalda",
+    roomsCount: "stanze",
     noRoomsConfigured: "Nessuna stanza trovata.",
     minutes: "min",
   },
@@ -358,6 +458,26 @@ const I18N = {
     overviewEditorTitle: "Titel (optioneel)",
     overviewEditorRooms: "Kamers selecteren (leeg = alle)",
     overviewEditorMiniTimeline: "Toon compacte 24u-tijdlijn",
+    overviewEditorShowBulk: "Toon filters & groepsacties",
+    overviewEditorDefaultFilter: "Standaardfilter",
+    overviewEditorDefaultSort: "Standaardsortering",
+    filterAll: "Alle",
+    filterAutoOn: "Auto Aan",
+    filterHeating: "Verwarmt / Thermisch",
+    filterOverride: "Override",
+    filterEmpty: "Geen kamers komen overeen met het filter.",
+    resetFilter: "Reset filter",
+    sortName: "Naam (A–Z)",
+    sortPhase: "Actieve fase eerst",
+    sortDelta: "Grootste afwijking",
+    bulkAutoOn: "Alles Aan",
+    bulkAutoOff: "Alles Uit",
+    bulkOverride: "Groeps-override",
+    bulkStopOverrides: "Overrides uit",
+    bulkProfile: "Profiel (alle)",
+    bulkApply: "Toepassen op kamers",
+    heatingActive: "Verwarmt",
+    roomsCount: "kamers",
     noRoomsConfigured: "Geen kamers gevonden.",
     minutes: "min",
   },
@@ -416,6 +536,26 @@ const I18N = {
     overviewEditorTitle: "Tytuł (opcjonalnie)",
     overviewEditorRooms: "Pokoje (puste = wszystkie)",
     overviewEditorMiniTimeline: "Pokaż mini oś czasu 24h",
+    overviewEditorShowBulk: "Pokaż pasek filtrów i akcji zbiorczych",
+    overviewEditorDefaultFilter: "Domyślny filtr",
+    overviewEditorDefaultSort: "Domyślne sortowanie",
+    filterAll: "Wszystkie",
+    filterAutoOn: "Auto Wł.",
+    filterHeating: "Grzanie / Termika",
+    filterOverride: "Override",
+    filterEmpty: "Brak pokoi pasujących do filtra.",
+    resetFilter: "Resetuj filtr",
+    sortName: "Nazwa (A–Z)",
+    sortPhase: "Aktywna faza najpierw",
+    sortDelta: "Największa różnica",
+    bulkAutoOn: "Wszystkie Wł.",
+    bulkAutoOff: "Wszystkie Wył.",
+    bulkOverride: "Zbiorczy override",
+    bulkStopOverrides: "Zatrzymaj override",
+    bulkProfile: "Profil (wszystkie)",
+    bulkApply: "Zastosuj do pokoi",
+    heatingActive: "Grzeje",
+    roomsCount: "pokoi",
     noRoomsConfigured: "Nie znaleziono pokoi.",
     minutes: "min",
   },
@@ -2494,6 +2634,12 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     this._lastStateSig = null;
     this._fetchPending = false;
     this._refreshTimer = null;
+    this._filterMode = "all";
+    this._sortMode = "name";
+    this._bulkOverrideOpen = false;
+    this._bulkOverridePreset = "eco";
+    this._bulkOverrideDuration = 60;
+    this._bulkPending = false;
   }
 
   static getConfigElement() {
@@ -2507,6 +2653,9 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
+      show_bulk_actions: true,
+      default_filter: "all",
+      default_sort: "phase",
     };
   }
 
@@ -2520,8 +2669,13 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
+      show_bulk_actions: true,
+      default_filter: "all",
+      default_sort: "name",
       ...config,
     };
+    this._filterMode = this._config.default_filter || "all";
+    this._sortMode = this._config.default_sort || "name";
     this._lastStateSig = null;
     if (this._hass) {
       this._fetchAllRooms(true);
@@ -2531,7 +2685,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
   }
 
   getCardSize() {
-    return Math.max(2, Math.min(8, 1 + (this._roomsData.length || 2)));
+    return Math.max(2, Math.min(9, 2 + (this._roomsData.length || 2)));
   }
 
   set hass(hass) {
@@ -2640,17 +2794,67 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
+    const hvacAction = clSt?.attributes?.hvac_action ?? d.hvac_action ?? null;
+    const isHeating = hvacAction === "heating";
     const activeOverrides = Object.entries(d.overrides || {});
+    const tempDelta =
+      curTemp !== null && curTemp !== undefined && tgtTemp !== null && tgtTemp !== undefined
+        ? Number(tgtTemp) - Number(curTemp)
+        : -999;
 
     return {
       automationOn,
       curTemp,
       tgtTemp,
+      tempDelta,
       activePreset,
       preheating,
       coolingDown,
+      hvacAction,
+      isHeating,
       activeOverrides,
     };
+  }
+
+  _matchesFilter(room, live, filterMode) {
+    if (filterMode === "auto_on") return live.automationOn;
+    if (filterMode === "heating") return live.isHeating || live.preheating || live.coolingDown;
+    if (filterMode === "override") return live.activeOverrides.length > 0;
+    return true;
+  }
+
+  _getFilteredSortedRooms() {
+    const filterMode = this._filterMode || "all";
+    const sortMode = this._sortMode || "name";
+    const enriched = this._roomsData.map((room) => ({
+      room,
+      live: this._getRoomLive(room),
+    }));
+
+    const filtered = enriched.filter(({ room, live }) => this._matchesFilter(room, live, filterMode));
+    const phaseWeight = (live) => {
+      if (live.activeOverrides.length > 0) return 5;
+      if (live.preheating) return 4;
+      if (live.isHeating) return 3;
+      if (live.coolingDown) return 2;
+      if (live.automationOn) return 1;
+      return 0;
+    };
+
+    filtered.sort((a, b) => {
+      if (sortMode === "phase") {
+        const diff = phaseWeight(b.live) - phaseWeight(a.live);
+        if (diff !== 0) return diff;
+      } else if (sortMode === "temp_delta") {
+        const diff = b.live.tempDelta - a.live.tempDelta;
+        if (Math.abs(diff) > 0.05) return diff;
+      }
+      const nameA = String(a.room.room_name || a.room.entry_id || "").toLowerCase();
+      const nameB = String(b.room.room_name || b.room.entry_id || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    return filtered;
   }
 
   _getPresetLabel(d, preset) {
@@ -2668,6 +2872,114 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       entity_id: room.automation_switch_entity_id,
     });
     setTimeout(() => this._fetchAllRooms(false), 250);
+  }
+
+  async _bulkSetAutomation(turnOn) {
+    if (!this._hass || this._bulkPending) return;
+    const visible = this._getFilteredSortedRooms().map((x) => x.room);
+    const entityIds = visible.map((r) => r.automation_switch_entity_id).filter(Boolean);
+    if (entityIds.length === 0) return;
+
+    this._bulkPending = true;
+    this._error = null;
+    this._render();
+    try {
+      await Promise.all(
+        entityIds.map((entityId) =>
+          this._hass.callService("switch", turnOn ? "turn_on" : "turn_off", { entity_id: entityId })
+        )
+      );
+      setTimeout(() => this._fetchAllRooms(false), 300);
+    } catch (err) {
+      this._error = err?.message || "Bulk action failed";
+    } finally {
+      this._bulkPending = false;
+      this._render();
+    }
+  }
+
+  async _bulkStartOverride() {
+    if (!this._hass || this._bulkPending) return;
+    const visible = this._getFilteredSortedRooms().map((x) => x.room);
+    if (visible.length === 0) return;
+
+    const preset = this._bulkOverridePreset || "eco";
+    const minutes = Number(this._bulkOverrideDuration || 60);
+    this._bulkPending = true;
+    this._error = null;
+    this._render();
+    try {
+      await Promise.all(
+        visible.map((r) =>
+          this._hass.callService(DOMAIN, "set_override", {
+            entry_id: r.entry_id,
+            preset,
+            duration: { minutes },
+          })
+        )
+      );
+      this._bulkOverrideOpen = false;
+      setTimeout(() => this._fetchAllRooms(false), 300);
+    } catch (err) {
+      this._error = err?.message || "Bulk override failed";
+    } finally {
+      this._bulkPending = false;
+      this._render();
+    }
+  }
+
+  async _bulkStopOverrides() {
+    if (!this._hass || this._bulkPending) return;
+    const visibleWithOverrides = this._getFilteredSortedRooms().filter(({ live }) => live.activeOverrides.length > 0);
+    if (visibleWithOverrides.length === 0) return;
+
+    this._bulkPending = true;
+    this._error = null;
+    this._render();
+    try {
+      await Promise.all(
+        visibleWithOverrides.map(({ room }) =>
+          this._hass.callService(DOMAIN, "remove_override", { entry_id: room.entry_id })
+        )
+      );
+      setTimeout(() => this._fetchAllRooms(false), 300);
+    } catch (err) {
+      this._error = err?.message || "Stop overrides failed";
+    } finally {
+      this._bulkPending = false;
+      this._render();
+    }
+  }
+
+  async _bulkSwitchProfile(profileName) {
+    if (!this._hass || !profileName || this._bulkPending) return;
+    const visibleTargets = this._getFilteredSortedRooms()
+      .map((x) => x.room)
+      .filter((r) => r.profiles && Object.prototype.hasOwnProperty.call(r.profiles, profileName));
+    if (visibleTargets.length === 0) return;
+
+    this._bulkPending = true;
+    this._error = null;
+    this._render();
+    try {
+      const updatedRooms = await Promise.all(
+        visibleTargets.map((r) =>
+          this._hass.callWS({
+            type: `${DOMAIN}/manage_profile`,
+            entry_id: r.entry_id,
+            action: "switch",
+            profile: profileName,
+          })
+        )
+      );
+      const updatedMap = new Map(updatedRooms.filter(Boolean).map((r) => [r.entry_id, r]));
+      this._roomsData = this._roomsData.map((r) => updatedMap.get(r.entry_id) || r);
+    } catch (err) {
+      this._error = err?.message || "Bulk profile switch failed";
+    } finally {
+      this._bulkPending = false;
+      this._render();
+    }
   }
 
   async _switchProfile(entryId, profileName) {
@@ -2780,10 +3092,35 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const titleText = String(this._config?.title || "").trim();
     const showMini = this._config?.show_mini_timeline !== false;
     const showOv = this._config?.show_override_bar !== false;
+    const showBulk = this._config?.show_bulk_actions !== false;
+    const filterMode = this._filterMode || "all";
+    const sortMode = this._sortMode || "name";
 
-    const roomsHtml = this._roomsData
-      .map((d) => {
-        const live = this._getRoomLive(d);
+    const allEnriched = this._roomsData.map((room) => ({ room, live: this._getRoomLive(room) }));
+    const visibleEntries = this._getFilteredSortedRooms();
+
+    const countAll = allEnriched.length;
+    const countAutoOn = allEnriched.filter((x) => x.live.automationOn).length;
+    const countHeating = allEnriched.filter((x) => x.live.isHeating || x.live.preheating || x.live.coolingDown).length;
+    const countOverride = allEnriched.filter((x) => x.live.activeOverrides.length > 0).length;
+    const visibleWithOverrides = visibleEntries.filter((x) => x.live.activeOverrides.length > 0).length;
+
+    const allProfileNames = Array.from(
+      new Set(visibleEntries.flatMap(({ room }) => Object.keys(room.profiles || {})))
+    );
+    const bulkPresets = Array.from(
+      new Set([...(this._roomsData[0]?.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS])
+    ).filter((p) => p !== "none");
+
+    const filterChips = [
+      { key: "all", label: `${t.filterAll} (${countAll})` },
+      { key: "auto_on", label: `${t.filterAutoOn} (${countAutoOn})` },
+      { key: "heating", label: `${t.filterHeating} (${countHeating})` },
+      { key: "override", label: `${t.filterOverride} (${countOverride})` },
+    ];
+
+    const roomsHtml = visibleEntries
+      .map(({ room: d, live }) => {
         const expanded = this._expandedRoomId === d.entry_id;
         const presetCol = getPresetColor(live.activePreset);
         const presetLabel = this._getPresetLabel(d, live.activePreset);
@@ -2802,6 +3139,8 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.preheating)}</span>`;
         } else if (live.coolingDown) {
           phaseBadge = `<span class="ov-phase ov-phase-cool">${escapeHtml(t.coolingDown)}</span>`;
+        } else if (live.isHeating) {
+          phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.heatingActive)}</span>`;
         }
 
         const tempStr = [
@@ -2888,14 +3227,89 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       })
       .join("");
 
+    const toolbarHtml = showBulk
+      ? `
+        <div class="ov-toolbar">
+          <div class="ov-filter-row">
+            <div class="ov-filter-chips">
+              ${filterChips
+                .map(
+                  (fc) =>
+                    `<button type="button" class="day-chip ov-filter-chip ${filterMode === fc.key ? "active" : ""}" data-filter-key="${fc.key}">${escapeHtml(fc.label)}</button>`
+                )
+                .join("")}
+            </div>
+            <select id="ov-sort-select" class="ctrl-select ov-sort-select" title="${escapeHtml(t.overviewEditorDefaultSort)}">
+              <option value="name" ${sortMode === "name" ? "selected" : ""}>${escapeHtml(t.sortName)}</option>
+              <option value="phase" ${sortMode === "phase" ? "selected" : ""}>${escapeHtml(t.sortPhase)}</option>
+              <option value="temp_delta" ${sortMode === "temp_delta" ? "selected" : ""}>${escapeHtml(t.sortDelta)}</option>
+            </select>
+          </div>
+          <div class="ov-bulk-row">
+            <button type="button" class="btn-outline ov-bulk-btn" id="ov-bulk-on" ${this._bulkPending || visibleEntries.length === 0 ? "disabled" : ""}>${escapeHtml(t.bulkAutoOn)}</button>
+            <button type="button" class="btn-outline ov-bulk-btn" id="ov-bulk-off" ${this._bulkPending || visibleEntries.length === 0 ? "disabled" : ""}>${escapeHtml(t.bulkAutoOff)}</button>
+            ${
+              showOv
+                ? `<button type="button" class="btn-outline ov-bulk-btn ${this._bulkOverrideOpen ? "active" : ""}" id="ov-bulk-ov-toggle" ${this._bulkPending || visibleEntries.length === 0 ? "disabled" : ""}>${escapeHtml(t.bulkOverride)}</button>`
+                : ""
+            }
+            ${
+              showOv && visibleWithOverrides > 0
+                ? `<button type="button" class="btn-outline danger ov-bulk-btn" id="ov-bulk-ov-stop" ${this._bulkPending ? "disabled" : ""}>${escapeHtml(t.bulkStopOverrides)} (${visibleWithOverrides})</button>`
+                : ""
+            }
+            ${
+              allProfileNames.length > 1
+                ? `<select id="ov-bulk-profile" class="ctrl-select ov-bulk-prof" ${this._bulkPending || visibleEntries.length === 0 ? "disabled" : ""}>
+                    <option value="">${escapeHtml(t.bulkProfile)}</option>
+                    ${allProfileNames.map((pn) => `<option value="${escapeHtml(pn)}">${escapeHtml(pn)}</option>`).join("")}
+                  </select>`
+                : ""
+            }
+          </div>
+          ${
+            showOv && this._bulkOverrideOpen
+              ? `<div class="ov-bulk-popover">
+                  <select id="ov-bulk-ov-preset" class="ctrl-select">
+                    ${bulkPresets
+                      .map(
+                        (p) =>
+                          `<option value="${escapeHtml(p)}" ${p === this._bulkOverridePreset ? "selected" : ""}>${escapeHtml(this._getPresetLabel(this._roomsData[0], p))}</option>`
+                      )
+                      .join("")}
+                  </select>
+                  <div class="chip-row">
+                    ${[30, 60, 120, 240]
+                      .map(
+                        (mins) =>
+                          `<button type="button" class="day-chip ${Number(this._bulkOverrideDuration) === mins ? "active" : ""}" data-bulk-dur="${mins}">${mins >= 60 ? `${mins / 60}h` : `${mins}m`}</button>`
+                      )
+                      .join("")}
+                  </div>
+                  <button type="button" class="btn-primary" id="ov-bulk-ov-apply" ${this._bulkPending ? "disabled" : ""}>${escapeHtml(t.bulkApply)} (${visibleEntries.length})</button>
+                </div>`
+              : ""
+          }
+        </div>
+      `
+      : "";
+
     this.shadowRoot.innerHTML = `
       <style>${this._getStyles()}</style>
       <ha-card>
         <div class="ov-root">
-          ${titleText ? `<div class="ov-header">${escapeHtml(titleText)}</div>` : ""}
+          ${titleText ? `<div class="ov-header"><span>${escapeHtml(titleText)}</span><span class="ov-header-count tabular">${visibleEntries.length}/${countAll} ${escapeHtml(t.roomsCount)}</span></div>` : ""}
+          ${toolbarHtml}
           ${this._error ? `<div class="ov-error">${escapeHtml(this._error)}</div>` : ""}
           <div class="ov-list">
-            ${roomsHtml}
+            ${
+              visibleEntries.length > 0
+                ? roomsHtml
+                : `<div class="ov-filter-empty">
+                    <span>${escapeHtml(t.filterEmpty)}</span>
+                    <button type="button" class="btn-outline" id="ov-reset-filter">${escapeHtml(t.resetFilter)}</button>
+                  </div>`
+            }
           </div>
         </div>
       </ha-card>
@@ -2907,6 +3321,47 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
   _bindEvents() {
     const root = this.shadowRoot;
     if (!root) return;
+
+    root.querySelectorAll("[data-filter-key]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this._filterMode = btn.dataset.filterKey || "all";
+        this._render();
+      });
+    });
+
+    root.querySelector("#ov-sort-select")?.addEventListener("change", (ev) => {
+      this._sortMode = ev.target.value || "name";
+      this._render();
+    });
+
+    root.querySelector("#ov-reset-filter")?.addEventListener("click", () => {
+      this._filterMode = "all";
+      this._render();
+    });
+
+    root.querySelector("#ov-bulk-on")?.addEventListener("click", () => this._bulkSetAutomation(true));
+    root.querySelector("#ov-bulk-off")?.addEventListener("click", () => this._bulkSetAutomation(false));
+    root.querySelector("#ov-bulk-ov-toggle")?.addEventListener("click", () => {
+      this._bulkOverrideOpen = !this._bulkOverrideOpen;
+      this._render();
+    });
+    root.querySelector("#ov-bulk-ov-stop")?.addEventListener("click", () => this._bulkStopOverrides());
+    root.querySelector("#ov-bulk-ov-preset")?.addEventListener("change", (ev) => {
+      this._bulkOverridePreset = ev.target.value;
+    });
+    root.querySelectorAll("[data-bulk-dur]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this._bulkOverrideDuration = parseInt(btn.dataset.bulkDur, 10) || 60;
+        this._render();
+      });
+    });
+    root.querySelector("#ov-bulk-ov-apply")?.addEventListener("click", () => this._bulkStartOverride());
+    root.querySelector("#ov-bulk-profile")?.addEventListener("change", (ev) => {
+      const val = ev.target.value;
+      if (val) {
+        this._bulkSwitchProfile(val);
+      }
+    });
 
     root.querySelectorAll("[data-toggle-expand]").forEach((row) => {
       row.addEventListener("click", (ev) => {
@@ -2971,8 +3426,80 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         font-variant-numeric: tabular-nums;
       }
       .ov-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
         font-size: 0.96rem;
         font-weight: 600;
+      }
+      .ov-header-count {
+        font-size: 0.74rem;
+        font-weight: 500;
+        color: var(--scs-muted);
+      }
+      .ov-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 9px;
+        border: 1px solid var(--scs-border);
+        background: var(--scs-surface);
+      }
+      .ov-filter-row,
+      .ov-bulk-row,
+      .ov-bulk-popover {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+      }
+      .ov-filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+      }
+      .ov-sort-select,
+      .ov-bulk-prof {
+        min-height: 24px;
+        font-size: 0.72rem;
+        padding: 2px 6px;
+      }
+      .ov-bulk-btn {
+        min-height: 24px;
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        background: transparent;
+        color: var(--scs-text);
+        border: 1px solid var(--scs-border);
+      }
+      .ov-bulk-btn.active {
+        border-color: var(--scs-accent);
+        color: var(--scs-accent);
+        background: rgba(245, 158, 11, 0.14);
+      }
+      .ov-bulk-btn:disabled,
+      .btn-primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .ov-bulk-popover {
+        padding-top: 4px;
+        border-top: 1px dashed var(--scs-border);
+      }
+      .ov-filter-empty {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        border: 1px dashed var(--scs-border);
+        color: var(--scs-muted);
+        font-size: 0.78rem;
       }
       .ov-error {
         font-size: 0.76rem;
@@ -3244,6 +3771,9 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
+      show_bulk_actions: true,
+      default_filter: "all",
+      default_sort: "name",
       ...config,
     };
     this._render();
@@ -3290,6 +3820,9 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
     const showMini = this._config?.show_mini_timeline !== false;
     const showThermal = this._config?.show_thermal_preview !== false;
     const showOv = this._config?.show_override_bar !== false;
+    const showBulk = this._config?.show_bulk_actions !== false;
+    const defaultFilter = this._config?.default_filter || "all";
+    const defaultSort = this._config?.default_sort || "name";
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -3306,7 +3839,7 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
           font-weight: 500;
           margin-bottom: 4px;
         }
-        input[type="text"] {
+        input[type="text"], select {
           width: 100%;
           box-sizing: border-box;
           padding: 8px 10px;
@@ -3315,6 +3848,11 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
           background: var(--secondary-background-color, rgba(255,255,255,0.05));
           color: var(--primary-text-color, #f1f5f9);
           font-size: 0.9rem;
+        }
+        .two-col {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
         }
         .room-checks {
           display: flex;
@@ -3361,6 +3899,29 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
             }
           </div>
         </div>
+        <div class="two-col">
+          <div>
+            <div class="field-title">${escapeHtml(t.overviewEditorDefaultFilter)}</div>
+            <select id="oved-filter">
+              <option value="all" ${defaultFilter === "all" ? "selected" : ""}>${escapeHtml(t.filterAll)}</option>
+              <option value="auto_on" ${defaultFilter === "auto_on" ? "selected" : ""}>${escapeHtml(t.filterAutoOn)}</option>
+              <option value="heating" ${defaultFilter === "heating" ? "selected" : ""}>${escapeHtml(t.filterHeating)}</option>
+              <option value="override" ${defaultFilter === "override" ? "selected" : ""}>${escapeHtml(t.filterOverride)}</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-title">${escapeHtml(t.overviewEditorDefaultSort)}</div>
+            <select id="oved-sort">
+              <option value="name" ${defaultSort === "name" ? "selected" : ""}>${escapeHtml(t.sortName)}</option>
+              <option value="phase" ${defaultSort === "phase" ? "selected" : ""}>${escapeHtml(t.sortPhase)}</option>
+              <option value="temp_delta" ${defaultSort === "temp_delta" ? "selected" : ""}>${escapeHtml(t.sortDelta)}</option>
+            </select>
+          </div>
+        </div>
+        <label class="inline">
+          <input id="oved-bulk" type="checkbox" ${showBulk ? "checked" : ""} />
+          <span>${escapeHtml(t.overviewEditorShowBulk)}</span>
+        </label>
         <label class="inline">
           <input id="oved-mini" type="checkbox" ${showMini ? "checked" : ""} />
           <span>${escapeHtml(t.overviewEditorMiniTimeline)}</span>
@@ -3387,6 +3948,15 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
           .map((el) => el.value);
         this._emitChange({ rooms: chosen });
       });
+    });
+    this.shadowRoot.querySelector("#oved-filter")?.addEventListener("change", (ev) => {
+      this._emitChange({ default_filter: ev.target.value || "all" });
+    });
+    this.shadowRoot.querySelector("#oved-sort")?.addEventListener("change", (ev) => {
+      this._emitChange({ default_sort: ev.target.value || "name" });
+    });
+    this.shadowRoot.querySelector("#oved-bulk")?.addEventListener("change", (ev) => {
+      this._emitChange({ show_bulk_actions: ev.target.checked });
     });
     this.shadowRoot.querySelector("#oved-mini")?.addEventListener("change", (ev) => {
       this._emitChange({ show_mini_timeline: ev.target.checked });

@@ -2,6 +2,12 @@
 
 Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen Changelog-Eintrag. Dieser wird beim Build automatisch für HACS (`README.md`) und das GitHub Release übernommen.
 
+## v3.2.0 – Multi-Raum Sammelaktionen, Filter & Sortierung
+
+- **Filter- & Sortierleiste in der Multi-Raum-Übersichtskarte (`custom:smart-climate-scheduler-overview-card`)**: Räume lassen sich direkt über Schnellfilter mit Live-Zählern (**Alle**, **Automatik An**, **Heizt / Thermik**, **Override**) eingrenzen sowie nach **Name (A–Z)**, **Aktive Phase zuerst** oder **Größte Abweichung (ΔT)** sortieren (Standard-Filter und -Sortierung auch im Karten-Editor konfigurierbar).
+- **Sammelaktionen für gefilterte Räume**: Direkt aus dem Kartenkopf lassen sich **Alle Automatik An/Aus**, **Sammel-Override** (Preset + Dauer), **Aktive Overrides stoppen** sowie **gemeinsame Zeitplan-Profile** auf alle aktuell angezeigten Räume gleichzeitig anwenden.
+- **7-Sprachen-Lokalisierung & Live-Simulator**: Vollständige Übersetzungen aller Filter-, Sortier- und Sammelaktions-Texte sowie interaktive Live-Vorschau beider Lovelace-Karten im Web-Tab.
+
 ## v3.1.0 – Konfigurierbare Abwesenheits-Presets, Live-Thermik-Vorschau & Multi-Raum-Übersicht
 
 - **Konfigurierbares `away`- und `away_near`-Preset pro Raum**: Im Config- und Options-Flow lassen sich nun getrennte Ziel-Presets für „Unterwegs (nah)“ (`away_near_preset`, Standard `eco`) und „Abwesend“ (`away_preset`, Standard `away`) je Raum festlegen und live über `debug_info.settings` einsehen.
