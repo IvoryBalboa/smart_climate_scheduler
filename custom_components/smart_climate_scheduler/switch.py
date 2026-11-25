@@ -58,8 +58,12 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Richtet die Switch-Plattform über einen Config Entry ein."""
+    auto_switch = SmartClimateSchedulerSwitch(hass, config_entry)
+    domain_data = hass.data.setdefault(DOMAIN, {}).setdefault(config_entry.entry_id, {})
+    domain_data["automatic_switch"] = auto_switch
+
     entities: list[SwitchEntity] = [
-        SmartClimateSchedulerSwitch(hass, config_entry),
+        auto_switch,
         SmartClimateSchedulerOptionSwitch(
             hass,
             config_entry,

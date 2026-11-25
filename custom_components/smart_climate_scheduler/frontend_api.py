@@ -17,12 +17,14 @@ from .const import (
 )
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
+    async_restore_tolerance,
     get_config_entry_slug,
     get_ha_language,
     get_localized_slug_suffix,
     get_preset_temperature,
     get_profiles_and_active,
     parse_time,
+    resolve_entry_entity_id,
     safe_float as _safe_float,
 )
 
@@ -150,22 +152,27 @@ def _resolve_target_entry(hass: Any, entry_id: str | None = None, entity_id: str
 def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None) -> dict[str, Any]:
     """Assemble full schedule, live status, and linked entity metadata for the Lovelace card."""
     lang = get_ha_language(hass)
-    slug = get_config_entry_slug(entry_obj)
-    schedule_entity_id = f"sensor.{slug}_{get_localized_slug_suffix('schedule', lang)}"
-    automation_switch_entity_id = f"switch.{slug}_{get_localized_slug_suffix('automatic', lang)}"
-    profile_select_entity_id = f"select.{slug}_{get_localized_slug_suffix('schedule_profile', lang)}"
-
-    # Prefer registered runtime entity_ids when available
-    for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
-        if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == entry_obj.entry_id:
-            if getattr(sensor, "_attr_translation_key", None) == "schedule" and getattr(sensor, "entity_id", None):
-                schedule_entity_id = sensor.entity_id
-                break
-
-    if isinstance(domain_data, dict):
-        prof_sel = domain_data.get("profile_select")
-        if prof_sel and getattr(prof_sel, "entity_id", None):
-            profile_select_entity_id = prof_sel.entity_id
+    schedule_entity_id = resolve_entry_entity_id(
+        hass,
+        entry_obj,
+        "sensor",
+        "schedule",
+        runtime_key="main_sensor",
+    )
+    automation_switch_entity_id = resolve_entry_entity_id(
+        hass,
+        entry_obj,
+        "switch",
+        "automatic",
+        runtime_key="automatic_switch",
+    )
+    profile_select_entity_id = resolve_entry_entity_id(
+        hass,
+        entry_obj,
+        "select",
+        "schedule_profile",
+        runtime_key="profile_select",
+    )
 
     profiles, active_profile = _normalize_all_profiles(entry_obj)
 
@@ -229,13 +236,13 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
             continue
         ce = hass.config_entries.async_get_entry(eid)
         if ce:
-            r_slug = get_config_entry_slug(ce)
-            r_sched = f"sensor.{r_slug}_{get_localized_slug_suffix('schedule', lang)}"
-            for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
-                if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == eid:
-                    if getattr(sensor, "_attr_translation_key", None) == "schedule" and getattr(sensor, "entity_id", None):
-                        r_sched = sensor.entity_id
-                        break
+            r_sched = resolve_entry_entity_id(
+                hass,
+                ce,
+                "sensor",
+                "schedule",
+                runtime_key="main_sensor",
+            )
             available_rooms.append(
                 {
                     "entry_id": eid,
@@ -316,7 +323,6 @@ async def _async_persist_profiles_and_apply(
 
 def _list_available_rooms(hass: Any) -> list[dict[str, str]]:
     """Return all configured Smart Climate Scheduler rooms with config_entry id and climate entity."""
-    lang = get_ha_language(hass)
     rooms: list[dict[str, str]] = []
     if not hass:
         return rooms
@@ -326,13 +332,13 @@ def _list_available_rooms(hass: Any) -> list[dict[str, str]]:
         ce = hass.config_entries.async_get_entry(eid)
         if not ce:
             continue
-        r_slug = get_config_entry_slug(ce)
-        r_sched = f"sensor.{r_slug}_{get_localized_slug_suffix('schedule', lang)}"
-        for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
-            if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == eid:
-                if getattr(sensor, "_attr_translation_key", None) == "schedule" and getattr(sensor, "entity_id", None):
-                    r_sched = sensor.entity_id
-                    break
+        r_sched = resolve_entry_entity_id(
+            hass,
+            ce,
+            "sensor",
+            "schedule",
+            runtime_key="main_sensor",
+        )
         cl_ent = (ce.options.get(CONF_CLIMATE_ENTITY) or ce.data.get(CONF_CLIMATE_ENTITY, "")).strip()
         rooms.append(
             {
@@ -508,6 +514,85 @@ async def async_ws_manage_profile(hass: Any, msg: dict[str, Any]) -> tuple[dict[
     return _build_schedule_payload(hass, entry_obj, domain_data), None
 
 
+async def _async_apply_automation_for_entry(
+    hass: Any,
+    entry_obj: Any,
+    domain_data: dict | None,
+    enabled: bool,
+) -> dict[str, Any]:
+    """Set automation on/off for a single ConfigEntry regardless of renamed switch entity_ids."""
+    if not isinstance(domain_data, dict):
+        domain_data = hass.data.setdefault(DOMAIN, {}).setdefault(entry_obj.entry_id, {})
+
+    auto_switch = domain_data.get("automatic_switch")
+    if auto_switch is not None and (
+        hasattr(auto_switch, "async_turn_on") and hasattr(auto_switch, "async_turn_off")
+    ):
+        if enabled:
+            await auto_switch.async_turn_on()
+        else:
+            await auto_switch.async_turn_off()
+    else:
+        domain_data["automation_enabled"] = enabled
+        if enabled:
+            domain_data["is_setting_preset"] = False
+            domain_data["is_setting_hvac"] = False
+        else:
+            domain_data["two_point_target_reached"] = False
+            domain_data["tolerance_kickstart_done"] = False
+            domain_data["tolerance_kickstart_target"] = None
+            await async_restore_tolerance(hass, domain_data, reason="automation_disabled")
+
+        storage = domain_data.get("storage")
+        if storage and hasattr(storage, "async_save_data"):
+            await storage.async_save_data({"automation_enabled": enabled})
+
+        if enabled:
+            apply_fn = domain_data.get("async_apply_schedule")
+            if callable(apply_fn):
+                res = apply_fn()
+                if hasattr(res, "__await__"):
+                    await res
+
+        update_all = domain_data.get("update_all_entities")
+        if callable(update_all):
+            update_all()
+
+    return _build_schedule_payload(hass, entry_obj, domain_data)
+
+
+async def async_ws_set_automation(hass: Any, msg: dict[str, Any]) -> tuple[dict[str, Any] | None, tuple[str, str] | None]:
+    """Enable or disable room automation by config_entry/entry_id (single or bulk entry_ids)."""
+    enabled = bool(msg.get("enabled"))
+    raw_entry_ids = msg.get("entry_ids")
+
+    if isinstance(raw_entry_ids, list):
+        target_ids = [str(eid).strip() for eid in raw_entry_ids if str(eid).strip()]
+        if not target_ids:
+            return None, ("invalid_targets", "entry_ids must be a non-empty list")
+
+        payloads: list[dict[str, Any]] = []
+        for eid in target_ids:
+            entry_obj, domain_data = _resolve_target_entry(hass, entry_id=eid)
+            if entry_obj:
+                payloads.append(await _async_apply_automation_for_entry(hass, entry_obj, domain_data, enabled))
+
+        if not payloads:
+            return None, ("not_found", "No matching Smart Climate Scheduler room entries found")
+        return {"rooms": payloads, "updated_count": len(payloads)}, None
+
+    entry_obj, domain_data = _resolve_target_entry(
+        hass,
+        entry_id=msg.get("config_entry") or msg.get("entry_id"),
+        entity_id=msg.get("entity_id"),
+    )
+    if not entry_obj:
+        return None, ("not_found", "Smart Climate Scheduler room entry not found")
+
+    payload = await _async_apply_automation_for_entry(hass, entry_obj, domain_data, enabled)
+    return payload, None
+
+
 async def async_register_frontend_and_ws(hass: Any) -> None:
     """Register static frontend asset route, auto-load Lovelace JS URL, and register WS commands once."""
     if not hass:
@@ -629,10 +714,29 @@ async def async_register_frontend_and_ws(hass: Any) -> None:
             else:
                 connection.send_result(msg["id"], res)
 
+        @websocket_api.websocket_command(
+            {
+                vol.Required("type"): f"{DOMAIN}/set_automation",
+                vol.Required("enabled"): bool,
+                vol.Optional("config_entry"): str,
+                vol.Optional("entry_id"): str,
+                vol.Optional("entity_id"): str,
+                vol.Optional("entry_ids"): list,
+            }
+        )
+        @websocket_api.async_response
+        async def _ws_set_automation(hass_obj, connection, msg):
+            res, err = await async_ws_set_automation(hass_obj, msg)
+            if err:
+                connection.send_error(msg["id"], err[0], err[1])
+            else:
+                connection.send_result(msg["id"], res)
+
         websocket_api.async_register_command(hass, _ws_list_entries)
         websocket_api.async_register_command(hass, _ws_get_schedule)
         websocket_api.async_register_command(hass, _ws_save_day_slots)
         websocket_api.async_register_command(hass, _ws_copy_day_slots)
         websocket_api.async_register_command(hass, _ws_manage_profile)
+        websocket_api.async_register_command(hass, _ws_set_automation)
     except Exception as err:
         _LOGGER.debug("WebSocket-Registrierung übersprungen (%s)", err)

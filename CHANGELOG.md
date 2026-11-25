@@ -6,6 +6,7 @@ Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen
 
 - **Filter- & Sortierleiste in der Multi-Raum-Übersichtskarte (`custom:smart-climate-scheduler-overview-card`)**: Räume lassen sich direkt über Schnellfilter mit Live-Zählern (**Alle**, **Automatik An**, **Heizt / Thermik**, **Override**) eingrenzen sowie nach **Name (A–Z)**, **Aktive Phase zuerst** oder **Größte Abweichung (ΔT)** sortieren (Standard-Filter und -Sortierung auch im Karten-Editor konfigurierbar).
 - **Sammelaktionen für gefilterte Räume**: Direkt aus dem Kartenkopf lassen sich **Alle Automatik An/Aus**, **Sammel-Override** (Preset + Dauer), **Aktive Overrides stoppen** sowie **gemeinsame Zeitplan-Profile** auf alle aktuell angezeigten Räume gleichzeitig anwenden.
+- **Robuste Entity-Registry-Auflösung & `entry_id`-Steuerung**: Automatik-Schalter, Zeitplan-Sensor und Profil-Auswahl werden per `unique_id` aus der Home-Assistant-Entity-Registry aufgelöst und Einzel- sowie Sammel-Schaltungen der Automatik laufen direkt über `entry_id` (`smart_climate_scheduler/set_automation`), sodass auch umbenannte Entitäten jederzeit zuverlässig funktionieren.
 - **7-Sprachen-Lokalisierung & Live-Simulator**: Vollständige Übersetzungen aller Filter-, Sortier- und Sammelaktions-Texte sowie interaktive Live-Vorschau beider Lovelace-Karten im Web-Tab.
 
 ## v3.1.0 – Konfigurierbare Abwesenheits-Presets, Live-Thermik-Vorschau & Multi-Raum-Übersicht

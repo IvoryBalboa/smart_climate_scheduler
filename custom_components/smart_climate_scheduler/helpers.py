@@ -1323,3 +1323,52 @@ async def async_restore_tolerance(
     return True
 
 
+def resolve_entry_entity_id(
+    hass: Any,
+    entry_obj: Any,
+    entity_domain: str,
+    unique_suffix: str,
+    fallback_suffix: str | None = None,
+    runtime_key: str | None = None,
+) -> str:
+    """Löst die aktuelle entity_id eines Config-Entry-Objekts robust auf (Entity Registry -> Laufzeit -> Slug-Fallback)."""
+    entry_id = getattr(entry_obj, "entry_id", None) if entry_obj else None
+    prefix = f"{entity_domain}."
+
+    # 1. Primär: Home Assistant Entity Registry über stabile unique_id (<entry_id>_<unique_suffix>)
+    if hass and entry_id:
+        try:
+            from homeassistant.helpers import entity_registry as er
+
+            ent_reg = er.async_get(hass)
+            if ent_reg and hasattr(ent_reg, "async_get_entity_id"):
+                reg_eid = ent_reg.async_get_entity_id(entity_domain, DOMAIN, f"{entry_id}_{unique_suffix}")
+                if isinstance(reg_eid, str) and reg_eid.strip().startswith(prefix):
+                    return reg_eid.strip()
+        except Exception:
+            pass
+
+    # 2. Laufzeit-Referenz (HA aktualisiert entity.entity_id bei Umbenennungen automatisch)
+    domain_data = hass.data.get(DOMAIN, {}).get(entry_id) if (hass and entry_id and getattr(hass, "data", None)) else None
+    if isinstance(domain_data, dict) and runtime_key:
+        runtime_ent = domain_data.get(runtime_key)
+        runtime_eid = getattr(runtime_ent, "entity_id", None) if runtime_ent else None
+        if isinstance(runtime_eid, str) and runtime_eid.strip().startswith(prefix):
+            return runtime_eid.strip()
+
+    if hass and entry_id and unique_suffix == "schedule" and getattr(hass, "data", None):
+        for sensor in hass.data.get(f"{DOMAIN}_sensors", []):
+            if getattr(sensor, "config_entry", None) and sensor.config_entry.entry_id == entry_id:
+                if getattr(sensor, "_attr_translation_key", None) == "schedule":
+                    s_eid = getattr(sensor, "entity_id", None)
+                    if isinstance(s_eid, str) and s_eid.strip().startswith(prefix):
+                        return s_eid.strip()
+
+    # 3. Lokalisierter Slug-Fallback
+    lang = get_ha_language(hass)
+    slug = get_config_entry_slug(entry_obj)
+    loc_suffix = get_localized_slug_suffix(fallback_suffix or unique_suffix, lang)
+    return f"{entity_domain}.{slug}_{loc_suffix}"
+
+
+

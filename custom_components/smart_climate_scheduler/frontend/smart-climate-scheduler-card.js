@@ -961,11 +961,22 @@ class SmartClimateSchedulerCard extends HTMLElement {
   }
 
   async _handleToggleAuto() {
-    if (!this._hass || !this._data?.automation_switch_entity_id) return;
+    if (!this._hass || !this._data?.entry_id) return;
     const { automationOn } = this._getLiveStatus();
-    await this._hass.callService("switch", automationOn ? "turn_off" : "turn_on", {
-      entity_id: this._data.automation_switch_entity_id,
-    });
+    try {
+      const res = await this._hass.callWS({
+        type: `${DOMAIN}/set_automation`,
+        entry_id: this._data.entry_id,
+        enabled: !automationOn,
+      });
+      if (res && res.entry_id) {
+        this._data = res;
+      }
+      this._error = null;
+    } catch (err) {
+      this._error = err?.message || "Toggle automation failed";
+    }
+    this._render();
     setTimeout(() => this._fetchSchedule(false), 250);
   }
 
@@ -2866,30 +2877,46 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
 
   async _toggleAuto(entryId) {
     const room = this._roomsData.find((r) => r.entry_id === entryId);
-    if (!this._hass || !room?.automation_switch_entity_id) return;
+    if (!this._hass || !room?.entry_id) return;
     const { automationOn } = this._getRoomLive(room);
-    await this._hass.callService("switch", automationOn ? "turn_off" : "turn_on", {
-      entity_id: room.automation_switch_entity_id,
-    });
+    try {
+      const updated = await this._hass.callWS({
+        type: `${DOMAIN}/set_automation`,
+        entry_id: room.entry_id,
+        enabled: !automationOn,
+      });
+      if (updated && updated.entry_id) {
+        this._roomsData = this._roomsData.map((r) => (r.entry_id === entryId ? updated : r));
+      }
+      this._error = null;
+    } catch (err) {
+      this._error = err?.message || "Toggle automation failed";
+    }
+    this._render();
     setTimeout(() => this._fetchAllRooms(false), 250);
   }
 
   async _bulkSetAutomation(turnOn) {
     if (!this._hass || this._bulkPending) return;
-    const visible = this._getFilteredSortedRooms().map((x) => x.room);
-    const entityIds = visible.map((r) => r.automation_switch_entity_id).filter(Boolean);
-    if (entityIds.length === 0) return;
+    const entryIds = this._getFilteredSortedRooms()
+      .map((x) => x.room?.entry_id)
+      .filter(Boolean);
+    if (entryIds.length === 0) return;
 
     this._bulkPending = true;
     this._error = null;
     this._render();
     try {
-      await Promise.all(
-        entityIds.map((entityId) =>
-          this._hass.callService("switch", turnOn ? "turn_on" : "turn_off", { entity_id: entityId })
-        )
-      );
-      setTimeout(() => this._fetchAllRooms(false), 300);
+      const res = await this._hass.callWS({
+        type: `${DOMAIN}/set_automation`,
+        entry_ids: entryIds,
+        enabled: Boolean(turnOn),
+      });
+      if (Array.isArray(res?.rooms)) {
+        const updatedMap = new Map(res.rooms.filter(Boolean).map((r) => [r.entry_id, r]));
+        this._roomsData = this._roomsData.map((r) => updatedMap.get(r.entry_id) || r);
+      }
+      setTimeout(() => this._fetchAllRooms(false), 250);
     } catch (err) {
       this._error = err?.message || "Bulk action failed";
     } finally {

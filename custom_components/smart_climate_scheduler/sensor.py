@@ -51,6 +51,7 @@ from .helpers import (
     normalize_matrix,
     parse_time,
     register_startup_grace_callback,
+    resolve_entry_entity_id,
     resolve_tolerance_entity,
     safe_float as _safe_float,
     unregister_startup_grace_callback,
@@ -144,6 +145,7 @@ async def async_setup_entry(
     next_action_sensor = SmartClimateSchedulerNextActionSensor(config_entry, hass=hass)
     debug_sensor = SmartClimateSchedulerDebugSensor(config_entry, main_sensor, hass=hass)
 
+    domain_data["main_sensor"] = main_sensor
     sensors = hass.data.setdefault(f"{DOMAIN}_sensors", [])
     sensors.extend([main_sensor, heating_rate_sensor, cooling_rate_sensor, next_action_sensor, debug_sensor])
 
@@ -1086,9 +1088,14 @@ async def async_setup_entry(
         tracked_entities.append(outside_sensor)
     if outside_weather:
         tracked_entities.append(outside_weather)
-    switch_slug = get_config_entry_slug(config_entry)
-    auto_suffix = get_localized_slug_suffix("automatic", get_ha_language(hass))
-    tracked_entities.append(f"switch.{switch_slug}_{auto_suffix}")
+    resolved_auto_switch = resolve_entry_entity_id(
+        hass,
+        config_entry,
+        "switch",
+        "automatic",
+        runtime_key="automatic_switch",
+    )
+    tracked_entities.append(resolved_auto_switch)
 
     _tol_tracker["cb"] = async_climate_changed
     initial_tol_entity, _ = resolve_tolerance_entity(hass, config_entry)
