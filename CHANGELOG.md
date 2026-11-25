@@ -8,6 +8,7 @@ Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen
 - **Thermostat-Ausfall & eingefrorener Temperatursensor**: Meldet `unavailable`/`unknown` am Thermostat (nach Ablauf der 90s-Start-Karenzzeit) sowie eingefrorene Sensoren (`>= 180 Min.` unveränderte Temperatur bei Heizbedarf bzw. `last_updated`, oder `>= 360 Min.` im Leerlauf).
 - **Neuer Diagnose-Problem-Sensor (`BinarySensorDeviceClass.PROBLEM`)**: Stellt pro Raum eine lokalisierte Diagnose-Entität (`_anomaly` / `_anomalie`) inklusive Brenner-Kontext, Heizdauer ohne Anstieg, `ΔT` und Entity-Registry-Synchronisation bereit.
 - **Lovelace-Warnbadge & Übersichtskarten-Filter**: Beide eingebetteten Karten (`smart-climate-scheduler-card` & `smart-climate-scheduler-overview-card`) zeigen Live-Warnbadges (`⚠️`), Detailbanner und einen eigenen `Warnungen`-Filter inklusive Prioritäts-Sortierung in allen 7 Sprachen.
+- **Manuelle Raum-Sortierung & stabiler Karten-Editor**: In der Multi-Raum-Übersichtskarte steht nun zusätzlich die Sortieroption **„Manuelle Reihenfolge“** (`default_sort: custom` + `room_order`) bereit – die gewünschte Reihenfolge lässt sich im Karten-Editor direkt per **▲ / ▼** oder **Drag-&-Drop (⋮⋮)** festlegen. Zudem wurde ein Fokus-Verlust beim Tippen von Karten- und Raumnamen in beiden Karten-Editoren behoben (keine unnötigen Re-Renders bei laufenden Home-Assistant-Zustandsupdates).
 
 ## v3.2.0 – Multi-Raum Sammelaktionen, Filter & Sortierung
 

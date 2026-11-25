@@ -80,6 +80,10 @@ const I18N = {
     sortName: "Name (A–Z)",
     sortPhase: "Aktive Phase zuerst",
     sortDelta: "Größte Abweichung",
+    sortCustom: "Manuelle Reihenfolge",
+    moveUp: "Nach oben",
+    moveDown: "Nach unten",
+    overviewEditorOrderHint: "Reihenfolge per ▲ / ▼ oder Ziehen (⋮⋮) festlegen — wirkt bei „Manuelle Reihenfolge“.",
     bulkAutoOn: "Alle An",
     bulkAutoOff: "Alle Aus",
     bulkOverride: "Sammel-Override",
@@ -167,6 +171,10 @@ const I18N = {
     sortName: "Name (A–Z)",
     sortPhase: "Active phase first",
     sortDelta: "Largest delta",
+    sortCustom: "Custom order",
+    moveUp: "Move up",
+    moveDown: "Move down",
+    overviewEditorOrderHint: "Arrange order via ▲ / ▼ or drag (⋮⋮) — used with “Custom order” sort.",
     bulkAutoOn: "All On",
     bulkAutoOff: "All Off",
     bulkOverride: "Bulk override",
@@ -254,6 +262,10 @@ const I18N = {
     sortName: "Nom (A–Z)",
     sortPhase: "Phase active en premier",
     sortDelta: "Plus grand écart",
+    sortCustom: "Ordre manuel",
+    moveUp: "Monter",
+    moveDown: "Descendre",
+    overviewEditorOrderHint: "Définir l'ordre via ▲ / ▼ ou glisser (⋮⋮) — utilisé avec « Ordre manuel ».",
     bulkAutoOn: "Tout activer",
     bulkAutoOff: "Tout couper",
     bulkOverride: "Dérogation groupée",
@@ -341,6 +353,10 @@ const I18N = {
     sortName: "Nombre (A–Z)",
     sortPhase: "Fase activa primero",
     sortDelta: "Mayor diferencia",
+    sortCustom: "Orden manual",
+    moveUp: "Subir",
+    moveDown: "Bajar",
+    overviewEditorOrderHint: "Ordenar con ▲ / ▼ o arrastrando (⋮⋮) — usado con «Orden manual».",
     bulkAutoOn: "Activar todo",
     bulkAutoOff: "Apagar todo",
     bulkOverride: "Anulación grupal",
@@ -428,6 +444,10 @@ const I18N = {
     sortName: "Nome (A–Z)",
     sortPhase: "Fase attiva prima",
     sortDelta: "Differenza maggiore",
+    sortCustom: "Ordine manuale",
+    moveUp: "Sposta su",
+    moveDown: "Sposta giù",
+    overviewEditorOrderHint: "Imposta l'ordine con ▲ / ▼ o trascina (⋮⋮) — usato con «Ordine manuale».",
     bulkAutoOn: "Attiva tutte",
     bulkAutoOff: "Disattiva tutte",
     bulkOverride: "Override di gruppo",
@@ -515,6 +535,10 @@ const I18N = {
     sortName: "Naam (A–Z)",
     sortPhase: "Actieve fase eerst",
     sortDelta: "Grootste afwijking",
+    sortCustom: "Handmatige volgorde",
+    moveUp: "Omhoog",
+    moveDown: "Omlaag",
+    overviewEditorOrderHint: "Bepaal volgorde via ▲ / ▼ of slepen (⋮⋮) — gebruikt bij «Handmatige volgorde».",
     bulkAutoOn: "Alles Aan",
     bulkAutoOff: "Alles Uit",
     bulkOverride: "Groeps-override",
@@ -602,6 +626,10 @@ const I18N = {
     sortName: "Nazwa (A–Z)",
     sortPhase: "Aktywna faza najpierw",
     sortDelta: "Największa różnica",
+    sortCustom: "Kolejność ręczna",
+    moveUp: "W górę",
+    moveDown: "W dół",
+    overviewEditorOrderHint: "Ustal kolejność przez ▲ / ▼ lub przeciągnij (⋮⋮) — używane przy «Kolejność ręczna».",
     bulkAutoOn: "Wszystkie Wł.",
     bulkAutoOff: "Wszystkie Wył.",
     bulkOverride: "Zbiorczy override",
@@ -674,6 +702,47 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function captureTextInputFocus(shadowRoot) {
+  const active = shadowRoot?.activeElement;
+  if (
+    active &&
+    active.tagName === "INPUT" &&
+    (active.type === "text" || active.type === "search" || active.type === "number") &&
+    active.id
+  ) {
+    return {
+      id: active.id,
+      value: active.value,
+      selectionStart: typeof active.selectionStart === "number" ? active.selectionStart : null,
+      selectionEnd: typeof active.selectionEnd === "number" ? active.selectionEnd : null,
+    };
+  }
+  return null;
+}
+
+function restoreTextInputFocus(shadowRoot, state) {
+  if (!shadowRoot || !state?.id) return;
+  const el = shadowRoot.getElementById(state.id);
+  if (!el) return;
+  if (el.value !== state.value) {
+    el.value = state.value;
+  }
+  if (typeof el.focus === "function") {
+    el.focus();
+  }
+  if (
+    state.selectionStart !== null &&
+    state.selectionEnd !== null &&
+    typeof el.setSelectionRange === "function"
+  ) {
+    try {
+      el.setSelectionRange(state.selectionStart, state.selectionEnd);
+    } catch {
+      // Ignore input types that do not support selection ranges
+    }
+  }
 }
 
 function getTodayKey() {
@@ -1597,6 +1666,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
     const inspectorHtml = this._renderInspector(t, presets);
     const panelHtml = this._renderActivePanel(t, presets, profileNames, activeProfile);
+    const savedFocus = captureTextInputFocus(this.shadowRoot);
 
     this.shadowRoot.innerHTML = `
       <style>${this._getStyles()}</style>
@@ -1708,6 +1778,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     `;
 
     this._bindEvents();
+    restoreTextInputFocus(this.shadowRoot, savedFocus);
   }
 
   _renderActivePanel(t, presets, profileNames, activeProfile) {
@@ -2635,6 +2706,27 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     this._config = {};
     this._hass = null;
     this._rooms = [];
+    this._roomsLoaded = false;
+    this._roomsLoading = false;
+    this._roomsSig = "";
+    this._renderedOnce = false;
+    this._textDebounce = null;
+  }
+
+  disconnectedCallback() {
+    if (this._textDebounce) {
+      clearTimeout(this._textDebounce);
+      this._textDebounce = null;
+    }
+  }
+
+  _isTextInputFocused() {
+    const active = this.shadowRoot?.activeElement;
+    return Boolean(
+      active &&
+        active.tagName === "INPUT" &&
+        (active.type === "text" || active.type === "search")
+    );
   }
 
   setConfig(config) {
@@ -2644,21 +2736,29 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
       show_thermal_preview: true,
       ...config,
     };
+    if (this._renderedOnce && this._isTextInputFocused()) {
+      this._syncControlsFromConfig();
+      return;
+    }
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    this._loadRooms();
+    if (!this._roomsLoaded && !this._roomsLoading) {
+      this._loadRooms();
+    }
   }
 
   async _loadRooms() {
-    if (!this._hass) return;
+    if (!this._hass || this._roomsLoading) return;
+    this._roomsLoading = true;
     try {
       const res = await this._hass.callWS({ type: `${DOMAIN}/list_entries` });
       if (Array.isArray(res?.entries)) {
         this._rooms = res.entries;
       }
+      this._roomsLoaded = true;
     } catch {
       // Fallback: discover via entity registry / states
       const seen = new Set();
@@ -2692,8 +2792,17 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
         }
       }
       this._rooms = list;
+      this._roomsLoaded = true;
+    } finally {
+      this._roomsLoading = false;
     }
-    this._render();
+    const nextSig = this._rooms
+      .map((r) => `${r.entry_id}:${r.name}:${r.climate_entity || ""}`)
+      .join("|");
+    if (!this._renderedOnce || nextSig !== this._roomsSig) {
+      this._roomsSig = nextSig;
+      this._render();
+    }
   }
 
   _emitChange(updated) {
@@ -2713,8 +2822,48 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     );
   }
 
+  _scheduleTextEmit(updated) {
+    if (this._textDebounce) clearTimeout(this._textDebounce);
+    this._textDebounce = setTimeout(() => {
+      this._textDebounce = null;
+      this._emitChange(updated);
+    }, 250);
+  }
+
+  _flushTextEmit(updated) {
+    if (this._textDebounce) {
+      clearTimeout(this._textDebounce);
+      this._textDebounce = null;
+    }
+    this._emitChange(updated);
+  }
+
+  _syncControlsFromConfig() {
+    if (!this.shadowRoot) return;
+    const active = this.shadowRoot.activeElement;
+    const entryEl = this.shadowRoot.querySelector("#ed-config-entry");
+    if (entryEl && entryEl !== active) {
+      const entryVal = this._config?.config_entry || this._config?.entry_id || "";
+      if (entryEl.value !== entryVal) entryEl.value = entryVal;
+    }
+    const nameEl = this.shadowRoot.querySelector("#ed-name");
+    if (nameEl && nameEl !== active) {
+      const nameVal = this._config?.name || "";
+      if (nameEl.value !== nameVal) nameEl.value = nameVal;
+    }
+    const snapEl = this.shadowRoot.querySelector("#ed-snap");
+    if (snapEl && snapEl !== active) {
+      snapEl.value = String(Number(this._config?.snap_minutes || 15));
+    }
+    const thermalEl = this.shadowRoot.querySelector("#ed-thermal");
+    if (thermalEl) thermalEl.checked = this._config?.show_thermal_preview !== false;
+    const ovEl = this.shadowRoot.querySelector("#ed-ov");
+    if (ovEl) ovEl.checked = this._config?.show_override_bar !== false;
+  }
+
   _render() {
     if (!this.shadowRoot) return;
+    const savedFocus = captureTextInputFocus(this.shadowRoot);
     const t = getTexts(this._hass?.language || "de");
     let entryVal = this._config?.config_entry || this._config?.entry_id || "";
     if (!entryVal && this._config?.entity && this._rooms.length > 0) {
@@ -2800,18 +2949,44 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
       </div>
     `;
 
-    this.shadowRoot.querySelector("#ed-config-entry")?.addEventListener("change", (ev) => {
-      const val = ev.target.value.trim();
-      this._emitChange({
-        config_entry: val || undefined,
-        entry_id: undefined,
-        entity: undefined,
+    this._renderedOnce = true;
+
+    const entryEl = this.shadowRoot.querySelector("#ed-config-entry");
+    if (entryEl) {
+      const emitEntry = (val, immediate) => {
+        const payload = {
+          config_entry: val || undefined,
+          entry_id: undefined,
+          entity: undefined,
+        };
+        if (immediate) this._flushTextEmit(payload);
+        else this._scheduleTextEmit(payload);
+      };
+      if (entryEl.tagName === "INPUT") {
+        entryEl.addEventListener("input", (ev) => emitEntry(ev.target.value.trim(), false));
+        entryEl.addEventListener("blur", (ev) => emitEntry(ev.target.value.trim(), true));
+      }
+      entryEl.addEventListener("change", (ev) => emitEntry(ev.target.value.trim(), true));
+    }
+
+    const nameEl = this.shadowRoot.querySelector("#ed-name");
+    if (nameEl) {
+      nameEl.addEventListener("input", (ev) => {
+        const val = ev.target.value;
+        this._scheduleTextEmit({ name: val.trim() ? val : undefined });
       });
-    });
-    this.shadowRoot.querySelector("#ed-name")?.addEventListener("change", (ev) => {
-      const val = ev.target.value.trim();
-      this._emitChange({ name: val || undefined });
-    });
+      nameEl.addEventListener("change", (ev) => {
+        const val = ev.target.value.trim();
+        this._flushTextEmit({ name: val || undefined });
+      });
+      nameEl.addEventListener("blur", (ev) => {
+        const val = ev.target.value.trim();
+        if ((this._config?.name || "") !== val || this._textDebounce) {
+          this._flushTextEmit({ name: val || undefined });
+        }
+      });
+    }
+
     this.shadowRoot.querySelector("#ed-snap")?.addEventListener("change", (ev) => {
       this._emitChange({ snap_minutes: parseInt(ev.target.value, 10) || 15 });
     });
@@ -2821,6 +2996,8 @@ class SmartClimateSchedulerCardEditor extends HTMLElement {
     this.shadowRoot.querySelector("#ed-ov")?.addEventListener("change", (ev) => {
       this._emitChange({ show_override_bar: ev.target.checked });
     });
+
+    restoreTextInputFocus(this.shadowRoot, savedFocus);
   }
 }
 
@@ -2855,6 +3032,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     return {
       title: "",
       rooms: [],
+      room_order: [],
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
@@ -2871,6 +3049,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     this._config = {
       title: "",
       rooms: [],
+      room_order: [],
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
@@ -3053,8 +3232,24 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       return 0;
     };
 
+    const customOrderList =
+      Array.isArray(this._config?.room_order) && this._config.room_order.length > 0
+        ? this._config.room_order
+        : Array.isArray(this._config?.rooms) && this._config.rooms.length > 0
+          ? this._config.rooms
+          : [];
+    const customOrderMap = new Map(customOrderList.map((id, idx) => [id, idx]));
+
     filtered.sort((a, b) => {
-      if (sortMode === "phase") {
+      if (sortMode === "custom") {
+        const idxA = customOrderMap.has(a.room.entry_id)
+          ? customOrderMap.get(a.room.entry_id)
+          : Number.MAX_SAFE_INTEGER;
+        const idxB = customOrderMap.has(b.room.entry_id)
+          ? customOrderMap.get(b.room.entry_id)
+          : Number.MAX_SAFE_INTEGER;
+        if (idxA !== idxB) return idxA - idxB;
+      } else if (sortMode === "phase") {
         const diff = phaseWeight(b.live) - phaseWeight(a.live);
         if (diff !== 0) return diff;
       } else if (sortMode === "temp_delta") {
@@ -3482,6 +3677,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
               <option value="name" ${sortMode === "name" ? "selected" : ""}>${escapeHtml(t.sortName)}</option>
               <option value="phase" ${sortMode === "phase" ? "selected" : ""}>${escapeHtml(t.sortPhase)}</option>
               <option value="temp_delta" ${sortMode === "temp_delta" ? "selected" : ""}>${escapeHtml(t.sortDelta)}</option>
+              <option value="custom" ${sortMode === "custom" ? "selected" : ""}>${escapeHtml(t.sortCustom)}</option>
             </select>
           </div>
           <div class="ov-bulk-row">
@@ -4018,12 +4214,35 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
     this._config = {};
     this._hass = null;
     this._rooms = [];
+    this._roomsLoaded = false;
+    this._roomsLoading = false;
+    this._roomsSig = "";
+    this._renderedOnce = false;
+    this._textDebounce = null;
+    this._dragRoomId = null;
+  }
+
+  disconnectedCallback() {
+    if (this._textDebounce) {
+      clearTimeout(this._textDebounce);
+      this._textDebounce = null;
+    }
+  }
+
+  _isTextInputFocused() {
+    const active = this.shadowRoot?.activeElement;
+    return Boolean(
+      active &&
+        active.tagName === "INPUT" &&
+        (active.type === "text" || active.type === "search")
+    );
   }
 
   setConfig(config) {
     this._config = {
       title: "",
       rooms: [],
+      room_order: [],
       show_mini_timeline: true,
       show_thermal_preview: true,
       show_override_bar: true,
@@ -4032,25 +4251,42 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
       default_sort: "name",
       ...config,
     };
+    if (this._renderedOnce && this._isTextInputFocused()) {
+      this._syncControlsFromConfig();
+      return;
+    }
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    this._loadRooms();
+    if (!this._roomsLoaded && !this._roomsLoading) {
+      this._loadRooms();
+    }
   }
 
   async _loadRooms() {
-    if (!this._hass) return;
+    if (!this._hass || this._roomsLoading) return;
+    this._roomsLoading = true;
     try {
       const res = await this._hass.callWS({ type: `${DOMAIN}/list_entries` });
       if (Array.isArray(res?.entries)) {
         this._rooms = res.entries;
       }
+      this._roomsLoaded = true;
     } catch {
       this._rooms = [];
+      this._roomsLoaded = true;
+    } finally {
+      this._roomsLoading = false;
     }
-    this._render();
+    const nextSig = this._rooms
+      .map((r) => `${r.entry_id}:${r.name}:${r.climate_entity || ""}`)
+      .join("|");
+    if (!this._renderedOnce || nextSig !== this._roomsSig) {
+      this._roomsSig = nextSig;
+      this._render();
+    }
   }
 
   _emitChange(updated) {
@@ -4068,10 +4304,113 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
     );
   }
 
+  _scheduleTextEmit(updated) {
+    if (this._textDebounce) clearTimeout(this._textDebounce);
+    this._textDebounce = setTimeout(() => {
+      this._textDebounce = null;
+      this._emitChange(updated);
+    }, 250);
+  }
+
+  _flushTextEmit(updated) {
+    if (this._textDebounce) {
+      clearTimeout(this._textDebounce);
+      this._textDebounce = null;
+    }
+    this._emitChange(updated);
+  }
+
+  _getOrderedRooms() {
+    const rooms = Array.isArray(this._rooms) ? [...this._rooms] : [];
+    const orderSource =
+      Array.isArray(this._config?.room_order) && this._config.room_order.length > 0
+        ? this._config.room_order
+        : Array.isArray(this._config?.rooms) && this._config.rooms.length > 0
+          ? this._config.rooms
+          : [];
+    if (orderSource.length === 0) return rooms;
+    const orderMap = new Map(orderSource.map((id, idx) => [id, idx]));
+    return rooms.sort((a, b) => {
+      const idxA = orderMap.has(a.entry_id) ? orderMap.get(a.entry_id) : Number.MAX_SAFE_INTEGER;
+      const idxB = orderMap.has(b.entry_id) ? orderMap.get(b.entry_id) : Number.MAX_SAFE_INTEGER;
+      if (idxA !== idxB) return idxA - idxB;
+      return String(a.name || a.entry_id || "").localeCompare(String(b.name || b.entry_id || ""));
+    });
+  }
+
+  _applyRoomOrder(nextOrderIds) {
+    const cleanOrder = nextOrderIds.filter(Boolean);
+    const currentSelected = new Set(Array.isArray(this._config?.rooms) ? this._config.rooms : []);
+    const nextRooms =
+      currentSelected.size > 0
+        ? cleanOrder.filter((id) => currentSelected.has(id))
+        : [];
+    const patch = {
+      room_order: cleanOrder,
+      default_sort: "custom",
+    };
+    if (currentSelected.size > 0) {
+      patch.rooms = nextRooms;
+    }
+    this._emitChange(patch);
+    this._render();
+  }
+
+  _moveRoom(entryId, delta) {
+    const orderedIds = this._getOrderedRooms().map((r) => r.entry_id);
+    const idx = orderedIds.indexOf(entryId);
+    const targetIdx = idx + delta;
+    if (idx < 0 || targetIdx < 0 || targetIdx >= orderedIds.length) return;
+    const next = [...orderedIds];
+    const [moved] = next.splice(idx, 1);
+    next.splice(targetIdx, 0, moved);
+    this._applyRoomOrder(next);
+  }
+
+  _reorderRoom(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return;
+    const orderedIds = this._getOrderedRooms().map((r) => r.entry_id);
+    const fromIdx = orderedIds.indexOf(fromId);
+    const toIdx = orderedIds.indexOf(toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const next = [...orderedIds];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    this._applyRoomOrder(next);
+  }
+
+  _syncControlsFromConfig() {
+    if (!this.shadowRoot) return;
+    const active = this.shadowRoot.activeElement;
+    const titleEl = this.shadowRoot.querySelector("#oved-title");
+    if (titleEl && titleEl !== active) {
+      const titleVal = this._config?.title || "";
+      if (titleEl.value !== titleVal) titleEl.value = titleVal;
+    }
+    const filterEl = this.shadowRoot.querySelector("#oved-filter");
+    if (filterEl && filterEl !== active) {
+      filterEl.value = this._config?.default_filter || "all";
+    }
+    const sortEl = this.shadowRoot.querySelector("#oved-sort");
+    if (sortEl && sortEl !== active) {
+      sortEl.value = this._config?.default_sort || "name";
+    }
+    const bulkEl = this.shadowRoot.querySelector("#oved-bulk");
+    if (bulkEl) bulkEl.checked = this._config?.show_bulk_actions !== false;
+    const miniEl = this.shadowRoot.querySelector("#oved-mini");
+    if (miniEl) miniEl.checked = this._config?.show_mini_timeline !== false;
+    const thermalEl = this.shadowRoot.querySelector("#oved-thermal");
+    if (thermalEl) thermalEl.checked = this._config?.show_thermal_preview !== false;
+    const ovEl = this.shadowRoot.querySelector("#oved-ov");
+    if (ovEl) ovEl.checked = this._config?.show_override_bar !== false;
+  }
+
   _render() {
     if (!this.shadowRoot) return;
+    const savedFocus = captureTextInputFocus(this.shadowRoot);
     const t = getTexts(this._hass?.language || "de");
     const selectedRooms = new Set(Array.isArray(this._config?.rooms) ? this._config.rooms : []);
+    const orderedRooms = this._getOrderedRooms();
     const titleVal = this._config?.title || "";
     const showMini = this._config?.show_mini_timeline !== false;
     const showThermal = this._config?.show_thermal_preview !== false;
@@ -4118,6 +4457,60 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
           border-radius: 8px;
           border: 1px solid var(--divider-color, rgba(255,255,255,0.14));
         }
+        .room-order-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 6px;
+          border-radius: 6px;
+          border: 1px solid transparent;
+          background: rgba(255,255,255,0.02);
+        }
+        .room-order-row.drag-over {
+          border-color: var(--primary-color, #f59e0b);
+          background: rgba(245, 158, 11, 0.12);
+        }
+        .drag-handle {
+          cursor: grab;
+          user-select: none;
+          font-size: 0.85rem;
+          letter-spacing: -1px;
+          color: var(--secondary-text-color, #94a3b8);
+          padding: 0 2px;
+        }
+        .room-check-label {
+          flex: 1;
+          min-width: 0;
+        }
+        .room-order-btns {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+        }
+        .order-btn {
+          width: 24px;
+          height: 24px;
+          padding: 0;
+          border-radius: 6px;
+          border: 1px solid var(--divider-color, rgba(255,255,255,0.18));
+          background: var(--secondary-background-color, rgba(255,255,255,0.05));
+          color: var(--primary-text-color, #f1f5f9);
+          font-size: 0.68rem;
+          line-height: 1;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .order-btn:hover:not(:disabled) {
+          border-color: var(--primary-color, #f59e0b);
+          color: var(--primary-color, #f59e0b);
+        }
+        .order-btn:disabled {
+          opacity: 0.3;
+          cursor: default;
+        }
         label.inline {
           display: flex;
           flex-direction: row;
@@ -4129,6 +4522,7 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
         .hint {
           font-size: 0.76rem;
           color: var(--secondary-text-color, #94a3b8);
+          margin-top: 4px;
         }
       </style>
       <div class="ed-root">
@@ -4140,20 +4534,28 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
           <div class="field-title">${escapeHtml(t.overviewEditorRooms)}</div>
           <div class="room-checks">
             ${
-              this._rooms.length > 0
-                ? this._rooms
+              orderedRooms.length > 0
+                ? orderedRooms
                     .map(
-                      (r) => `
-                        <label class="inline">
-                          <input type="checkbox" class="oved-room" value="${escapeHtml(r.entry_id)}" ${selectedRooms.has(r.entry_id) ? "checked" : ""} />
-                          <span>${escapeHtml(r.name)}</span>
-                        </label>
+                      (r, idx) => `
+                        <div class="room-order-row" draggable="true" data-room-id="${escapeHtml(r.entry_id)}">
+                          <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+                          <label class="inline room-check-label">
+                            <input type="checkbox" class="oved-room" value="${escapeHtml(r.entry_id)}" ${selectedRooms.has(r.entry_id) ? "checked" : ""} />
+                            <span>${escapeHtml(r.name)}</span>
+                          </label>
+                          <div class="room-order-btns">
+                            <button type="button" class="order-btn" data-move-up="${escapeHtml(r.entry_id)}" title="${escapeHtml(t.moveUp)}" aria-label="${escapeHtml(t.moveUp)}" ${idx === 0 ? "disabled" : ""}>▲</button>
+                            <button type="button" class="order-btn" data-move-down="${escapeHtml(r.entry_id)}" title="${escapeHtml(t.moveDown)}" aria-label="${escapeHtml(t.moveDown)}" ${idx === orderedRooms.length - 1 ? "disabled" : ""}>▼</button>
+                          </div>
+                        </div>
                       `
                     )
                     .join("")
                 : `<div class="hint">${escapeHtml(t.overviewAllRoomsHint)}</div>`
             }
           </div>
+          ${orderedRooms.length > 1 ? `<div class="hint">${escapeHtml(t.overviewEditorOrderHint)}</div>` : ""}
         </div>
         <div class="two-col">
           <div>
@@ -4172,6 +4574,7 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
               <option value="name" ${defaultSort === "name" ? "selected" : ""}>${escapeHtml(t.sortName)}</option>
               <option value="phase" ${defaultSort === "phase" ? "selected" : ""}>${escapeHtml(t.sortPhase)}</option>
               <option value="temp_delta" ${defaultSort === "temp_delta" ? "selected" : ""}>${escapeHtml(t.sortDelta)}</option>
+              <option value="custom" ${defaultSort === "custom" ? "selected" : ""}>${escapeHtml(t.sortCustom)}</option>
             </select>
           </div>
         </div>
@@ -4194,10 +4597,24 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
       </div>
     `;
 
-    this.shadowRoot.querySelector("#oved-title")?.addEventListener("change", (ev) => {
-      const val = ev.target.value.trim();
-      this._emitChange({ title: val });
-    });
+    this._renderedOnce = true;
+
+    const titleEl = this.shadowRoot.querySelector("#oved-title");
+    if (titleEl) {
+      titleEl.addEventListener("input", (ev) => {
+        this._scheduleTextEmit({ title: ev.target.value });
+      });
+      titleEl.addEventListener("change", (ev) => {
+        this._flushTextEmit({ title: ev.target.value.trim() });
+      });
+      titleEl.addEventListener("blur", (ev) => {
+        const val = ev.target.value.trim();
+        if ((this._config?.title || "") !== val || this._textDebounce) {
+          this._flushTextEmit({ title: val });
+        }
+      });
+    }
+
     this.shadowRoot.querySelectorAll(".oved-room").forEach((cb) => {
       cb.addEventListener("change", () => {
         const chosen = Array.from(this.shadowRoot.querySelectorAll(".oved-room"))
@@ -4206,6 +4623,57 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
         this._emitChange({ rooms: chosen });
       });
     });
+
+    this.shadowRoot.querySelectorAll("[data-move-up]").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._moveRoom(btn.dataset.moveUp, -1);
+      });
+    });
+
+    this.shadowRoot.querySelectorAll("[data-move-down]").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._moveRoom(btn.dataset.moveDown, 1);
+      });
+    });
+
+    this.shadowRoot.querySelectorAll(".room-order-row").forEach((row) => {
+      row.addEventListener("dragstart", (ev) => {
+        this._dragRoomId = row.dataset.roomId || null;
+        if (ev.dataTransfer && this._dragRoomId) {
+          ev.dataTransfer.effectAllowed = "move";
+          ev.dataTransfer.setData("text/plain", this._dragRoomId);
+        }
+      });
+      row.addEventListener("dragover", (ev) => {
+        ev.preventDefault();
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = "move";
+        row.classList.add("drag-over");
+      });
+      row.addEventListener("dragleave", () => {
+        row.classList.remove("drag-over");
+      });
+      row.addEventListener("drop", (ev) => {
+        ev.preventDefault();
+        row.classList.remove("drag-over");
+        const fromId = this._dragRoomId || ev.dataTransfer?.getData("text/plain");
+        const toId = row.dataset.roomId;
+        this._dragRoomId = null;
+        if (fromId && toId && fromId !== toId) {
+          this._reorderRoom(fromId, toId);
+        }
+      });
+      row.addEventListener("dragend", () => {
+        this._dragRoomId = null;
+        this.shadowRoot.querySelectorAll(".room-order-row.drag-over").forEach((el) => {
+          el.classList.remove("drag-over");
+        });
+      });
+    });
+
     this.shadowRoot.querySelector("#oved-filter")?.addEventListener("change", (ev) => {
       this._emitChange({ default_filter: ev.target.value || "all" });
     });
@@ -4224,6 +4692,8 @@ class SmartClimateSchedulerOverviewCardEditor extends HTMLElement {
     this.shadowRoot.querySelector("#oved-ov")?.addEventListener("change", (ev) => {
       this._emitChange({ show_override_bar: ev.target.checked });
     });
+
+    restoreTextInputFocus(this.shadowRoot, savedFocus);
   }
 }
 
