@@ -8,6 +8,7 @@ import time as time_mod
 from datetime import datetime, time
 from typing import Any, Callable
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import callback as ha_callback
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -134,6 +135,7 @@ def register_startup_grace_callback(
         loop = getattr(hass, "loop", None)
         call_later = getattr(loop, "call_later", None)
         if callable(call_later):
+            @ha_callback
             def _on_timer() -> None:
                 grace_state["timer_handle"] = None
                 if hasattr(hass, "async_create_task"):
@@ -145,6 +147,7 @@ def register_startup_grace_callback(
         grace_state["listener_registered"] = True
         grace_state["started_fired"] = False
 
+        @ha_callback
         def _on_ha_started(_event=None) -> None:
             # One-time listener is automatically removed by HA when the event fires;
             # clear event_unsub so clear_startup_grace_state never tries to remove it again.
