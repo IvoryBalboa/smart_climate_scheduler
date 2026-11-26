@@ -80,8 +80,9 @@ def register_startup_grace_callback(
     hass,
     entry_id: str,
     callback: Callable[[], Any],
+    on_started_callback: Callable[[], Any] | None = None,
 ) -> None:
-    """Registriert einen Raum-Callback für die Nachprüfung nach Ablauf der 90s-Start-Karenzzeit."""
+    """Registriert Raum-Callbacks für den sofortigen Start-Sync sowie die Nachprüfung nach 90s."""
     if hass is None or not entry_id:
         return
     if not (is_hass_starting(hass) or is_in_startup_grace(hass)):
@@ -92,6 +93,23 @@ def register_startup_grace_callback(
         return
     callbacks = grace_state.setdefault("callbacks", {})
     callbacks[entry_id] = callback
+    if on_started_callback is not None and is_hass_starting(hass):
+        started_cbs = grace_state.setdefault("on_started_callbacks", {})
+        started_cbs[entry_id] = on_started_callback
+
+    async def _run_started_callbacks() -> None:
+        started_map = grace_state.get("on_started_callbacks")
+        if not isinstance(started_map, dict) or not started_map:
+            return
+        pending = list(started_map.values())
+        started_map.clear()
+        for cb in pending:
+            try:
+                res = cb()
+                if hasattr(res, "__await__"):
+                    await res
+            except Exception as err:
+                _LOGGER.debug("Fehler beim HA-Start-Sync: %s", err)
 
     async def _run_grace_expired_callbacks() -> None:
         grace_state["grace_until"] = None
@@ -136,6 +154,8 @@ def register_startup_grace_callback(
             if not isinstance(hass_data, dict) or hass_data.get(f"{DOMAIN}_startup_state") is not grace_state:
                 return
             grace_state["grace_until"] = time_mod.monotonic() + STARTUP_GRACE_SECONDS
+            if grace_state.get("on_started_callbacks") and hasattr(hass, "async_create_task"):
+                hass.async_create_task(_run_started_callbacks())
             _schedule_post_grace_timer()
 
         bus = getattr(hass, "bus", None)
@@ -151,7 +171,7 @@ def register_startup_grace_callback(
 
 
 def unregister_startup_grace_callback(hass, entry_id: str) -> None:
-    """Entfernt den Startup-Check-Callback eines entladenen Config Entrys."""
+    """Entfernt die Startup-Check-Callbacks eines entladenen Config Entrys."""
     if hass is None or not isinstance(getattr(hass, "data", None), dict):
         return
     grace_state = hass.data.get(f"{DOMAIN}_startup_state")
@@ -160,6 +180,9 @@ def unregister_startup_grace_callback(hass, entry_id: str) -> None:
     callbacks = grace_state.get("callbacks")
     if isinstance(callbacks, dict):
         callbacks.pop(entry_id, None)
+    started_cbs = grace_state.get("on_started_callbacks")
+    if isinstance(started_cbs, dict):
+        started_cbs.pop(entry_id, None)
 
 
 def clear_startup_grace_state(hass) -> None:

@@ -1,5 +1,5 @@
 /**
- * Smart Climate Scheduler Card (v3.3.0)
+ * Smart Climate Scheduler Card (v3.3.1)
  * Embedded interactive 24h timeline & multi-room overview Lovelace cards for Home Assistant.
  * Self-contained ES module with Shadow DOM & zero external dependencies.
  */

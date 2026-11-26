@@ -47,6 +47,7 @@ from .helpers import (
     get_preset_temperature,
     get_profiles_and_active,
     get_target_hvac_mode,
+    is_hass_starting,
     is_in_startup_grace,
     is_window_or_door_open,
     normalize_matrix,
@@ -566,6 +567,16 @@ async def async_setup_entry(
     # Automatik: Preset und optionale Zweipunkt-Regelung anwenden
     async def async_apply_schedule_to_climate(event=None):
         entry_name = config_entry.title or config_entry.entry_id
+        if is_hass_starting(hass):
+            if not domain_data.get("_startup_apply_deferred_logged"):
+                domain_data["_startup_apply_deferred_logged"] = True
+                _LOGGER.debug(
+                    "Smart Climate Scheduler [%s]: Erste aktive Thermostat-Schaltung wartet auf Abschluss des Home-Assistant-Starts",
+                    entry_name,
+                )
+            return
+        domain_data.pop("_startup_apply_deferred_logged", None)
+
         hvac_off_on_target, opportunistic_heating, is_heating_active = _get_heating_flags()
 
         if not domain_data.get("automation_enabled", False):
@@ -1068,7 +1079,8 @@ async def async_setup_entry(
                 _LOGGER.debug("Fehler beim Abruf der stündlichen Vorhersage: %s", e)
 
     if outside_weather:
-        hass.async_create_task(async_refresh_forecast())
+        if not is_hass_starting(hass):
+            hass.async_create_task(async_refresh_forecast())
         config_entry.async_on_unload(
             async_track_time_interval(hass, async_refresh_forecast, timedelta(minutes=30))
         )
@@ -1127,8 +1139,10 @@ async def async_setup_entry(
     domain_data["reschedule_target_timer"] = _reschedule_target_timer
     domain_data["update_all_entities"] = _async_update_all_entities
 
-    # Neustart-Schutz: Falls noch eine abgesenkte Toleranz im Speicher liegt und kein aktiver Mitheizbedarf besteht, sofort wiederherstellen
-    if domain_data.get("tolerance_backup") is not None:
+    # Neustart-Schutz: Falls noch eine abgesenkte Toleranz im Speicher liegt und kein aktiver Mitheizbedarf besteht, wiederherstellen
+    async def _async_startup_tolerance_recovery():
+        if domain_data.get("tolerance_backup") is None:
+            return
         _, opp_on, burner_on = _get_heating_flags()
         cl_st = hass.states.get(climate_entity) if climate_entity else None
         win_open = is_window_or_door_open(cl_st)
@@ -1143,6 +1157,17 @@ async def async_setup_entry(
         elif cl_st and cl_st.attributes.get("hvac_action") == "heating":
             await async_restore_tolerance(hass, domain_data, reason="startup_recovery_heating")
 
+    # Sofort-Abgleich unmittelbar nach vollständigem Home-Assistant-Start (EVENT_HOMEASSISTANT_STARTED)
+    async def _async_on_ha_started():
+        invalidate_eval_cache(domain_data)
+        if outside_weather:
+            await async_refresh_forecast()
+        await _async_startup_tolerance_recovery()
+        await async_apply_schedule_to_climate()
+        evaluate_and_update_anomaly(hass, config_entry, domain_data)
+        _async_update_all_entities()
+        _reschedule_target_timer()
+
     # Nach Ablauf der 90s-Start-Karenzzeit ggf. noch ausstehende Warnungen / Schaltvorgänge prüfen
     async def _async_post_startup_check():
         invalidate_eval_cache(domain_data)
@@ -1151,7 +1176,17 @@ async def async_setup_entry(
         _async_update_all_entities()
         _reschedule_target_timer()
 
-    register_startup_grace_callback(hass, config_entry.entry_id, _async_post_startup_check)
+    if is_hass_starting(hass):
+        register_startup_grace_callback(
+            hass,
+            config_entry.entry_id,
+            _async_post_startup_check,
+            on_started_callback=_async_on_ha_started,
+        )
+    else:
+        await _async_startup_tolerance_recovery()
+        register_startup_grace_callback(hass, config_entry.entry_id, _async_post_startup_check)
+
     config_entry.async_on_unload(
         lambda: unregister_startup_grace_callback(hass, config_entry.entry_id)
     )

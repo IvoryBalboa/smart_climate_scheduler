@@ -1,4 +1,4 @@
-# Smart Climate Scheduler (v3.3.0)
+# Smart Climate Scheduler (v3.3.1)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -90,7 +90,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v3.3.0.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v3.3.1.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -209,10 +209,10 @@ Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
 ## 📝 Changelog
 
 <!-- CURRENT_CHANGELOG_START -->
-Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.3.0** (*Anomalie- & Hardware-Wächter (brenner-sensitiv)*):
-* **Brenner-sensitive Heizüberwachung („Keine Erwärmung“)**: Erkennt automatisch, wenn ein Thermostat über den konfigurierbaren Schwellwert (Standard: **45 Minuten**, 0–240 Min. im Config- & Options-Flow anpassbar) aktiv heizt, die Temperatur jedoch nicht um mindestens `+0,05 °C` steigt – bei konfiguriertem zentralem Brenner-Sensor (`heating_active_sensor`) strikt erst dann, wenn auch der Brenner tatsächlich aktiv ist (bei Nachtabsenkung/Brenner-Aus erfolgt kein Fehlalarm, ebenso bei geöffnetem Fenster).
-* **Thermostat-Ausfall & eingefrorener Temperatursensor**: Meldet `unavailable`/`unknown` am Thermostat (nach Ablauf der 90s-Start-Karenzzeit) sowie eingefrorene Sensoren (`>= 180 Min.` unveränderte Temperatur bei Heizbedarf bzw. `last_updated`, oder `>= 360 Min.` im Leerlauf).
-* **Neuer Diagnose-Problem-Sensor (`BinarySensorDeviceClass.PROBLEM`)**: Stellt pro Raum eine lokalisierte Diagnose-Entität (`_anomaly` / `_anomalie`) inklusive Brenner-Kontext, Heizdauer ohne Anstieg, `ΔT` und Entity-Registry-Synchronisation bereit.
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.3.1** (*Deterministische Start-Reihenfolge & sicherer HA-Boot-Sync*):
+* **Umfassende Start-Reihenfolge via `after_dependencies`**: In `manifest.json` sind nun alle gängigen Thermostat-, Funk-/Geräte-, Wetter- sowie Präsenz- und Kalender-Integrationen (`better_thermostat`, `versatile_thermostat`, `climate`, `mqtt`, `zha`, `zwave_js`, `homematicip_local`, `matter`, `esphome`, `shelly`, `weather`, `person`, `zone`, `workday`, `calendar` u. v. m.) als optionale `after_dependencies` hinterlegt – Home Assistant lädt diese beim Start zuerst und ignoriert nicht installierte Integrationen automatisch.
+* **Erste aktive Schaltung erst nach vollständigem Home-Assistant-Start (`EVENT_HOMEASSISTANT_STARTED`)**: Während der laufenden Boot-Phase (`starting`) werden aktive Thermostat-Schaltbefehle, Toleranz-Wiederherstellung und der initiale Wettervorhersage-Abruf zurückgehalten und unmittelbar nach Abschluss des HA-Starts sauber ausgeführt (im laufenden Betrieb/Reload greifen Änderungen weiterhin sofort; die 90-Sekunden-Karenzzeit für verzögerte Funkgeräte bleibt erhalten).
+* **Anomalie-Wächter & Stabilitäts-Feinschliff**: Der minimale Temperaturanstieg für „Keine Erwärmung“ wurde auf **+0,05 °C** verfeinert (damit löst bereits `+0,1 °C` keinen Fehlalarm aus), der `EVENT_HOMEASSISTANT_STARTED`-One-Time-Listener wird beim Entladen sauber ohne `ValueError` bereinigt und in der Übersichtskarte steht nun zusätzlich **„Manuelle Reihenfolge“** inklusive fokusstabilem Karten-Editor bereit.
 <!-- CURRENT_CHANGELOG_END -->
 
 ---

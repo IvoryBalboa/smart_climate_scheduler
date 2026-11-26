@@ -2,6 +2,12 @@
 
 Jede veröffentlichte Versionsnummer besitzt hier einen eigenen, eigenständigen Changelog-Eintrag. Dieser wird beim Build automatisch für HACS (`README.md`) und das GitHub Release übernommen.
 
+## v3.3.1 – Deterministische Start-Reihenfolge & sicherer HA-Boot-Sync
+
+- **Umfassende Start-Reihenfolge via `after_dependencies`**: In `manifest.json` sind nun alle gängigen Thermostat-, Funk-/Geräte-, Wetter- sowie Präsenz- und Kalender-Integrationen (`better_thermostat`, `versatile_thermostat`, `climate`, `mqtt`, `zha`, `zwave_js`, `homematicip_local`, `matter`, `esphome`, `shelly`, `weather`, `person`, `zone`, `workday`, `calendar` u. v. m.) als optionale `after_dependencies` hinterlegt – Home Assistant lädt diese beim Start zuerst und ignoriert nicht installierte Integrationen automatisch.
+- **Erste aktive Schaltung erst nach vollständigem Home-Assistant-Start (`EVENT_HOMEASSISTANT_STARTED`)**: Während der laufenden Boot-Phase (`starting`) werden aktive Thermostat-Schaltbefehle, Toleranz-Wiederherstellung und der initiale Wettervorhersage-Abruf zurückgehalten und unmittelbar nach Abschluss des HA-Starts sauber ausgeführt (im laufenden Betrieb/Reload greifen Änderungen weiterhin sofort; die 90-Sekunden-Karenzzeit für verzögerte Funkgeräte bleibt erhalten).
+- **Anomalie-Wächter & Stabilitäts-Feinschliff**: Der minimale Temperaturanstieg für „Keine Erwärmung“ wurde auf **+0,05 °C** verfeinert (damit löst bereits `+0,1 °C` keinen Fehlalarm aus), der `EVENT_HOMEASSISTANT_STARTED`-One-Time-Listener wird beim Entladen sauber ohne `ValueError` bereinigt und in der Übersichtskarte steht nun zusätzlich **„Manuelle Reihenfolge“** inklusive fokusstabilem Karten-Editor bereit.
+
 ## v3.3.0 – Anomalie- & Hardware-Wächter (brenner-sensitiv)
 
 - **Brenner-sensitive Heizüberwachung („Keine Erwärmung“)**: Erkennt automatisch, wenn ein Thermostat über den konfigurierbaren Schwellwert (Standard: **45 Minuten**, 0–240 Min. im Config- & Options-Flow anpassbar) aktiv heizt, die Temperatur jedoch nicht um mindestens `+0,05 °C` steigt – bei konfiguriertem zentralem Brenner-Sensor (`heating_active_sensor`) strikt erst dann, wenn auch der Brenner tatsächlich aktiv ist (bei Nachtabsenkung/Brenner-Aus erfolgt kein Fehlalarm, ebenso bei geöffnetem Fenster).

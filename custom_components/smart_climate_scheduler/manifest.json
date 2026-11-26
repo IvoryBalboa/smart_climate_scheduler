@@ -1,6 +1,36 @@
 {
   "domain": "smart_climate_scheduler",
   "name": "Smart Climate Scheduler",
+  "after_dependencies": [
+    "better_thermostat",
+    "bluetooth",
+    "calendar",
+    "climate",
+    "dwd_weather",
+    "esphome",
+    "fritz",
+    "generic_thermostat",
+    "group",
+    "homematicip_cloud",
+    "homematicip_local",
+    "matter",
+    "met",
+    "modbus",
+    "mqtt",
+    "open_meteo",
+    "openweathermap",
+    "person",
+    "schedule",
+    "shelly",
+    "tado",
+    "template",
+    "versatile_thermostat",
+    "weather",
+    "workday",
+    "zha",
+    "zone",
+    "zwave_js"
+  ],
   "codeowners": [
     "@IvoryBalboa"
   ],
@@ -14,5 +44,5 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/IvoryBalboa/smart_climate_scheduler/issues",
-  "version": "3.3.0"
+  "version": "3.3.1"
 }
