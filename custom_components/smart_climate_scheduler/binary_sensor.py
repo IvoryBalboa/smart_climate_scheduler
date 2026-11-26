@@ -247,6 +247,8 @@ class SmartClimateSchedulerAnomalyBinarySensor(BinarySensorEntity):
             "heating_watch_minutes": snap.get("heating_watch_minutes", 0.0),
             "temp_delta": snap.get("temp_delta"),
             "unchanged_minutes": snap.get("unchanged_minutes", 0.0),
+            "unavailable_threshold_minutes": snap.get("unavailable_threshold_minutes"),
+            "unavailable_minutes": snap.get("unavailable_minutes", 0.0),
             "burner_configured": snap.get("burner_configured", False),
             "burner_active": snap.get("burner_active", False),
             "thermostat_heating": snap.get("thermostat_heating", False),

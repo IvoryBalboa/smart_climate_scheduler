@@ -11,6 +11,7 @@ from .const import (
     ANOMALY_FROZEN_DEMAND_MINUTES,
     ANOMALY_FROZEN_IDLE_MINUTES,
     ANOMALY_MIN_TEMP_RISE,
+    ANOMALY_UNAVAILABLE_MINUTES,
     CONF_ANOMALY_DETECTION_ENABLED,
     CONF_ANOMALY_NO_HEAT_MINUTES,
     CONF_CLIMATE_ENTITY,
@@ -101,6 +102,8 @@ def evaluate_and_update_anomaly(
             "heating_watch_minutes": 0.0,
             "temp_delta": None,
             "unchanged_minutes": 0.0,
+            "unavailable_threshold_minutes": ANOMALY_UNAVAILABLE_MINUTES,
+            "unavailable_minutes": 0.0,
             "burner_configured": bool(heating_active_sensor),
             "burner_active": False,
             "thermostat_heating": False,
@@ -129,16 +132,19 @@ def evaluate_and_update_anomaly(
     heating_watch_minutes = 0.0
     temp_delta: float | None = None
     unchanged_minutes = 0.0
+    unavailable_minutes = 0.0
 
-    # 1. Thermostat nicht verfügbar (mit 90s-Start-Karenzzeit)
+    # 1. Thermostat nicht verfügbar (mit 90s-Start-Karenzzeit + Entprell-Wartezeit gegen kurze Aussetzer)
     if is_unavailable:
         tracker["heating_watch_start"] = None
         tracker["heating_baseline_temp"] = None
         tracker["heating_max_temp"] = None
         if not in_grace:
-            if tracker.get("unavailable_since") is None:
+            if not isinstance(tracker.get("unavailable_since"), datetime):
                 tracker["unavailable_since"] = now
-            active_anomalies.append("thermostat_unavailable")
+            unavailable_minutes = _elapsed_minutes(tracker.get("unavailable_since"), now)
+            if unavailable_minutes >= ANOMALY_UNAVAILABLE_MINUTES:
+                active_anomalies.append("thermostat_unavailable")
         else:
             tracker["unavailable_since"] = None
     else:
@@ -275,6 +281,8 @@ def evaluate_and_update_anomaly(
         "heating_watch_minutes": round(heating_watch_minutes, 1),
         "temp_delta": temp_delta,
         "unchanged_minutes": round(unchanged_minutes, 1),
+        "unavailable_threshold_minutes": ANOMALY_UNAVAILABLE_MINUTES,
+        "unavailable_minutes": round(unavailable_minutes, 1),
         "burner_configured": burner_configured,
         "burner_active": burner_active,
         "thermostat_heating": thermostat_heating,

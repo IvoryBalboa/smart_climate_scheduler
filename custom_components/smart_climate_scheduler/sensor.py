@@ -1199,13 +1199,15 @@ async def async_setup_entry(
             prev_snap.get("primary_type"),
             tuple(prev_snap.get("anomalies", [])),
         )
+        prev_unavail = prev_snap.get("unavailable_minutes", 0.0)
         new_snap = evaluate_and_update_anomaly(hass, config_entry, domain_data)
         new_key = (
             bool(new_snap.get("active", False)),
             new_snap.get("primary_type"),
             tuple(new_snap.get("anomalies", [])),
         )
-        if new_key != prev_key or new_snap.get("active"):
+        new_unavail = new_snap.get("unavailable_minutes", 0.0)
+        if new_key != prev_key or new_snap.get("active") or new_unavail != prev_unavail:
             anomaly_ent = domain_data.get("anomaly_binary_sensor")
             if anomaly_ent is not None:
                 async_write_ha_state_if_enabled(anomaly_ent)
