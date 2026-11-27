@@ -116,7 +116,7 @@ class SmartClimateSchedulerClimate(ClimateEntity):
 
     _attr_has_entity_name = True
     _attr_name = None
-    _attr_temperature_unit = getattr(UnitOfTemperature, "CELSIUS", "°C")
+    _attr_native_temperature_unit = getattr(UnitOfTemperature, "CELSIUS", "°C")
     _attr_min_temp = MIN_TARGET_TEMP
     _attr_max_temp = MAX_TARGET_TEMP
     _attr_target_temperature_step = 0.5
@@ -270,7 +270,7 @@ class SmartClimateSchedulerClimate(ClimateEntity):
         return (clamped if clamped is not None else 20.0), preset, preheat, cooldown, active_slot
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Aktuelle Raumtemperatur (externer Raumsensor vor TRV-Durchschnitt)."""
         return self._compute_room_snapshot()["current_temp"]
 
@@ -291,7 +291,7 @@ class SmartClimateSchedulerClimate(ClimateEntity):
         return HVACMode.HEAT if snap["any_trv_active"] else HVACMode.OFF
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Effektive Solltemperatur (im AUTO-Modus aus Zeitplan/Override, sonst manuelle Solltemperatur)."""
         snap = self._compute_room_snapshot()
         cur_mode = self.hvac_mode
@@ -472,7 +472,7 @@ class SmartClimateSchedulerClimate(ClimateEntity):
             return
 
         if mode_str == "heat":
-            current_target = self.target_temperature
+            current_target = self.native_target_temperature
             manual_temp = _clamp_target_temp(domain_data.get("manual_temperature"))
             if manual_temp is None:
                 manual_temp = current_target if current_target is not None else 20.0
