@@ -54,6 +54,8 @@ from .const import (
     CONF_AWAY_NEAR_PRESET,
     CONF_ANOMALY_DETECTION_ENABLED,
     CONF_ANOMALY_NO_HEAT_MINUTES,
+    CUSTOM_PRESET_COLOR_OPTIONS,
+    CUSTOM_PRESET_HEX_TO_KEY,
     CUSTOM_PRESET_PALETTE,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
@@ -809,7 +811,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 self.settings_data[CONF_CUSTOM_PRESETS] = presets
                 return await self.async_step_custom_presets()
 
-        default_color = CUSTOM_PRESET_PALETTE[len(presets) % len(CUSTOM_PRESET_PALETTE)]
+        default_color_key = CUSTOM_PRESET_COLOR_OPTIONS[len(presets) % len(CUSTOM_PRESET_COLOR_OPTIONS)]
         schema = vol.Schema(
             {
                 vol.Required("name"): TextSelector(TextSelectorConfig()),
@@ -822,10 +824,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
-                vol.Required("color", default=default_color): SelectSelector(
+                vol.Required("color", default=default_color_key): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="preset_color",
-                        options=CUSTOM_PRESET_PALETTE,
+                        options=CUSTOM_PRESET_COLOR_OPTIONS,
                     )
                 ),
             }
@@ -927,10 +929,16 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
-                vol.Required("color", default=current["color"]): SelectSelector(
+                vol.Required(
+                    "color",
+                    default=CUSTOM_PRESET_HEX_TO_KEY.get(
+                        str(current["color"]).strip().lower(),
+                        CUSTOM_PRESET_COLOR_OPTIONS[0],
+                    ),
+                ): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="preset_color",
-                        options=CUSTOM_PRESET_PALETTE,
+                        options=CUSTOM_PRESET_COLOR_OPTIONS,
                     )
                 ),
             }

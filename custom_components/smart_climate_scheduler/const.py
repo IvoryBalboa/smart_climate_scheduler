@@ -51,16 +51,19 @@ DEFAULT_CUSTOM_PRESETS = [
     {"id": "boost", "name": "Boost", "temperature": 23.0, "color": "#ef4444"},
     {"id": "away", "name": "Abwesend", "temperature": 15.5, "color": "#64748b"},
 ]
-CUSTOM_PRESET_PALETTE = [
-    "#f59e0b",
-    "#10b981",
-    "#6366f1",
-    "#ef4444",
-    "#0ea5e9",
-    "#ec4899",
-    "#8b5cf6",
-    "#64748b",
-]
+CUSTOM_PRESET_COLOR_MAP = {
+    "amber": "#f59e0b",
+    "emerald": "#10b981",
+    "indigo": "#6366f1",
+    "red": "#ef4444",
+    "sky": "#0ea5e9",
+    "pink": "#ec4899",
+    "violet": "#8b5cf6",
+    "slate": "#64748b",
+}
+CUSTOM_PRESET_COLOR_OPTIONS = list(CUSTOM_PRESET_COLOR_MAP.keys())
+CUSTOM_PRESET_HEX_TO_KEY = {v: k for k, v in CUSTOM_PRESET_COLOR_MAP.items()}
+CUSTOM_PRESET_PALETTE = list(CUSTOM_PRESET_COLOR_MAP.values())
 
 DEFAULT_FALLBACK_PRESET = "eco"
 DEFAULT_AWAY_PRESET = "away"

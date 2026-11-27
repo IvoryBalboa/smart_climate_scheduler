@@ -26,6 +26,7 @@ from .const import (
     CONF_WINDOW_OPEN_DELAY_MINUTES,
     CONF_WINDOW_PAUSE_ENABLED,
     CONF_WINDOW_SENSORS,
+    CUSTOM_PRESET_COLOR_MAP,
     CUSTOM_PRESET_PALETTE,
     DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_COOLDOWN_ENABLED,
@@ -563,9 +564,11 @@ def _clamp_preset_temp(raw_temp: Any, default: float = 20.0) -> float:
 
 def _normalize_hex_color(raw_color: Any, index: int = 0) -> str:
     if isinstance(raw_color, str):
-        c = raw_color.strip()
-        if re.fullmatch(r"#[0-9a-fA-F]{6}", c):
-            return c.lower()
+        c = raw_color.strip().lower()
+        if c in CUSTOM_PRESET_COLOR_MAP:
+            return CUSTOM_PRESET_COLOR_MAP[c]
+        if re.fullmatch(r"#[0-9a-f]{6}", c):
+            return c
     return CUSTOM_PRESET_PALETTE[index % len(CUSTOM_PRESET_PALETTE)]
 
 

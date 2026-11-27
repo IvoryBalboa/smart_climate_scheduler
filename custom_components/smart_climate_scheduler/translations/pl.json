@@ -253,14 +253,14 @@
     },
     "preset_color": {
       "options": {
-        "#f59e0b": "Bursztynowy (#f59e0b)",
-        "#10b981": "Szmaragdowy (#10b981)",
-        "#6366f1": "Indygo (#6366f1)",
-        "#ef4444": "Czerwony (#ef4444)",
-        "#0ea5e9": "Błękitny (#0ea5e9)",
-        "#ec4899": "Różowy (#ec4899)",
-        "#8b5cf6": "Fioletowy (#8b5cf6)",
-        "#64748b": "Łupkowy (#64748b)"
+        "amber": "Bursztynowy (#f59e0b)",
+        "emerald": "Szmaragdowy (#10b981)",
+        "indigo": "Indygo (#6366f1)",
+        "red": "Czerwony (#ef4444)",
+        "sky": "Błękitny (#0ea5e9)",
+        "pink": "Różowy (#ec4899)",
+        "violet": "Fioletowy (#8b5cf6)",
+        "slate": "Łupkowy (#64748b)"
       }
     },
     "schedule_action": {
