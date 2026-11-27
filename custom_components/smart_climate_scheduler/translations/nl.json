@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Eerste installatie",
-        "description": "Configureer de thermostaten, buitentemperatuurbron (sensor heeft voorrang op weer-entiteit), brander/verwarmingsentiteit, zelflerende functie en standaardsnelheden.",
+        "title": "Kamer & Apparaten (1/4)",
+        "description": "Stel kamernaam, thermostaten, optionele kamersensor, brander-entiteit en standaard preset in.",
         "data": {
           "name": "Kamernaam",
-          "climate_entity": "Thermostaat / Climate-entiteit",
           "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
           "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
+          "heating_active_sensor": "Brander- / verwarming actief sensor",
+          "default_preset": "Standaard preset voor lege tijdvakken"
+        }
+      },
+      "windows": {
+        "title": "Ramen & Deuren (2/4)",
+        "description": "Optionele raam-/deursensoren en vertragingen voor pauzeren en hervatten van verwarming.",
+        "data": {
           "window_sensors": "Raam- / deursensoren (Optioneel)",
-          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
-          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)",
           "window_pause_enabled": "Verwarming pauzeren (HVAC Off) bij open raam",
+          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
+          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)"
+        }
+      },
+      "thermal": {
+        "title": "Thermiek, Weer & Regeling (3/4)",
+        "description": "Configureer buitentemperatuur/weer, voorverwarmen, afkoelen, zelflerend en hysterese.",
+        "data": {
           "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer-entiteit)",
           "outside_weather_entity": "Weer-entiteit",
-          "heating_active_sensor": "Brander- / verwarming actief sensor",
-          "enable_self_learning": "Zelflerend inschakelen",
-          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
-          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
-          "zone_home_entity": "Aanwezigheidszone",
-          "zone_away_near_entity": "Nabije zone / naderingszone (optioneel)",
-          "near_distance": "Afstandsdrempel nabije zone (km)",
-          "default_preset": "Standaard preset voor lege tijdvakken",
-          "away_near_preset": "Preset bij nabije zone (Away Near)",
-          "away_preset": "Preset bij afwezigheid (Away)",
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
           "preheat_enabled": "Voorspellend voorverwarmen inschakelen",
           "max_minutes_preheat": "Max. voorverwarmtijd (minuten)",
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
+          "enable_self_learning": "Zelflerend inschakelen",
+          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
+          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
-          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+        }
+      },
+      "presence": {
+        "title": "Aanwezigheid & Diagnose (4/4)",
+        "description": "Configureer aanwezigheidszones, afwezigheidspresets en anomaliebewaking.",
+        "data": {
+          "zone_home_entity": "Aanwezigheidszone",
+          "zone_away_near_entity": "Nabije zone / naderingszone (optioneel)",
+          "near_distance": "Afstandsdrempel nabije zone (km)",
+          "away_near_preset": "Preset bij nabije zone (Away Near)",
+          "away_preset": "Preset bij afwezigheid (Away)",
+          "preheat_ignores_away": "Voorverwarmen ondanks afwezigheid",
           "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
           "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Algemene instellingen & thermische parameters",
-        "description": "Pas buitentemperatuurbron, leren en standaard opwarm- en afkoelsnelheden aan:",
+        "title": "Instellingen",
+        "description": "Selecteer een instellingencategorie:",
+        "data": {
+          "settings_section": "Categorie"
+        }
+      },
+      "settings_devices": {
+        "title": "Apparaten & Sensoren",
+        "description": "Thermostaten, optionele kamertemperatuursensor, brander-entiteit en standaard preset.",
         "data": {
           "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
           "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
+          "heating_active_sensor": "Brander- / verwarming actief sensor",
+          "default_preset": "Standaard preset voor lege tijdvakken"
+        }
+      },
+      "settings_windows": {
+        "title": "Ramen & Deuren",
+        "description": "Raam-/deursensoren, verwarmingspauze en open-/dichtvertragingen.",
+        "data": {
           "window_sensors": "Raam- / deursensoren (Optioneel)",
-          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
-          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)",
           "window_pause_enabled": "Verwarming pauzeren (HVAC Off) bij open raam",
+          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
+          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Thermiek, Weer & Regeling",
+        "description": "Buitentemperatuur/weer, voorverwarmen, afkoelen, zelflerend en hysterese.",
+        "data": {
           "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer)",
           "outside_weather_entity": "Weer-entiteit voor buitentemperatuur",
-          "heating_active_sensor": "Brander- / verwarming actief sensor",
-          "enable_self_learning": "Zelflerend inschakelen",
-          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
-          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
-          "zone_home_entity": "Aanwezigheidszone",
-          "zone_away_near_entity": "Nabije zone / nadering (optioneel)",
-          "near_distance": "Afstandsdrempel nabije zone (km)",
-          "default_preset": "Standaard preset voor lege tijdvakken",
-          "away_near_preset": "Preset bij nabije zone (Away Near)",
-          "away_preset": "Preset bij afwezigheid (Away)",
+          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
           "preheat_enabled": "Voorspellend voorverwarmen inschakelen",
           "max_minutes_preheat": "Max. voorverwarmtijd (minuten)",
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
+          "enable_self_learning": "Zelflerend inschakelen",
+          "fallback_heating_rate": "Standaard opwarmsnelheid (K/h)",
+          "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
-          "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+        }
+      },
+      "settings_presence": {
+        "title": "Aanwezigheid & Diagnose",
+        "description": "Aanwezigheidszones, afwezigheidspresets, voorverwarmen bij afwezigheid en anomaliebewaking.",
+        "data": {
+          "zone_home_entity": "Aanwezigheidszone",
+          "zone_away_near_entity": "Nabije zone / nadering (optioneel)",
+          "near_distance": "Afstandsdrempel nabije zone (km)",
+          "away_near_preset": "Preset bij nabije zone (Away Near)",
+          "away_preset": "Preset bij afwezigheid (Away)",
           "preheat_ignores_away": "Voorverwarmen ondanks afwezigheid",
           "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
           "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Alle tijdvakken van de dag wissen",
         "back": "◀️ Terug naar dagselectie"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Apparaten & Sensoren (Thermostaten, Sensor, Brander)",
+        "windows": "🪟 Ramen & Deuren (Contacten & Vertragingen)",
+        "thermal": "🔥 Thermiek, Weer & Regeling (Voorverwarmen, Hysterese)",
+        "presence": "🏠 Aanwezigheid & Diagnose (Zones, Afwezigheid, Anomalie)",
+        "save": "💾 Opslaan & Afsluiten",
+        "back": "← Terug naar hoofdmenu"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Overschrijving verwijderen",
-      "description": "Verwijdert een actieve overschrijving via ID.",
+      "description": "Annuleert een specifieke tijdelijke override, of alle overrides voor de geselecteerde kamer als Override-ID leeg blijft.",
       "fields": {
         "device_id": {
           "name": "Apparaat",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "Overschrijvings-ID",
-          "description": "ID van te verwijderen overschrijving."
+          "description": "ID van de te verwijderen override (bijv. gasten of feest). Laat leeg om alle overrides voor de geselecteerde kamer te verwijderen."
         }
       }
     },

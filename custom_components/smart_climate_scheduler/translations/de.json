@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Ersteinrichtung",
-        "description": "Konfigurieren Sie die Thermostate, die Außentemperatur-Quelle (Sensor hat Vorrang vor Wetter-Entität), den Brenner-Sensor sowie Lernen und Standard-Raten.",
+        "title": "Raum & Geräte (1/4)",
+        "description": "Legen Sie Raumname, Thermostate, optionalen Raumsensor, Brenner-Entität und Standard-Preset fest.",
         "data": {
           "name": "Name des Raums",
-          "climate_entity": "Thermostat / Climate-Entität",
           "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
           "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
+          "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
+          "default_preset": "Standard-Preset für leere Slots"
+        }
+      },
+      "windows": {
+        "title": "Fenster & Türen (2/4)",
+        "description": "Optionale Fenster-/Türkontakte sowie Verzögerungen für Pause und Wiederherstellung.",
+        "data": {
           "window_sensors": "Fenster- / Tür-Sensoren (Optional)",
-          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
-          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)",
           "window_pause_enabled": "Heizung bei geöffnetem Fenster pausieren (HVAC Off)",
+          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
+          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)"
+        }
+      },
+      "thermal": {
+        "title": "Thermik, Wetter & Regelung (3/4)",
+        "description": "Konfigurieren Sie Außentemperatur/Wetter, Vorheizen, Auskühlen, adaptives Lernen und Hysterese.",
+        "data": {
           "outside_temp_sensor": "Außentemperatur-Sensor (Vorrang vor Wetter-Entität)",
           "outside_weather_entity": "Wetter-Entität",
-          "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
-          "enable_self_learning": "Lernen aktivieren",
-          "fallback_heating_rate": "Standard-Aufheizrate (K/h)",
-          "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
-          "zone_home_entity": "Anwesenheits-Zone",
-          "zone_away_near_entity": "Nahe Zone / Anfahrts-Zone (Optional)",
-          "near_distance": "Entfernungsschwelle Home-Zone (km)",
-          "default_preset": "Standard-Preset für leere Slots",
-          "away_near_preset": "Preset bei Nahbereich-Abwesenheit (Away Near)",
-          "away_preset": "Preset bei vollständiger Abwesenheit (Away)",
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
           "preheat_enabled": "Vorheizen aktivieren",
           "max_minutes_preheat": "Max. Vorheizzeit (Minuten)",
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
+          "enable_self_learning": "Lernen aktivieren",
+          "fallback_heating_rate": "Standard-Aufheizrate (K/h)",
+          "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
-          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+        }
+      },
+      "presence": {
+        "title": "Anwesenheit & Diagnose (4/4)",
+        "description": "Konfigurieren Sie Anwesenheits-Zonen, Abwesenheits-Presets sowie den Anomalie-Wächter.",
+        "data": {
+          "zone_home_entity": "Anwesenheits-Zone",
+          "zone_away_near_entity": "Nahe Zone / Anfahrts-Zone (Optional)",
+          "near_distance": "Entfernungsschwelle Home-Zone (km)",
+          "away_near_preset": "Preset bei Nahbereich-Abwesenheit (Away Near)",
+          "away_preset": "Preset bei vollständiger Abwesenheit (Away)",
+          "preheat_ignores_away": "Vorheizen trotz Abwesenheit",
           "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
           "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Allgemeine Einstellungen & Thermik",
-        "description": "Passen Sie Außentemperatur-Quelle, Lernen sowie Standard-Aufheiz- und Verlustrate an:",
+        "title": "Einstellungen",
+        "description": "Wählen Sie einen Einstellungsbereich aus:",
+        "data": {
+          "settings_section": "Bereich auswählen"
+        }
+      },
+      "settings_devices": {
+        "title": "Geräte & Sensoren",
+        "description": "Thermostate, optionaler Raumtemperatur-Sensor, Brenner-Entität und Standard-Preset.",
         "data": {
           "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
           "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
+          "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
+          "default_preset": "Standard-Preset für leere Slots"
+        }
+      },
+      "settings_windows": {
+        "title": "Fenster & Türen",
+        "description": "Fenster-/Türsensoren, Heizungspause und Verzögerungen beim Öffnen und Schließen.",
+        "data": {
           "window_sensors": "Fenster- / Tür-Sensoren (Optional)",
-          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
-          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)",
           "window_pause_enabled": "Heizung bei geöffnetem Fenster pausieren (HVAC Off)",
+          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
+          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Thermik, Wetter & Regelung",
+        "description": "Außentemperatur/Wetter, Vorheizen, Auskühlen, adaptives Lernen, Hysterese und Mitheizen.",
+        "data": {
           "outside_temp_sensor": "Außentemperatur-Sensor (Vorrang vor Wetter-Entität)",
           "outside_weather_entity": "Wetter-Entität für Außentemperatur",
-          "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
-          "enable_self_learning": "Lernen aktivieren",
-          "fallback_heating_rate": "Standard-Aufheizrate (K/h)",
-          "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
-          "zone_home_entity": "Anwesenheits-Zone",
-          "zone_away_near_entity": "Nahe Zone / Anfahrts-Zone (Optional)",
-          "near_distance": "Entfernungsschwelle Home-Zone (km)",
-          "default_preset": "Standard-Preset für leere Slots",
-          "away_near_preset": "Preset bei Nahbereich-Abwesenheit (Away Near)",
-          "away_preset": "Preset bei vollständiger Abwesenheit (Away)",
+          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
           "preheat_enabled": "Vorheizen aktivieren",
           "max_minutes_preheat": "Max. Vorheizzeit (Minuten)",
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
+          "enable_self_learning": "Lernen aktivieren",
+          "fallback_heating_rate": "Standard-Aufheizrate (K/h)",
+          "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
-          "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+        }
+      },
+      "settings_presence": {
+        "title": "Anwesenheit & Diagnose",
+        "description": "Anwesenheits-Zonen, Abwesenheits-Presets, Vorheizen trotz Abwesenheit und Anomalie-Wächter.",
+        "data": {
+          "zone_home_entity": "Anwesenheits-Zone",
+          "zone_away_near_entity": "Nahe Zone / Anfahrts-Zone (Optional)",
+          "near_distance": "Entfernungsschwelle Home-Zone (km)",
+          "away_near_preset": "Preset bei Nahbereich-Abwesenheit (Away Near)",
+          "away_preset": "Preset bei vollständiger Abwesenheit (Away)",
           "preheat_ignores_away": "Vorheizen trotz Abwesenheit",
           "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
           "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Alle Slots des Tages löschen",
         "back": "◀️ Zurück zur Tagesauswahl"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Geräte & Sensoren (Thermostate, Raumsensor, Brenner)",
+        "windows": "🪟 Fenster & Türen (Kontakte & Verzögerungen)",
+        "thermal": "🔥 Thermik, Wetter & Regelung (Vorheizen, Auskühlen, Hysterese)",
+        "presence": "🏠 Anwesenheit & Diagnose (Zonen, Abwesenheit, Anomalie-Wächter)",
+        "save": "💾 Speichern & Beenden",
+        "back": "← Zurück zum Hauptmenü"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Override entfernen",
-      "description": "Hebt einen aktiven temporären Slot-Override vorzeitig auf.",
+      "description": "Beendet einen einzelnen temporären Override oder alle Overrides des ausgewählten Raums, wenn keine Override-ID angegeben wird.",
       "fields": {
         "device_id": {
           "name": "Gerät",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "Override ID",
-          "description": "Die ID des zu entfernenden Overrides (z. B. gaeste oder party)."
+          "description": "ID des zu entfernenden Overrides (z. B. gaeste oder party). Leer lassen, um alle Overrides für den ausgewählten Raum zu löschen."
         }
       }
     },

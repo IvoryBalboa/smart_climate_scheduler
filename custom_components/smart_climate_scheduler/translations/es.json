@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Configuración inicial",
-        "description": "Configure los termostatos, la fuente de temperatura exterior (el sensor tiene prioridad sobre el clima), la entidad de quemador/calefacción activa, el aprendizaje y las tasas por defecto.",
+        "title": "Habitación y Dispositivos (1/4)",
+        "description": "Defina el nombre de la habitación, los termostatos, el sensor ambiente opcional, la entidad de caldera y el modo predeterminado.",
         "data": {
           "name": "Nombre de la habitación",
-          "climate_entity": "Termostato / Entidad Climate",
           "climate_entities": "Termostatos / Entidades Climate (Grupo)",
           "room_temp_sensor": "Sensor de temperatura ambiente (Opcional - solo para térmica e histéresis SCS)",
+          "heating_active_sensor": "Entidad de calefacción / quemador activo",
+          "default_preset": "Modo predeterminado para franjas vacías"
+        }
+      },
+      "windows": {
+        "title": "Ventanas y Puertas (2/4)",
+        "description": "Sensores de ventana/puerta opcionales y retardos para pausar y reanudar la calefacción.",
+        "data": {
           "window_sensors": "Sensores de ventana / puerta (Opcional)",
-          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
-          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)",
           "window_pause_enabled": "Pausar calefacción (HVAC Off) al abrir ventana",
+          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
+          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)"
+        }
+      },
+      "thermal": {
+        "title": "Térmica, Clima y Control (3/4)",
+        "description": "Configure temperatura exterior/clima, precalentamiento, enfriamiento, autoaprendizaje e histéresis.",
+        "data": {
           "outside_temp_sensor": "Sensor de temperatura exterior (prioridad sobre clima)",
           "outside_weather_entity": "Entidad meteorológica",
-          "heating_active_sensor": "Entidad de calefacción / quemador activo",
-          "enable_self_learning": "Habilitar autoaprendizaje",
-          "fallback_heating_rate": "Tasa de calentamiento por defecto (K/h)",
-          "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
-          "zone_home_entity": "Zona de presencia en casa",
-          "zone_away_near_entity": "Zona cercana / aproximación (Opcional)",
-          "near_distance": "Umbral de distancia zona cercana (km)",
-          "default_preset": "Modo predeterminado para franjas vacías",
-          "away_near_preset": "Modo en zona cercana (Away Near)",
-          "away_preset": "Modo en ausencia (Away)",
+          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
           "preheat_enabled": "Activar precalentamiento predictivo",
           "max_minutes_preheat": "Tiempo máx. de precalentamiento (minutos)",
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
+          "enable_self_learning": "Habilitar autoaprendizaje",
+          "fallback_heating_rate": "Tasa de calentamiento por defecto (K/h)",
+          "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
-          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
-          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
+        }
+      },
+      "presence": {
+        "title": "Presencia y Diagnóstico (4/4)",
+        "description": "Configure zonas de presencia, modos de ausencia y el supervisor de anomalías.",
+        "data": {
+          "zone_home_entity": "Zona de presencia en casa",
+          "zone_away_near_entity": "Zona cercana / aproximación (Opcional)",
+          "near_distance": "Umbral de distancia zona cercana (km)",
+          "away_near_preset": "Modo en zona cercana (Away Near)",
+          "away_preset": "Modo en ausencia (Away)",
+          "preheat_ignores_away": "Precalentar en ausencia",
           "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
           "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Ajustes generales y parámetros térmicos",
-        "description": "Ajuste la fuente de temperatura exterior, el aprendizaje y las tasas de calentamiento y enfriamiento:",
+        "title": "Ajustes",
+        "description": "Seleccione una categoría de ajustes:",
+        "data": {
+          "settings_section": "Categoría"
+        }
+      },
+      "settings_devices": {
+        "title": "Dispositivos y Sensores",
+        "description": "Termostatos, sensor de temperatura ambiente opcional, entidad de quemador y modo predeterminado.",
         "data": {
           "climate_entities": "Termostatos / Entidades Climate (Grupo)",
           "room_temp_sensor": "Sensor de temperatura ambiente (Opcional - solo para térmica e histéresis SCS)",
+          "heating_active_sensor": "Entidad de calefacción / quemador activo",
+          "default_preset": "Modo predeterminado para franjas vacías"
+        }
+      },
+      "settings_windows": {
+        "title": "Ventanas y Puertas",
+        "description": "Sensores de ventana/puerta, pausa de calefacción y retardos de apertura y cierre.",
+        "data": {
           "window_sensors": "Sensores de ventana / puerta (Opcional)",
-          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
-          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)",
           "window_pause_enabled": "Pausar calefacción (HVAC Off) al abrir ventana",
+          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
+          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Térmica, Clima y Control",
+        "description": "Temperatura exterior/clima, precalentamiento, enfriamiento, autoaprendizaje e histéresis.",
+        "data": {
           "outside_temp_sensor": "Sensor de temperatura exterior (prioridad sobre clima)",
           "outside_weather_entity": "Entidad meteorológica para temperatura exterior",
-          "heating_active_sensor": "Entidad de calefacción / quemador activo",
-          "enable_self_learning": "Habilitar autoaprendizaje",
-          "fallback_heating_rate": "Tasa de calentamiento por defecto (K/h)",
-          "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
-          "zone_home_entity": "Zona de presencia en casa",
-          "zone_away_near_entity": "Zona cercana / aproximación (Opcional)",
-          "near_distance": "Umbral de distancia zona cercana (km)",
-          "default_preset": "Modo predeterminado para franjas vacías",
-          "away_near_preset": "Modo en zona cercana (Away Near)",
-          "away_preset": "Modo en ausencia (Away)",
+          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
           "preheat_enabled": "Activar precalentamiento predictivo",
           "max_minutes_preheat": "Tiempo máx. de precalentamiento (minutos)",
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
+          "enable_self_learning": "Habilitar autoaprendizaje",
+          "fallback_heating_rate": "Tasa de calentamiento por defecto (K/h)",
+          "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
-          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
-          "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
+        }
+      },
+      "settings_presence": {
+        "title": "Presencia y Diagnóstico",
+        "description": "Zonas de presencia, modos de ausencia, precalentamiento en ausencia y supervisor de anomalías.",
+        "data": {
+          "zone_home_entity": "Zona de presencia en casa",
+          "zone_away_near_entity": "Zona cercana / aproximación (Opcional)",
+          "near_distance": "Umbral de distancia zona cercana (km)",
+          "away_near_preset": "Modo en zona cercana (Away Near)",
+          "away_preset": "Modo en ausencia (Away)",
           "preheat_ignores_away": "Precalentar en ausencia",
           "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
           "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Borrar todas las franjas del día",
         "back": "◀️ Volver a la selección de día"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Dispositivos y Sensores (Termostatos, Sensor, Caldera)",
+        "windows": "🪟 Ventanas y Puertas (Contactos y Retardos)",
+        "thermal": "🔥 Térmica, Clima y Control (Precalentamiento, Histéresis)",
+        "presence": "🏠 Presencia y Diagnóstico (Zonas, Ausencia, Anomalías)",
+        "save": "💾 Guardar y Salir",
+        "back": "← Volver al menú principal"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Eliminar anulación temporal",
-      "description": "Elimina una anulación temporal activa por su identificador.",
+      "description": "Cancela un override temporal específico, o todos los overrides de la habitación seleccionada si el ID se deja vacío.",
       "fields": {
         "device_id": {
           "name": "Dispositivo",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "ID de anulación",
-          "description": "Identificador único de la anulación a eliminar."
+          "description": "ID del override a eliminar (p. ej. invitados o fiesta). Déjelo vacío para eliminar todos los overrides de la habitación seleccionada."
         }
       }
     },

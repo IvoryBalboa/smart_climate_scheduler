@@ -367,6 +367,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             resolved.add(sensor.config_entry.entry_id)
 
                 for eid, store in hass.data[DOMAIN].items():
+                    if not isinstance(store, dict) or str(eid).startswith("_"):
+                        continue
                     entry_obj = hass.config_entries.async_get_entry(eid)
                     if entry_obj:
                         c_entities = get_climate_entities(entry_obj)
@@ -379,8 +381,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if resolved:
             return list(resolved)
 
-        if len(hass.data[DOMAIN]) == 1:
-            return list(hass.data[DOMAIN].keys())
+        room_entry_ids = [
+            eid for eid, store in hass.data[DOMAIN].items()
+            if isinstance(store, dict) and not str(eid).startswith("_")
+        ]
+        if len(room_entry_ids) == 1:
+            return room_entry_ids
         return []
 
     async def handle_set_override(call: ServiceCall) -> None:
@@ -464,24 +470,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await _async_update_sensors(hass, target_entry_id)
 
     async def handle_remove_override(call: ServiceCall) -> None:
-        """Service zum Löschen eines Overrides."""
-        override_id = call.data.get("override_id")
+        """Service zum Löschen eines einzelnen oder aller Overrides für ausgewählte Räume."""
+        raw_override_id = call.data.get("override_id")
+        override_id = str(raw_override_id).strip() if raw_override_id is not None else ""
         entry_ids = _resolve_entry_ids(call)
-        target_stores = [hass.data[DOMAIN][eid] for eid in entry_ids if eid in hass.data[DOMAIN]] if entry_ids else list(hass.data[DOMAIN].values())
+        has_explicit_target = any(
+            call.data.get(k)
+            for k in ("entry_id", "config_entry_id", "config_entry", "device_id", "area_id", "entity_id")
+        )
+        if entry_ids:
+            target_entry_ids = [
+                eid
+                for eid in entry_ids
+                if isinstance(hass.data[DOMAIN].get(eid), dict) and not str(eid).startswith("_")
+            ]
+        elif not has_explicit_target:
+            target_entry_ids = [
+                eid
+                for eid, st in hass.data[DOMAIN].items()
+                if isinstance(st, dict) and not str(eid).startswith("_")
+            ]
+        else:
+            _LOGGER.warning("remove_override: Ziel-Raum konnte nicht aufgelöst werden (%s).", dict(call.data))
+            return
 
-        for store in target_stores:
+        for eid in target_entry_ids:
+            store = hass.data[DOMAIN][eid]
             if override_id:
                 if override_id in store.get("overrides", {}):
                     store["overrides"].pop(override_id)
-                    _LOGGER.info("Override '%s' entfernt.", override_id)
+                    _LOGGER.info("Override '%s' entfernt (Raum: %s).", override_id, eid)
             else:
+                removed_count = len(store.get("overrides", {}))
                 store.setdefault("overrides", {}).clear()
-                _LOGGER.info("Alle Overrides entfernt.")
+                _LOGGER.info("Alle Overrides (%d) entfernt (Raum: %s).", removed_count, eid)
             storage = store.get("storage")
             if storage and hasattr(storage, "async_save_data"):
                 await storage.async_save_data({"overrides": store.get("overrides", {})})
-
-        for eid in (entry_ids or list(hass.data[DOMAIN].keys())):
             await _async_update_sensors(hass, eid)
 
     async def handle_reset_heating_rates(call: ServiceCall) -> None:

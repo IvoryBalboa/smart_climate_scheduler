@@ -53,7 +53,7 @@ set_override:
 
 remove_override:
   name: Remove Override
-  description: Prematurely cancels an active temporary slot override.
+  description: Cancels a specific temporary slot override, or all overrides for the selected room when Override ID is left empty.
   fields:
     device_id:
       name: Device
@@ -64,8 +64,8 @@ remove_override:
           integration: smart_climate_scheduler
     override_id:
       name: Override ID
-      description: The ID of the override to remove (e.g. guests or party).
-      required: true
+      description: ID of the override to remove (e.g. guests or party). Leave empty to remove all overrides for the selected room.
+      required: false
       selector:
         text: {}
 

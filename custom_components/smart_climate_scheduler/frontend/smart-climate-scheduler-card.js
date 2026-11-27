@@ -91,6 +91,7 @@ const I18N = {
     bulkProfile: "Profil (alle)",
     bulkApply: "Auf Räume anwenden",
     heatingActive: "Heizt",
+    heatingIdle: "Heizt nicht",
     roomsCount: "Räume",
     noRoomsConfigured: "Keine Smart Climate Scheduler Räume gefunden.",
     minutes: "Min",
@@ -197,6 +198,7 @@ const I18N = {
     bulkProfile: "Profile (all)",
     bulkApply: "Apply to rooms",
     heatingActive: "Heating",
+    heatingIdle: "Not heating",
     roomsCount: "rooms",
     noRoomsConfigured: "No Smart Climate Scheduler rooms found.",
     minutes: "min",
@@ -303,6 +305,7 @@ const I18N = {
     bulkProfile: "Profil (toutes)",
     bulkApply: "Appliquer aux pièces",
     heatingActive: "Chauffe",
+    heatingIdle: "Ne chauffe pas",
     roomsCount: "pièces",
     noRoomsConfigured: "Aucune pièce Smart Climate Scheduler trouvée.",
     minutes: "min",
@@ -409,6 +412,7 @@ const I18N = {
     bulkProfile: "Perfil (todas)",
     bulkApply: "Aplicar a salas",
     heatingActive: "Calentando",
+    heatingIdle: "Sin calefacción",
     roomsCount: "salas",
     noRoomsConfigured: "No se encontraron habitaciones.",
     minutes: "min",
@@ -515,6 +519,7 @@ const I18N = {
     bulkProfile: "Profilo (tutte)",
     bulkApply: "Applica alle stanze",
     heatingActive: "Riscalda",
+    heatingIdle: "Non riscalda",
     roomsCount: "stanze",
     noRoomsConfigured: "Nessuna stanza trovata.",
     minutes: "min",
@@ -621,6 +626,7 @@ const I18N = {
     bulkProfile: "Profiel (alle)",
     bulkApply: "Toepassen op kamers",
     heatingActive: "Verwarmt",
+    heatingIdle: "Verwarmt niet",
     roomsCount: "kamers",
     noRoomsConfigured: "Geen kamers gevonden.",
     minutes: "min",
@@ -727,6 +733,7 @@ const I18N = {
     bulkProfile: "Profil (wszystkie)",
     bulkApply: "Zastosuj do pokoi",
     heatingActive: "Grzeje",
+    heatingIdle: "Nie grzeje",
     roomsCount: "pokoi",
     noRoomsConfigured: "Nie znaleziono pokoi.",
     minutes: "min",
@@ -1177,6 +1184,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
             this._data.automation_switch_entity_id,
             this._data.profile_select_entity_id,
             this._data.anomaly_entity_id,
+            this._data.heating_demand_entity_id,
           ].filter(Boolean)
         )
       );
@@ -1340,9 +1348,35 @@ class SmartClimateSchedulerCard extends HTMLElement {
     const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
-    const hvacAction = thermostats.some((trv) => trv.hvac_action === "heating")
+    const hvacAction = thermostats.some((trv) => trv.available && String(trv.state || "").toLowerCase() !== "off" && trv.hvac_action === "heating")
       ? "heating"
       : (clSt?.attributes?.hvac_action ?? d.hvac_action);
+    const windowOpen = Boolean(d.window_open);
+    const windowPauseEnabled = d.window_pause_enabled !== false;
+    const demandSt = d.heating_demand_entity_id ? st[d.heating_demand_entity_id] : null;
+    let isHeating = false;
+    if (demandSt && (demandSt.state === "on" || demandSt.state === "off")) {
+      isHeating = demandSt.state === "on";
+    } else if (!(windowOpen && windowPauseEnabled)) {
+      const anyTrvHeating = thermostats.some((trv) => {
+        if (!trv.available) return false;
+        const m = String(trv.state || "").toLowerCase();
+        if (m === "off") return false;
+        if (trv.hvac_action !== null && trv.hvac_action !== undefined && String(trv.hvac_action).trim() !== "") {
+          return String(trv.hvac_action).toLowerCase() === "heating";
+        }
+        const tCur = curTemp ?? trv.current_temperature;
+        const tTgt = trv.target_temperature ?? tgtTemp;
+        if (["heat", "auto", "heat_cool"].includes(m)) {
+          if (tCur !== null && tCur !== undefined && tTgt !== null && tTgt !== undefined) {
+            return Number(tCur) < Number(tTgt);
+          }
+          return m === "heat";
+        }
+        return false;
+      });
+      isHeating = anyTrvHeating || (thermostats.length === 0 && Boolean(d.is_heating));
+    }
     const anomaly = resolveLiveAnomaly(d, st);
 
     return {
@@ -1353,13 +1387,14 @@ class SmartClimateSchedulerCard extends HTMLElement {
       preheating,
       coolingDown,
       hvacAction,
+      isHeating,
       anomaly,
       thermostats,
-      windowOpen: Boolean(d.window_open),
+      windowOpen,
       windowRawOpen: Boolean(d.window_raw_open),
       windowPendingAction: d.window_pending_action || null,
       windowPendingSeconds: computeRemainingSeconds(d.window_pending_until),
-      windowPauseEnabled: d.window_pause_enabled !== false,
+      windowPauseEnabled,
     };
   }
 
@@ -1956,6 +1991,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
             <div class="header-left">
               <div class="header-inline">
                 <span class="room-title">${escapeHtml(roomTitle)}</span>
+                <span class="heat-indicator ${live.isHeating ? "heating" : "idle"}">
+                  <span class="heat-dot" aria-hidden="true"></span>
+                  ${escapeHtml(live.isHeating ? t.heatingActive : t.heatingIdle)}
+                </span>
                 <span class="status-line tabular">
                   ${statusParts.map((p) => `<span>${escapeHtml(p)}</span>`).join('<span class="sep">·</span>')}
                 </span>
@@ -2539,6 +2578,41 @@ class SmartClimateSchedulerCard extends HTMLElement {
         line-height: 1.2;
         color: var(--scs-text);
         white-space: nowrap;
+      }
+      .heat-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1.2;
+        padding: 2px 7px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .heat-indicator.heating {
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        color: color-mix(in srgb, #f59e0b 82%, var(--scs-text));
+      }
+      .heat-indicator.idle {
+        background: var(--scs-surface-alt);
+        border: 1px solid var(--scs-border);
+        color: var(--scs-muted);
+      }
+      .heat-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .heat-indicator.heating .heat-dot {
+        background: #f59e0b;
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.75);
+      }
+      .heat-indicator.idle .heat-dot {
+        background: var(--scs-muted);
+        opacity: 0.55;
       }
       .status-line {
         font-size: 0.78rem;
@@ -3604,6 +3678,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
                 d.automation_switch_entity_id,
                 d.profile_select_entity_id,
                 d.anomaly_entity_id,
+                d.heating_demand_entity_id,
               ].filter(Boolean)
             )
           );
@@ -3740,10 +3815,35 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
-    const hvacAction = thermostats.some((trv) => trv.hvac_action === "heating")
+    const hvacAction = thermostats.some((trv) => trv.available && String(trv.state || "").toLowerCase() !== "off" && trv.hvac_action === "heating")
       ? "heating"
       : (clSt?.attributes?.hvac_action ?? d.hvac_action ?? null);
-    const isHeating = hvacAction === "heating";
+    const windowOpen = Boolean(d.window_open);
+    const windowPauseEnabled = d.window_pause_enabled !== false;
+    const demandSt = d.heating_demand_entity_id ? st[d.heating_demand_entity_id] : null;
+    let isHeating = false;
+    if (demandSt && (demandSt.state === "on" || demandSt.state === "off")) {
+      isHeating = demandSt.state === "on";
+    } else if (!(windowOpen && windowPauseEnabled)) {
+      const anyTrvHeating = thermostats.some((trv) => {
+        if (!trv.available) return false;
+        const m = String(trv.state || "").toLowerCase();
+        if (m === "off") return false;
+        if (trv.hvac_action !== null && trv.hvac_action !== undefined && String(trv.hvac_action).trim() !== "") {
+          return String(trv.hvac_action).toLowerCase() === "heating";
+        }
+        const tCur = curTemp ?? trv.current_temperature;
+        const tTgt = trv.target_temperature ?? tgtTemp;
+        if (["heat", "auto", "heat_cool"].includes(m)) {
+          if (tCur !== null && tCur !== undefined && tTgt !== null && tTgt !== undefined) {
+            return Number(tCur) < Number(tTgt);
+          }
+          return m === "heat";
+        }
+        return false;
+      });
+      isHeating = anyTrvHeating || (thermostats.length === 0 && Boolean(d.is_heating));
+    }
     const activeOverrides = Object.entries(d.overrides || {});
     const tempDelta =
       curTemp !== null && curTemp !== undefined && tgtTemp !== null && tgtTemp !== undefined
@@ -4173,9 +4273,9 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.preheating)}</span>`;
         } else if (live.coolingDown) {
           phaseBadge = `<span class="ov-phase ov-phase-cool">${escapeHtml(t.coolingDown)}</span>`;
-        } else if (live.isHeating) {
-          phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.heatingActive)}</span>`;
         }
+
+        const heatStateBadge = `<span class="ov-heat-state ${live.isHeating ? "heating" : "idle"}"><span class="ov-heat-dot" aria-hidden="true"></span>${escapeHtml(live.isHeating ? t.heatingActive : t.heatingIdle)}</span>`;
 
         const onlineTrvs = live.thermostats.filter((x) => x.available).length;
         const totalTrvs = live.thermostats.length;
@@ -4215,6 +4315,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
                 <div class="ov-row-top">
                   <span class="ov-room-name">${escapeHtml(d.room_name || d.entry_id)}</span>
                   <span class="ov-preset-dot" style="background:${presetCol.bg};border-color:${presetCol.border};color:${presetCol.text};">${escapeHtml(presetLabel)}</span>
+                  ${heatStateBadge}
                   ${phaseBadge}
                   ${trvCountBadge}
                   ${anomalyBadge}
@@ -4626,6 +4727,41 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         border-radius: 5px;
         padding: 1px 6px;
         line-height: 1.3;
+      }
+      .ov-heat-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        border-radius: 5px;
+        padding: 1px 6px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .ov-heat-state.heating {
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        color: color-mix(in srgb, #f59e0b 82%, var(--scs-text));
+      }
+      .ov-heat-state.idle {
+        background: var(--scs-surface-alt);
+        border: 1px solid var(--scs-border);
+        color: var(--scs-muted);
+      }
+      .ov-heat-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .ov-heat-state.heating .ov-heat-dot {
+        background: #f59e0b;
+        box-shadow: 0 0 5px rgba(245, 158, 11, 0.75);
+      }
+      .ov-heat-state.idle .ov-heat-dot {
+        background: var(--scs-muted);
+        opacity: 0.55;
       }
       .ov-phase {
         font-size: 0.68rem;

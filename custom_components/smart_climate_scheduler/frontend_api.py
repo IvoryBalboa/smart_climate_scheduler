@@ -191,6 +191,14 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         fallback_suffix="binary_anomaly",
         runtime_key="anomaly_binary_sensor",
     )
+    heating_demand_entity_id = resolve_entry_entity_id(
+        hass,
+        entry_obj,
+        "binary_sensor",
+        "heating_demand",
+        fallback_suffix="binary_heating_demand",
+        runtime_key="heating_demand_binary_sensor",
+    )
 
     profiles, active_profile = _normalize_all_profiles(entry_obj)
 
@@ -338,6 +346,21 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         "automation_switch_entity_id": automation_switch_entity_id,
         "profile_select_entity_id": profile_select_entity_id,
         "anomaly_entity_id": anomaly_entity_id,
+        "heating_demand_entity_id": heating_demand_entity_id,
+        "is_heating": (
+            False
+            if (eff_win_open and win_pause_enabled)
+            else (
+                (states_mgr.get(heating_demand_entity_id).state == "on")
+                if (
+                    heating_demand_entity_id
+                    and states_mgr
+                    and states_mgr.get(heating_demand_entity_id) is not None
+                    and states_mgr.get(heating_demand_entity_id).state in ("on", "off")
+                )
+                else bool(any_heating)
+            )
+        ),
         "anomaly": anomaly_snap,
         "automation_enabled": automation_enabled,
         "current_temperature": current_temp,

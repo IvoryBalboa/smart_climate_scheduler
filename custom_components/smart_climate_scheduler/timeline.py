@@ -289,7 +289,7 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                         "end": ov_end,
                         "preset": preset,
                         "preheat": True,
-                        "cooldown": True,
+                        "cooldown": False,
                         "is_override": True,
                         "override_id": o_id,
                         "from_str": ov_start.strftime("%H:%M"),
@@ -323,7 +323,7 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                             "end": ov_end,
                             "preset": preset,
                             "preheat": True,
-                            "cooldown": True,
+                            "cooldown": False,
                             "is_override": True,
                             "override_id": o_id,
                             "from_str": start_str,
@@ -409,6 +409,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
         if item.get("is_override"):
             payload["is_override"] = True
             payload["override_id"] = item.get("override_id")
+            payload["preheat"] = True
+            payload["cooldown"] = False
         return payload
 
     active_item = timeline[active_idx]

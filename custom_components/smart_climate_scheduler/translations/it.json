@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Configurazione iniziale",
-        "description": "Configura i termostati, la sorgente della temperatura esterna (il sensore ha la precedenza sul meteo), il sensore di riscaldamento attivo, l'autoapprendimento e i tassi predefiniti.",
+        "title": "Stanza e Dispositivi (1/4)",
+        "description": "Imposta nome della stanza, termostati, sensore ambiente opzionale, entità caldaia e modalità predefinita.",
         "data": {
           "name": "Nome della stanza",
-          "climate_entity": "Termostato / Entità Climate",
           "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
           "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
+          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
+          "default_preset": "Modalità predefinita per fasce vuote"
+        }
+      },
+      "windows": {
+        "title": "Finestre e Porte (2/4)",
+        "description": "Sensori finestra/porta opzionali e ritardi per sospendere e riprendere il riscaldamento.",
+        "data": {
           "window_sensors": "Sensori finestra / porta (Opzionale)",
-          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
-          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)",
           "window_pause_enabled": "Sospendi riscaldamento (HVAC Off) a finestra aperta",
+          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
+          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)"
+        }
+      },
+      "thermal": {
+        "title": "Termica, Meteo e Controllo (3/4)",
+        "description": "Configura temperatura esterna/meteo, preriscaldamento, raffreddamento, autoapprendimento e isteresi.",
+        "data": {
           "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
           "outside_weather_entity": "Entità meteo",
-          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
-          "enable_self_learning": "Abilita autoapprendimento",
-          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
-          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
-          "zone_home_entity": "Zona presenza a casa",
-          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
-          "near_distance": "Soglia di distanza zona vicina (km)",
-          "default_preset": "Modalità predefinita per fasce vuote",
-          "away_near_preset": "Modalità in zona vicina (Away Near)",
-          "away_preset": "Modalità fuori casa (Away)",
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
           "preheat_enabled": "Abilita preriscaldamento predittivo",
           "max_minutes_preheat": "Tempo massimo di preriscaldamento (minuti)",
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
+          "enable_self_learning": "Abilita autoapprendimento",
+          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
+          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
-          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+        }
+      },
+      "presence": {
+        "title": "Presenza e Diagnostica (4/4)",
+        "description": "Configura zone di presenza, modalità fuori casa e controllo anomalie.",
+        "data": {
+          "zone_home_entity": "Zona presenza a casa",
+          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
+          "near_distance": "Soglia di distanza zona vicina (km)",
+          "away_near_preset": "Modalità in zona vicina (Away Near)",
+          "away_preset": "Modalità fuori casa (Away)",
+          "preheat_ignores_away": "Preriscalda anche in assenza",
           "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
           "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Impostazioni generali e parametri termici",
-        "description": "Regola la sorgente di temperatura esterna, l'apprendimento e i tassi di riscaldamento e raffreddamento:",
+        "title": "Impostazioni",
+        "description": "Seleziona una categoria di impostazioni:",
+        "data": {
+          "settings_section": "Categoria"
+        }
+      },
+      "settings_devices": {
+        "title": "Dispositivi e Sensori",
+        "description": "Termostati, sensore di temperatura ambiente opzionale, entità bruciatore e modalità predefinita.",
         "data": {
           "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
           "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
+          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
+          "default_preset": "Modalità predefinita per fasce vuote"
+        }
+      },
+      "settings_windows": {
+        "title": "Finestre e Porte",
+        "description": "Sensori finestra/porta, pausa riscaldamento e ritardi di apertura e chiusura.",
+        "data": {
           "window_sensors": "Sensori finestra / porta (Opzionale)",
-          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
-          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)",
           "window_pause_enabled": "Sospendi riscaldamento (HVAC Off) a finestra aperta",
+          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
+          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Termica, Meteo e Controllo",
+        "description": "Temperatura esterna/meteo, preriscaldamento, raffreddamento, autoapprendimento e isteresi.",
+        "data": {
           "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
           "outside_weather_entity": "Entità meteo per temperatura esterna",
-          "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
-          "enable_self_learning": "Abilita autoapprendimento",
-          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
-          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
-          "zone_home_entity": "Zona presenza a casa",
-          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
-          "near_distance": "Soglia di distanza zona vicina (km)",
-          "default_preset": "Modalità predefinita per fasce vuote",
-          "away_near_preset": "Modalità in zona vicina (Away Near)",
-          "away_preset": "Modalità fuori casa (Away)",
+          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
           "preheat_enabled": "Abilita preriscaldamento predittivo",
           "max_minutes_preheat": "Tempo massimo di preriscaldamento (minuti)",
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
+          "enable_self_learning": "Abilita autoapprendimento",
+          "fallback_heating_rate": "Tasso di riscaldamento predefinito (K/h)",
+          "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
-          "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+        }
+      },
+      "settings_presence": {
+        "title": "Presenza e Diagnostica",
+        "description": "Zone di presenza, modalità assenza, preriscaldamento in assenza e controllo anomalie.",
+        "data": {
+          "zone_home_entity": "Zona presenza a casa",
+          "zone_away_near_entity": "Zona vicina / avvicinamento (Opzionale)",
+          "near_distance": "Soglia di distanza zona vicina (km)",
+          "away_near_preset": "Modalità in zona vicina (Away Near)",
+          "away_preset": "Modalità fuori casa (Away)",
           "preheat_ignores_away": "Preriscalda anche in assenza",
           "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
           "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Cancella tutte le fasce del giorno",
         "back": "◀️ Torna alla selezione del giorno"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Dispositivi e Sensori (Termostati, Sensore, Caldaia)",
+        "windows": "🪟 Finestre e Porte (Contatti e Ritardi)",
+        "thermal": "🔥 Termica, Meteo e Controllo (Preriscaldamento, Isteresi)",
+        "presence": "🏠 Presenza e Diagnostica (Zone, Assenza, Anomalie)",
+        "save": "💾 Salva ed Esci",
+        "back": "← Torna al menu principale"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Rimuovi override",
-      "description": "Elimina un override temporaneo attivo tramite ID.",
+      "description": "Annulla uno specifico override temporaneo, oppure tutti gli override della stanza selezionata se l'ID viene lasciato vuoto.",
       "fields": {
         "device_id": {
           "name": "Dispositivo",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "ID override",
-          "description": "Identificatore dell'override da rimuovere."
+          "description": "ID dell'override da rimuovere (es. ospiti o festa). Lascia vuoto per rimuovere tutti gli override della stanza selezionata."
         }
       }
     },

@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Initial Setup",
-        "description": "Configure the thermostats, outdoor temperature source (sensor takes precedence over weather entity), burner entity, self-learning toggle, and default rates.",
+        "title": "Room & Devices (1/4)",
+        "description": "Set the room name, thermostats, optional room sensor, burner entity, and default preset.",
         "data": {
           "name": "Room Name",
-          "climate_entity": "Thermostat / Climate Entity",
           "climate_entities": "Thermostats / Climate Entities (Room Group)",
           "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
+          "heating_active_sensor": "Burner / Heating Active Entity",
+          "default_preset": "Default Preset for Empty Slots"
+        }
+      },
+      "windows": {
+        "title": "Windows & Doors (2/4)",
+        "description": "Optional window/door contacts and delays for pausing and resuming heating.",
+        "data": {
           "window_sensors": "Window / Door Sensors (Optional)",
-          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
-          "window_close_delay_minutes": "Window-close delay before resuming (minutes)",
           "window_pause_enabled": "Pause heating (HVAC Off) when window is open",
+          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
+          "window_close_delay_minutes": "Window-close delay before resuming (minutes)"
+        }
+      },
+      "thermal": {
+        "title": "Thermics, Weather & Control (3/4)",
+        "description": "Configure outdoor temperature/weather, predictive preheating, early cooldown, adaptive learning, and hysteresis.",
+        "data": {
           "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
           "outside_weather_entity": "Weather Entity",
-          "heating_active_sensor": "Burner / Heating Active Entity",
-          "enable_self_learning": "Enable Learning",
-          "fallback_heating_rate": "Default Heating Rate (K/h)",
-          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
-          "zone_home_entity": "Presence Zone",
-          "zone_away_near_entity": "Near Away Zone (Optional)",
-          "near_distance": "Near Zone Distance Threshold (km)",
-          "default_preset": "Default Preset for Empty Slots",
-          "away_near_preset": "Preset When Near Home (Away Near)",
-          "away_preset": "Preset When Away",
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
           "preheat_enabled": "Enable Predictive Preheating",
           "max_minutes_preheat": "Max Preheat Time (Minutes)",
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
+          "enable_self_learning": "Enable Learning",
+          "fallback_heating_rate": "Default Heating Rate (K/h)",
+          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
-          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+        }
+      },
+      "presence": {
+        "title": "Presence & Diagnostics (4/4)",
+        "description": "Configure presence zones, away presets, and the anomaly & hardware guard.",
+        "data": {
+          "zone_home_entity": "Presence Zone",
+          "zone_away_near_entity": "Near Away Zone (Optional)",
+          "near_distance": "Near Zone Distance Threshold (km)",
+          "away_near_preset": "Preset When Near Home (Away Near)",
+          "away_preset": "Preset When Away",
+          "preheat_ignores_away": "Preheat while away",
           "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
           "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "General Settings & Thermal Parameters",
-        "description": "Adjust outdoor temperature source, learning toggle, and default heating and cooling rates:",
+        "title": "Settings",
+        "description": "Select a settings category to configure:",
+        "data": {
+          "settings_section": "Category"
+        }
+      },
+      "settings_devices": {
+        "title": "Devices & Sensors",
+        "description": "Configure room thermostats, optional room temperature sensor, burner entity, and default preset.",
         "data": {
           "climate_entities": "Thermostats / Climate Entities (Room Group)",
           "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
+          "heating_active_sensor": "Burner / Heating Active Entity",
+          "default_preset": "Default Preset for Empty Slots"
+        }
+      },
+      "settings_windows": {
+        "title": "Windows & Doors",
+        "description": "Configure window/door sensors, heating pause, and open/close delays.",
+        "data": {
           "window_sensors": "Window / Door Sensors (Optional)",
-          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
-          "window_close_delay_minutes": "Window-close delay before resuming (minutes)",
           "window_pause_enabled": "Pause heating (HVAC Off) when window is open",
+          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
+          "window_close_delay_minutes": "Window-close delay before resuming (minutes)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Thermics, Weather & Control",
+        "description": "Configure outdoor temperature/weather, preheating, cooldown, adaptive learning, and hysteresis.",
+        "data": {
           "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
           "outside_weather_entity": "Weather Entity for Outdoor Temperature",
-          "heating_active_sensor": "Burner / Heating Active Entity",
-          "enable_self_learning": "Enable Learning",
-          "fallback_heating_rate": "Default Heating Rate (K/h)",
-          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
-          "zone_home_entity": "Presence Zone",
-          "zone_away_near_entity": "Near Away Zone (Optional)",
-          "near_distance": "Near Zone Distance Threshold (km)",
-          "default_preset": "Default Preset for Empty Slots",
-          "away_near_preset": "Preset When Near Home (Away Near)",
-          "away_preset": "Preset When Away",
+          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
           "preheat_enabled": "Enable Predictive Preheating",
           "max_minutes_preheat": "Max Preheat Time (Minutes)",
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
+          "enable_self_learning": "Enable Learning",
+          "fallback_heating_rate": "Default Heating Rate (K/h)",
+          "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
-          "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+        }
+      },
+      "settings_presence": {
+        "title": "Presence & Diagnostics",
+        "description": "Configure presence zones, away presets, preheat-while-away, and anomaly guard.",
+        "data": {
+          "zone_home_entity": "Presence Zone",
+          "zone_away_near_entity": "Near Away Zone (Optional)",
+          "near_distance": "Near Zone Distance Threshold (km)",
+          "away_near_preset": "Preset When Near Home (Away Near)",
+          "away_preset": "Preset When Away",
           "preheat_ignores_away": "Preheat while away",
           "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
           "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Clear All Slots for Day",
         "back": "◀️ Back to Day Selection"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Devices & Sensors (Thermostats, Room Sensor, Burner)",
+        "windows": "🪟 Windows & Doors (Contacts & Delays)",
+        "thermal": "🔥 Thermics, Weather & Control (Preheat, Cooldown, Hysteresis)",
+        "presence": "🏠 Presence & Diagnostics (Zones, Away Presets, Anomaly Guard)",
+        "save": "💾 Save & Exit",
+        "back": "← Back to Main Menu"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Remove Override",
-      "description": "Prematurely cancels an active temporary slot override.",
+      "description": "Cancels a specific temporary slot override, or all overrides for the selected room when Override ID is left empty.",
       "fields": {
         "device_id": {
           "name": "Device",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "Override ID",
-          "description": "The ID of the override to remove (e.g. guests or party)."
+          "description": "ID of the override to remove (e.g. guests or party). Leave empty to remove all overrides for the selected room."
         }
       }
     },

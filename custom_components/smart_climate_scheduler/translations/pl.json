@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Konfiguracja wstępna",
-        "description": "Skonfiguruj termostaty, źródło temperatury zewnętrznej (czujnik ma priorytet nad pogodą), czujnik aktywności ogrzewania, samouczenie oraz domyślne wskaźniki.",
+        "title": "Pomieszczenie i Urządzenia (1/4)",
+        "description": "Ustaw nazwę pomieszczenia, termostaty, opcjonalny czujnik pokojowy, czujnik palnika i domyślny tryb.",
         "data": {
           "name": "Nazwa pomieszczenia",
-          "climate_entity": "Termostat / Encja Climate",
           "climate_entities": "Termostaty / Encje Climate (Grupa pomieszczenia)",
           "room_temp_sensor": "Czujnik temperatury pokojowej (Opcjonalnie - tylko dla termiki i histerezy SCS)",
+          "heating_active_sensor": "Czujnik pracy palnika / ogrzewania",
+          "default_preset": "Domyślny tryb dla pustych przedziałów"
+        }
+      },
+      "windows": {
+        "title": "Okna i Drzwi (2/4)",
+        "description": "Opcjonalne czujniki okien/drzwi oraz opóźnienia wstrzymania i wznowienia ogrzewania.",
+        "data": {
           "window_sensors": "Czujniki otwarcia okna / drzwi (Opcjonalnie)",
-          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
-          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)",
           "window_pause_enabled": "Wstrzymaj ogrzewanie (HVAC Off) przy otwartym oknie",
+          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
+          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)"
+        }
+      },
+      "thermal": {
+        "title": "Termika, Pogoda i Regulacja (3/4)",
+        "description": "Skonfiguruj temperaturę zewnętrzną/pogodę, nagrzewanie, chłodzenie, samouczenie i histerezę.",
+        "data": {
           "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
           "outside_weather_entity": "Encja pogody",
-          "heating_active_sensor": "Czujnik pracy palnika / ogrzewania",
-          "enable_self_learning": "Włącz samouczenie",
-          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
-          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
-          "zone_home_entity": "Strefa obecności w domu",
-          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
-          "near_distance": "Próg odległości strefy zbliżania (km)",
-          "default_preset": "Domyślny tryb dla pustych przedziałów",
-          "away_near_preset": "Tryb w strefie bliskiej (Away Near)",
-          "away_preset": "Tryb podczas nieobecności (Away)",
+          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
           "preheat_enabled": "Włącz predykcyjne wstępne nagrzewanie",
           "max_minutes_preheat": "Maks. czas nagrzewania (minuty)",
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
+          "enable_self_learning": "Włącz samouczenie",
+          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
+          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
-          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+        }
+      },
+      "presence": {
+        "title": "Obecność i Diagnostyka (4/4)",
+        "description": "Skonfiguruj strefy obecności, tryby nieobecności oraz strażnika anomalii.",
+        "data": {
+          "zone_home_entity": "Strefa obecności w domu",
+          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
+          "near_distance": "Próg odległości strefy zbliżania (km)",
+          "away_near_preset": "Tryb w strefie bliskiej (Away Near)",
+          "away_preset": "Tryb podczas nieobecności (Away)",
+          "preheat_ignores_away": "Wstępne nagrzewanie mimo nieobecności",
           "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
           "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Ustawienia ogólne i parametry cieplne",
-        "description": "Dostosuj źródło temperatury zewnętrznej, samouczenie oraz domyślne prędkości nagrzewania i chłodzenia:",
+        "title": "Ustawienia",
+        "description": "Wybierz kategorię ustawień:",
+        "data": {
+          "settings_section": "Kategoria"
+        }
+      },
+      "settings_devices": {
+        "title": "Urządzenia i Czujniki",
+        "description": "Termostaty, opcjonalny czujnik temperatury pokojowej, czujnik palnika i domyślny tryb.",
         "data": {
           "climate_entities": "Termostaty / Encje Climate (Grupa pomieszczenia)",
           "room_temp_sensor": "Czujnik temperatury pokojowej (Opcjonalnie - tylko dla termiki i histerezy SCS)",
+          "heating_active_sensor": "Czujnik pracy ogrzewania / palnika",
+          "default_preset": "Domyślny tryb dla pustych przedziałów"
+        }
+      },
+      "settings_windows": {
+        "title": "Okna i Drzwi",
+        "description": "Czujniki okien/drzwi, pauza ogrzewania oraz opóźnienia otwarcia i zamknięcia.",
+        "data": {
           "window_sensors": "Czujniki otwarcia okna / drzwi (Opcjonalnie)",
-          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
-          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)",
           "window_pause_enabled": "Wstrzymaj ogrzewanie (HVAC Off) przy otwartym oknie",
+          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
+          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Termika, Pogoda i Regulacja",
+        "description": "Temperatura zewnętrzna/pogoda, nagrzewanie, chłodzenie, samouczenie i histereza.",
+        "data": {
           "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
           "outside_weather_entity": "Encja pogody dla temperatury zewnętrznej",
-          "heating_active_sensor": "Czujnik pracy ogrzewania / palnika",
-          "enable_self_learning": "Włącz samouczenie",
-          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
-          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
-          "zone_home_entity": "Strefa obecności w domu",
-          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
-          "near_distance": "Próg odległości strefy zbliżania (km)",
-          "default_preset": "Domyślny tryb dla pustych przedziałów",
-          "away_near_preset": "Tryb w strefie bliskiej (Away Near)",
-          "away_preset": "Tryb podczas nieobecności (Away)",
+          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
           "preheat_enabled": "Włącz predykcyjne wstępne nagrzewanie",
           "max_minutes_preheat": "Maks. czas nagrzewania (minuty)",
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
+          "enable_self_learning": "Włącz samouczenie",
+          "fallback_heating_rate": "Domyślna prędkość nagrzewania (K/h)",
+          "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
-          "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+        }
+      },
+      "settings_presence": {
+        "title": "Obecność i Diagnostyka",
+        "description": "Strefy obecności, tryby nieobecności, nagrzewanie mimo nieobecności i strażnik anomalii.",
+        "data": {
+          "zone_home_entity": "Strefa obecności w domu",
+          "zone_away_near_entity": "Strefa zbliżania się (Opcjonalnie)",
+          "near_distance": "Próg odległości strefy zbliżania (km)",
+          "away_near_preset": "Tryb w strefie bliskiej (Away Near)",
+          "away_preset": "Tryb podczas nieobecności (Away)",
           "preheat_ignores_away": "Wstępne nagrzewanie mimo nieobecności",
           "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
           "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Wyczyść wszystkie przedziały dnia",
         "back": "◀️ Powrót do wyboru dnia"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Urządzenia i Czujniki (Termostaty, Czujnik, Palnik)",
+        "windows": "🪟 Okna i Drzwi (Kontaktrony i Opóźnienia)",
+        "thermal": "🔥 Termika, Pogoda i Regulacja (Nagrzewanie, Histereza)",
+        "presence": "🏠 Obecność i Diagnostyka (Strefy, Nieobecność, Anomalie)",
+        "save": "💾 Zapisz i Wyjdź",
+        "back": "← Powrót do menu głównego"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Usuń nadpisanie",
-      "description": "Usuwa aktywne nadpisanie na podstawie ID.",
+      "description": "Anuluje wskazany tymczasowy override lub wszystkie override'y dla wybranego pomieszczenia, jeśli ID pozostanie puste.",
       "fields": {
         "device_id": {
           "name": "Urządzenie",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "ID nadpisania",
-          "description": "ID nadpisania do usunięcia."
+          "description": "ID override'u do usunięcia (np. goscie lub impreza). Pozostaw puste, aby usunąć wszystkie override'y dla wybranego pomieszczenia."
         }
       }
     },

@@ -208,11 +208,17 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     )
     cooldown_enabled = bool(options.get(CONF_COOLDOWN_ENABLED, data.get(CONF_COOLDOWN_ENABLED, True)))
 
-    next_slot_preheat = bool(next_slot.get("preheat", True)) if next_slot else True
+    next_is_override = bool(next_slot and next_slot.get("is_override"))
+    active_is_override = bool(active_slot and active_slot.get("is_override"))
+    next_slot_preheat = True if next_is_override else (bool(next_slot.get("preheat", True)) if next_slot else True)
     active_slot_cooldown = (
-        True
-        if (active_slot and active_slot.get("is_fallback"))
-        else (bool(active_slot.get("cooldown", True)) if active_slot else True)
+        False
+        if active_is_override
+        else (
+            True
+            if (active_slot and active_slot.get("is_fallback"))
+            else (bool(active_slot.get("cooldown", True)) if active_slot else True)
+        )
     )
     effective_preheat_enabled = preheat_enabled and next_slot_preheat
     effective_cooldown_enabled = cooldown_enabled and active_slot_cooldown

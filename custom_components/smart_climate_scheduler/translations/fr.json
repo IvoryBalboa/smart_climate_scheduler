@@ -2,37 +2,55 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler - Configuration initiale",
-        "description": "Configurez les thermostats, la source de température extérieure (le capteur a priorité sur la météo), le capteur de chauffage actif, l'apprentissage et les taux par défaut.",
+        "title": "Pièce & Appareils (1/4)",
+        "description": "Définissez le nom de la pièce, les thermostats, le capteur ambiant optionnel, le capteur de chauffage et le préréglage par défaut.",
         "data": {
           "name": "Nom de la pièce",
-          "climate_entity": "Thermostat / Entité Climate",
           "climate_entities": "Thermostats / Entités Climate (Groupe)",
           "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
+          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
+          "default_preset": "Préréglage par défaut pour créneaux vides"
+        }
+      },
+      "windows": {
+        "title": "Fenêtres & Portes (2/4)",
+        "description": "Capteurs de fenêtre/porte optionnels et délais de pause et de reprise du chauffage.",
+        "data": {
           "window_sensors": "Capteurs de fenêtre / porte (Optionnel)",
-          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
-          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)",
           "window_pause_enabled": "Mettre en pause le chauffage (HVAC Off) si fenêtre ouverte",
+          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
+          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)"
+        }
+      },
+      "thermal": {
+        "title": "Thermique, Météo & Régulation (3/4)",
+        "description": "Configurez la température extérieure/météo, le préchauffage, le refroidissement, l'apprentissage et l'hystérésis.",
+        "data": {
           "outside_temp_sensor": "Capteur de température extérieure (priorité sur la météo)",
           "outside_weather_entity": "Entité météo",
-          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
-          "enable_self_learning": "Activer l'apprentissage",
-          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
-          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
-          "zone_home_entity": "Zone de présence",
-          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
-          "near_distance": "Seuil de distance zone proche (km)",
-          "default_preset": "Préréglage par défaut pour créneaux vides",
-          "away_near_preset": "Préréglage en zone proche (Away Near)",
-          "away_preset": "Préréglage en absence (Away)",
+          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
           "preheat_enabled": "Activer le préchauffage prédictif",
           "max_minutes_preheat": "Temps max. de préchauffage (minutes)",
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
+          "enable_self_learning": "Activer l'apprentissage",
+          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
+          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
-          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
-          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
+        }
+      },
+      "presence": {
+        "title": "Présence & Diagnostic (4/4)",
+        "description": "Configurez les zones de présence, les préréglages d'absence et la surveillance d'anomalies.",
+        "data": {
+          "zone_home_entity": "Zone de présence",
+          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
+          "near_distance": "Seuil de distance zone proche (km)",
+          "away_near_preset": "Préréglage en zone proche (Away Near)",
+          "away_preset": "Préréglage en absence (Away)",
+          "preheat_ignores_away": "Préchauffer malgré l'absence",
           "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
           "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
         }
@@ -53,35 +71,60 @@
         }
       },
       "settings": {
-        "title": "Paramètres généraux & thermiques",
-        "description": "Ajustez la source de température extérieure, l'apprentissage et les taux de chauffe et refroidissement par défaut :",
+        "title": "Paramètres",
+        "description": "Sélectionnez une catégorie de paramètres :",
+        "data": {
+          "settings_section": "Catégorie"
+        }
+      },
+      "settings_devices": {
+        "title": "Appareils & Capteurs",
+        "description": "Thermostats, capteur ambiant optionnel, capteur de chauffage actif et préréglage par défaut.",
         "data": {
           "climate_entities": "Thermostats / Entités Climate (Groupe)",
           "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
+          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
+          "default_preset": "Préréglage par défaut pour créneaux vides"
+        }
+      },
+      "settings_windows": {
+        "title": "Fenêtres & Portes",
+        "description": "Capteurs de fenêtre/porte, pause de chauffage et délais d'ouverture/fermeture.",
+        "data": {
           "window_sensors": "Capteurs de fenêtre / porte (Optionnel)",
-          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
-          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)",
           "window_pause_enabled": "Mettre en pause le chauffage (HVAC Off) si fenêtre ouverte",
+          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
+          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)"
+        }
+      },
+      "settings_thermal": {
+        "title": "Thermique, Météo & Régulation",
+        "description": "Température extérieure/météo, préchauffage, refroidissement, apprentissage et hystérésis.",
+        "data": {
           "outside_temp_sensor": "Capteur de température extérieure (priorité sur météo)",
           "outside_weather_entity": "Entité météo pour température extérieure",
-          "heating_active_sensor": "Capteur de chauffage / brûleur actif",
-          "enable_self_learning": "Activer l'apprentissage",
-          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
-          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
-          "zone_home_entity": "Zone de présence",
-          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
-          "near_distance": "Seuil de distance zone proche (km)",
-          "default_preset": "Préréglage par défaut pour créneaux vides",
-          "away_near_preset": "Préréglage en zone proche (Away Near)",
-          "away_preset": "Préréglage en absence (Away)",
+          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
           "preheat_enabled": "Activer le préchauffage prédictif",
           "max_minutes_preheat": "Temps max. de préchauffage (minutes)",
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
+          "enable_self_learning": "Activer l'apprentissage",
+          "fallback_heating_rate": "Taux de chauffe par défaut (K/h)",
+          "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
-          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
-          "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
+        }
+      },
+      "settings_presence": {
+        "title": "Présence & Diagnostic",
+        "description": "Zones de présence, préréglages d'absence, préchauffage en absence et surveillance d'anomalies.",
+        "data": {
+          "zone_home_entity": "Zone de présence",
+          "zone_away_near_entity": "Zone proche / approche (Optionnel)",
+          "near_distance": "Seuil de distance zone proche (km)",
+          "away_near_preset": "Préréglage en zone proche (Away Near)",
+          "away_preset": "Préréglage en absence (Away)",
           "preheat_ignores_away": "Préchauffer malgré l'absence",
           "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
           "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
@@ -287,6 +330,16 @@
         "clear": "🗑 Effacer tous les créneaux du jour",
         "back": "◀️ Retour à la sélection du jour"
       }
+    },
+    "settings_section": {
+      "options": {
+        "devices": "🌡️ Appareils & Capteurs (Thermostats, Capteur, Brûleur)",
+        "windows": "🪟 Fenêtres & Portes (Contacts & Délais)",
+        "thermal": "🔥 Thermique, Météo & Régulation (Préchauffage, Hystérésis)",
+        "presence": "🏠 Présence & Diagnostic (Zones, Absence, Anomalies)",
+        "save": "💾 Enregistrer & Quitter",
+        "back": "← Retour au menu principal"
+      }
     }
   },
   "services": {
@@ -322,7 +375,7 @@
     },
     "remove_override": {
       "name": "Supprimer une dérogation",
-      "description": "Supprime une dérogation temporaire active par son identifiant.",
+      "description": "Annule un override temporaire spécifique, ou tous les overrides de la pièce sélectionnée si l'ID est laissé vide.",
       "fields": {
         "device_id": {
           "name": "Appareil",
@@ -330,7 +383,7 @@
         },
         "override_id": {
           "name": "ID de dérogation",
-          "description": "Identifiant unique de la dérogation à supprimer."
+          "description": "ID de l'override à supprimer (ex. invites ou fete). Laisser vide pour supprimer tous les overrides de la pièce sélectionnée."
         }
       }
     },
