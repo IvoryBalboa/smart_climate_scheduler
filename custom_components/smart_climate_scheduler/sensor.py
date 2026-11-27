@@ -54,6 +54,7 @@ from .helpers import (
     get_target_hvac_mode,
     get_window_delays,
     get_window_sensors,
+    is_climate_entity_enabled,
     is_hass_starting,
     is_in_startup_grace,
     normalize_matrix,
@@ -135,6 +136,15 @@ async def async_setup_entry(
 
     if "automation_enabled" not in domain_data:
         domain_data["automation_enabled"] = bool(stored_data.get("automation_enabled", False))
+    if "climate_mode" not in domain_data:
+        raw_cm = str(stored_data.get("climate_mode") or "").strip().lower()
+        domain_data["climate_mode"] = (
+            "auto" if domain_data["automation_enabled"] else (raw_cm if raw_cm in ("heat", "off") else "off")
+        )
+    if "manual_temperature" not in domain_data:
+        raw_mt = stored_data.get("manual_temperature")
+        parsed_mt = _safe_float(raw_mt, None, allow_zero_or_negative=True) if raw_mt is not None else None
+        domain_data["manual_temperature"] = round(parsed_mt, 1) if parsed_mt is not None else None
     if "active_session" not in domain_data:
         domain_data["active_session"] = None
     if "active_cooling_session" not in domain_data:
@@ -567,7 +577,14 @@ async def async_setup_entry(
 
         hvac_off_on_target, opportunistic_heating, is_heating_active = _get_heating_flags()
 
-        if not domain_data.get("automation_enabled", False):
+        is_auto = bool(domain_data.get("automation_enabled", False))
+        is_manual_heat = (
+            not is_auto
+            and is_climate_entity_enabled(config_entry)
+            and str(domain_data.get("climate_mode") or "").strip().lower() == "heat"
+        )
+
+        if not is_auto and not is_manual_heat:
             domain_data["opportunistic_kickstart"] = False
             domain_data["opportunistic_kickstart_done"] = False
             domain_data["opportunistic_kickstart_target"] = None
@@ -632,17 +649,117 @@ async def async_setup_entry(
         if win_debounce.get("transition") is not None:
             invalidate_eval_cache(domain_data)
 
+        if is_manual_heat:
+            domain_data["opportunistic_kickstart"] = False
+            domain_data["opportunistic_kickstart_done"] = False
+            domain_data["opportunistic_kickstart_target"] = None
+
+            manual_raw = domain_data.get("manual_temperature")
+            if manual_raw is None:
+                _, first_st = available_devices[0]
+                manual_raw = (first_st.attributes or {}).get("temperature", 20.0)
+            manual_target = round(
+                max(
+                    MIN_TARGET_TEMP,
+                    min(MAX_TARGET_TEMP, _safe_float(manual_raw, 20.0, allow_zero_or_negative=True)),
+                ),
+                1,
+            )
+
+            w_state = domain_data.setdefault("window_state", {})
+            saved_modes = w_state.setdefault("saved_hvac_modes", {})
+            if effective_win_open and win_pause_enabled:
+                for cl_id, st_obj in available_devices:
+                    cur_mode = str(st_obj.state or "").strip().lower()
+                    if cur_mode != "off":
+                        if cl_id not in saved_modes:
+                            saved_modes[cl_id] = cur_mode
+                        try:
+                            await hass.services.async_call(
+                                "climate",
+                                "set_hvac_mode",
+                                service_data={"hvac_mode": "off"},
+                                target={"entity_id": cl_id},
+                                blocking=False,
+                            )
+                        except Exception as err:
+                            _LOGGER.error(
+                                "Smart Climate Scheduler [%s]: Fehler beim Fenster-Pause-Ausschalten (Manuell) von '%s': %s",
+                                entry_name,
+                                cl_id,
+                                err,
+                            )
+                return
+
+            for cl_id, st_obj in available_devices:
+                saved_mode = saved_modes.pop(cl_id, None)
+                target_mode = saved_mode or get_target_hvac_mode(st_obj)
+                if str(st_obj.state or "").strip().lower() == "off":
+                    try:
+                        await hass.services.async_call(
+                            "climate",
+                            "set_hvac_mode",
+                            service_data={"hvac_mode": target_mode},
+                            target={"entity_id": cl_id},
+                            blocking=False,
+                        )
+                    except Exception as err:
+                        _LOGGER.error(
+                            "Smart Climate Scheduler [%s]: Fehler beim Einschalten (Manuell) von '%s': %s",
+                            entry_name,
+                            cl_id,
+                            err,
+                        )
+                cur_set = (st_obj.attributes or {}).get("temperature")
+                needs_set = True
+                if cur_set is not None:
+                    try:
+                        if abs(float(cur_set) - manual_target) < 0.05:
+                            needs_set = False
+                    except (ValueError, TypeError):
+                        pass
+                if needs_set:
+                    try:
+                        await hass.services.async_call(
+                            "climate",
+                            "set_temperature",
+                            service_data={"temperature": manual_target},
+                            target={"entity_id": cl_id},
+                            blocking=False,
+                        )
+                    except Exception as err:
+                        _LOGGER.error(
+                            "Smart Climate Scheduler [%s]: Fehler beim Setzen der manuellen Zieltemperatur %.1f auf '%s': %s",
+                            entry_name,
+                            manual_target,
+                            cl_id,
+                            err,
+                        )
+            return
+
         custom_presets = get_custom_presets(config_entry)
-        target_preset, _, _, _, _, _, _ = evaluate_state(hass, config_entry)
+        target_preset, _, _, active_slot, _, _, _ = evaluate_state(hass, config_entry)
         _, primary_state = available_devices[0]
 
         current_temp, _ = get_room_current_temperature(hass, config_entry, climate_entities)
-        target_temp = get_preset_temperature(
-            primary_state,
-            target_preset,
-            config_entry=config_entry,
-            custom_presets=custom_presets,
-        )
+        override_target_temp = None
+        if isinstance(active_slot, dict) and active_slot.get("is_override") and active_slot.get("temperature") is not None:
+            try:
+                parsed_ov_t = float(active_slot["temperature"])
+                if not math.isnan(parsed_ov_t) and not math.isinf(parsed_ov_t):
+                    override_target_temp = parsed_ov_t
+            except (ValueError, TypeError):
+                override_target_temp = None
+
+        if override_target_temp is not None:
+            target_temp = override_target_temp
+        else:
+            target_temp = get_preset_temperature(
+                primary_state,
+                target_preset,
+                config_entry=config_entry,
+                custom_presets=custom_presets,
+            )
         base_target_temp = round(
             max(
                 MIN_TARGET_TEMP,

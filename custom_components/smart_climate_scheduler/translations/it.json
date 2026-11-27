@@ -9,7 +9,8 @@
           "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
           "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
           "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
-          "default_preset": "Modalità predefinita per fasce vuote"
+          "default_preset": "Modalità predefinita per fasce vuote",
+          "enable_climate_entity": "Crea entità termostato stanza opzionale (Wrapper Climate: Auto / Riscalda / Spento)"
         }
       },
       "windows": {
@@ -58,7 +59,8 @@
     },
     "error": {
       "name_required": "Il nome della stanza è obbligatorio.",
-      "climate_required": "Selezionare almeno un termostato (entità climate)."
+      "climate_required": "Selezionare almeno un termostato (entità climate).",
+      "climate_self_reference": "Impossibile selezionare il termostato virtuale di Smart Climate Scheduler come termostato fisico."
     }
   },
   "options": {
@@ -84,7 +86,8 @@
           "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
           "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
           "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
-          "default_preset": "Modalità predefinita per fasce vuote"
+          "default_preset": "Modalità predefinita per fasce vuote",
+          "enable_climate_entity": "Crea entità termostato stanza opzionale (Wrapper Climate: Auto / Riscalda / Spento)"
         }
       },
       "settings_windows": {
@@ -252,7 +255,8 @@
       "profile_name_exists": "Esiste già un profilo con questo nome.",
       "climate_required": "Selezionare almeno un termostato (entità climate).",
       "preset_name_empty": "Il nome del preset non può essere vuoto.",
-      "cannot_delete_last_preset": "Deve rimanere almeno un preset personalizzato."
+      "cannot_delete_last_preset": "Deve rimanere almeno un preset personalizzato.",
+      "climate_self_reference": "Impossibile selezionare il termostato virtuale di Smart Climate Scheduler come termostato fisico."
     }
   },
   "selector": {

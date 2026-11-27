@@ -19,6 +19,7 @@ from .const import (
     CONF_COOLDOWN_ENABLED,
     CONF_CUSTOM_PRESETS,
     CONF_DEFAULT_PRESET,
+    CONF_ENABLE_CLIMATE_ENTITY,
     CONF_ENABLE_SELF_LEARNING,
     CONF_PREHEAT_ENABLED,
     CONF_ROOM_TEMP_SENSOR,
@@ -31,6 +32,7 @@ from .const import (
     DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_COOLDOWN_ENABLED,
     DEFAULT_CUSTOM_PRESETS,
+    DEFAULT_ENABLE_CLIMATE_ENTITY,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_FALLBACK_PRESET,
     DEFAULT_PREHEAT_ENABLED,
@@ -446,6 +448,16 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "schemaprofiel",
         "pl": "profil_harmonogramu",
     },
+    # Optional virtual climate entity
+    "room_thermostat": {
+        "de": "thermostat",
+        "en": "thermostat",
+        "es": "termostato",
+        "fr": "thermostat",
+        "it": "termostato",
+        "nl": "thermostaat",
+        "pl": "termostat",
+    },
 }
 
 # Legacy key aliases for backwards compatibility
@@ -541,6 +553,101 @@ def get_primary_climate_entity(config_entry: Any) -> str:
     """Gibt das primäre (erste) Thermostat aus der Gruppenliste zurück."""
     entities = get_climate_entities(config_entry)
     return entities[0] if entities else ""
+
+
+def is_climate_entity_enabled(config_entry: Any) -> bool:
+    """Gibt zurück, ob die optionale Raum-Climate-Entität für diesen Raum aktiviert ist."""
+    if not config_entry:
+        return DEFAULT_ENABLE_CLIMATE_ENTITY
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+    return bool(
+        options.get(
+            CONF_ENABLE_CLIMATE_ENTITY,
+            data.get(CONF_ENABLE_CLIMATE_ENTITY, DEFAULT_ENABLE_CLIMATE_ENTITY),
+        )
+    )
+
+
+def get_own_climate_entity_ids(
+    hass: Any,
+    config_entry: Any | None = None,
+    candidate_name: str | None = None,
+) -> set[str]:
+    """Ermittelt alle eigenen virtuellen SCS-Climate-Entity-IDs zur Verhinderung von Selbstreferenzen."""
+    own_ids: set[str] = set()
+    lang = get_ha_language(hass)
+    suffix = get_localized_slug_suffix("room_thermostat", lang)
+
+    if hass:
+        # 1. Aus laufender Domain-Registry (bereits erstellte Climate-Entitäten)
+        domain_map = getattr(hass, "data", {}).get(DOMAIN, {}) if isinstance(getattr(hass, "data", None), dict) else {}
+        for eid, store in domain_map.items():
+            if not isinstance(store, dict) or str(eid).startswith("_"):
+                continue
+            cl_ent = store.get("climate_entity")
+            if cl_ent and getattr(cl_ent, "entity_id", None):
+                own_ids.add(str(cl_ent.entity_id).strip().lower())
+
+        # 2. Aus der Home-Assistant Entity-Registry für unsere Domain
+        try:
+            from homeassistant.helpers import entity_registry as er
+
+            ent_reg = er.async_get(hass)
+            if ent_reg and hasattr(ent_reg, "entities"):
+                entities_attr = getattr(ent_reg, "entities", {})
+                entries_iter = entities_attr.values() if isinstance(entities_attr, dict) else []
+                for reg_entry in entries_iter:
+                    if (
+                        getattr(reg_entry, "platform", None) == DOMAIN
+                        and getattr(reg_entry, "domain", None) == "climate"
+                        and getattr(reg_entry, "entity_id", None)
+                    ):
+                        own_ids.add(str(reg_entry.entity_id).strip().lower())
+            if ent_reg and config_entry and hasattr(ent_reg, "async_get_entity_id"):
+                reg_id = ent_reg.async_get_entity_id("climate", DOMAIN, f"{config_entry.entry_id}_climate")
+                if isinstance(reg_id, str) and reg_id.strip():
+                    own_ids.add(reg_id.strip().lower())
+        except Exception:
+            pass
+
+    # 3. Vorhergesagte Entity-ID aus dem aktuellen ConfigEntry oder Raumnamen
+    if config_entry is not None:
+        slug = get_config_entry_slug(config_entry)
+        own_ids.add(f"climate.{slug}_{suffix}".lower())
+    if isinstance(candidate_name, str) and candidate_name.strip():
+        try:
+            from homeassistant.util import slugify as ha_slugify
+
+            cand_slug = ha_slugify(candidate_name.strip())
+        except Exception:
+            cand_slug = re.sub(r"[^a-z0-9]+", "_", candidate_name.strip().lower()).strip("_")
+        if cand_slug:
+            own_ids.add(f"climate.{cand_slug}_{suffix}".lower())
+
+    return own_ids
+
+
+async def async_cleanup_virtual_climate_entity(hass: Any, config_entry: Any) -> None:
+    """Entfernt eine zuvor angelegte virtuelle Climate-Entität sauber aus der Entity-Registry, wenn die Option aus ist."""
+    if not hass or not config_entry:
+        return
+    try:
+        from homeassistant.helpers import entity_registry as er
+
+        ent_reg = er.async_get(hass)
+        if not ent_reg or not hasattr(ent_reg, "async_get_entity_id"):
+            return
+        unique_id = f"{config_entry.entry_id}_climate"
+        ent_id = ent_reg.async_get_entity_id("climate", DOMAIN, unique_id)
+        if isinstance(ent_id, str) and ent_id.strip() and hasattr(ent_reg, "async_remove"):
+            ent_reg.async_remove(ent_id)
+            _LOGGER.info(
+                "Optionale Climate-Entität '%s' aus Entity Registry entfernt (Option deaktiviert).",
+                ent_id,
+            )
+    except Exception as err:
+        _LOGGER.debug("Fehler beim Entfernen der optionalen Climate-Entität: %s", err)
 
 
 def slugify_preset_id(raw_name: str, existing_ids: set[str] | None = None) -> str:

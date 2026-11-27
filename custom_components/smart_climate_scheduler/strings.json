@@ -9,7 +9,8 @@
           "climate_entities": "Thermostats / Climate Entities (Room Group)",
           "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
           "heating_active_sensor": "Burner / Heating Active Entity",
-          "default_preset": "Default Preset for Empty Slots"
+          "default_preset": "Default Preset for Empty Slots",
+          "enable_climate_entity": "Create optional room thermostat entity (Climate wrapper: Auto / Heat / Off)"
         }
       },
       "windows": {
@@ -58,7 +59,8 @@
     },
     "error": {
       "name_required": "Room name is required.",
-      "climate_required": "At least one thermostat (climate entity) must be selected."
+      "climate_required": "At least one thermostat (climate entity) must be selected.",
+      "climate_self_reference": "Cannot select Smart Climate Scheduler's own virtual thermostat as a physical thermostat."
     }
   },
   "options": {
@@ -84,7 +86,8 @@
           "climate_entities": "Thermostats / Climate Entities (Room Group)",
           "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
           "heating_active_sensor": "Burner / Heating Active Entity",
-          "default_preset": "Default Preset for Empty Slots"
+          "default_preset": "Default Preset for Empty Slots",
+          "enable_climate_entity": "Create optional room thermostat entity (Climate wrapper: Auto / Heat / Off)"
         }
       },
       "settings_windows": {
@@ -252,7 +255,8 @@
       "profile_name_exists": "A profile with this name already exists.",
       "climate_required": "At least one thermostat (climate entity) must be selected.",
       "preset_name_empty": "Preset name cannot be empty.",
-      "cannot_delete_last_preset": "At least one custom preset must remain."
+      "cannot_delete_last_preset": "At least one custom preset must remain.",
+      "climate_self_reference": "Cannot select Smart Climate Scheduler's own virtual thermostat as a physical thermostat."
     }
   },
   "selector": {

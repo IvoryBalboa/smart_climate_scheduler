@@ -9,7 +9,8 @@
           "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
           "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
           "heating_active_sensor": "Brander- / verwarming actief sensor",
-          "default_preset": "Standaard preset voor lege tijdvakken"
+          "default_preset": "Standaard preset voor lege tijdvakken",
+          "enable_climate_entity": "Optionele kamerthermostaat-entiteit aanmaken (Climate-wrapper: Auto / Verwarmen / Uit)"
         }
       },
       "windows": {
@@ -58,7 +59,8 @@
     },
     "error": {
       "name_required": "Kamernaam is verplicht.",
-      "climate_required": "Selecteer ten minste één thermostaat (climate-entiteit)."
+      "climate_required": "Selecteer ten minste één thermostaat (climate-entiteit).",
+      "climate_self_reference": "De eigen virtuele thermostaat van Smart Climate Scheduler kan niet als fysieke thermostaat worden gekozen."
     }
   },
   "options": {
@@ -84,7 +86,8 @@
           "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
           "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
           "heating_active_sensor": "Brander- / verwarming actief sensor",
-          "default_preset": "Standaard preset voor lege tijdvakken"
+          "default_preset": "Standaard preset voor lege tijdvakken",
+          "enable_climate_entity": "Optionele kamerthermostaat-entiteit aanmaken (Climate-wrapper: Auto / Verwarmen / Uit)"
         }
       },
       "settings_windows": {
@@ -252,7 +255,8 @@
       "profile_name_exists": "Er bestaat al een profiel met deze naam.",
       "climate_required": "Selecteer ten minste één thermostaat (climate-entiteit).",
       "preset_name_empty": "De presetnaam mag niet leeg zijn.",
-      "cannot_delete_last_preset": "Er moet minimaal één eigen preset behouden blijven."
+      "cannot_delete_last_preset": "Er moet minimaal één eigen preset behouden blijven.",
+      "climate_self_reference": "De eigen virtuele thermostaat van Smart Climate Scheduler kan niet als fysieke thermostaat worden gekozen."
     }
   },
   "selector": {

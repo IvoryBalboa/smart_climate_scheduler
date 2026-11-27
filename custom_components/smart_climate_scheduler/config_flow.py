@@ -54,6 +54,7 @@ from .const import (
     CONF_AWAY_NEAR_PRESET,
     CONF_ANOMALY_DETECTION_ENABLED,
     CONF_ANOMALY_NO_HEAT_MINUTES,
+    CONF_ENABLE_CLIMATE_ENTITY,
     CUSTOM_PRESET_COLOR_OPTIONS,
     CUSTOM_PRESET_HEX_TO_KEY,
     CUSTOM_PRESET_PALETTE,
@@ -65,6 +66,7 @@ from .const import (
     DEFAULT_AWAY_NEAR_PRESET,
     DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_ANOMALY_NO_HEAT_MINUTES,
+    DEFAULT_ENABLE_CLIMATE_ENTITY,
     DEFAULT_MAX_MINUTES_PREHEAT,
     DEFAULT_MAX_MINUTES_COOLDOWN,
     DEFAULT_NEAR_DISTANCE,
@@ -88,9 +90,11 @@ from .helpers import (
     get_climate_entities,
     get_custom_presets,
     get_ha_language,
+    get_own_climate_entity_ids,
     get_profiles_and_active,
     get_window_delays,
     get_window_sensors,
+    is_climate_entity_enabled,
     normalize_custom_presets,
     parse_time,
     safe_float as _safe_float,
@@ -214,10 +218,15 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             climate_entities = _normalize_entity_list(
                 user_input.get(CONF_CLIMATE_ENTITIES) or user_input.get(CONF_CLIMATE_ENTITY)
             )
+            own_climate_ids = get_own_climate_entity_ids(
+                getattr(self, "hass", None), candidate_name=name
+            )
             if not name:
                 errors["base"] = "name_required"
             elif not climate_entities:
                 errors["base"] = "climate_required"
+            elif any(cid.lower() in own_climate_ids for cid in climate_entities):
+                errors["base"] = "climate_self_reference"
             else:
                 unique_id = name.lower().replace(" ", "_")
                 await self.async_set_unique_id(unique_id)
@@ -243,15 +252,22 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         else None
                     ),
                     CONF_DEFAULT_PRESET: user_input.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET),
+                    CONF_ENABLE_CLIMATE_ENTITY: bool(
+                        user_input.get(CONF_ENABLE_CLIMATE_ENTITY, DEFAULT_ENABLE_CLIMATE_ENTITY)
+                    ),
                 }
                 return await self.async_step_windows()
 
+        own_climate_exclude = sorted(get_own_climate_entity_ids(getattr(self, "hass", None)))
+        climate_selector_cfg = (
+            EntitySelectorConfig(domain="climate", multiple=True, exclude_entities=own_climate_exclude)
+            if own_climate_exclude
+            else EntitySelectorConfig(domain="climate", multiple=True)
+        )
         schema = vol.Schema(
             {
                 vol.Required("name"): TextSelector(TextSelectorConfig()),
-                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(
-                    EntitySelectorConfig(domain="climate", multiple=True)
-                ),
+                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(climate_selector_cfg),
                 vol.Optional(CONF_ROOM_TEMP_SENSOR): EntitySelector(
                     EntitySelectorConfig(domain="sensor", device_class="temperature")
                 ),
@@ -266,6 +282,9 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         options=DEFAULT_PRESETS,
                     )
                 ),
+                vol.Optional(
+                    CONF_ENABLE_CLIMATE_ENTITY, default=DEFAULT_ENABLE_CLIMATE_ENTITY
+                ): BooleanSelector(),
             }
         )
 
@@ -614,6 +633,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data = {
                 CONF_CLIMATE_ENTITIES: climate_entities,
                 CONF_CLIMATE_ENTITY: climate_entities[0] if climate_entities else "",
+                CONF_ENABLE_CLIMATE_ENTITY: is_climate_entity_enabled(self.config_entry),
                 CONF_CUSTOM_PRESETS: [dict(p) for p in get_custom_presets(self.config_entry)],
                 CONF_ROOM_TEMP_SENSOR: options.get(
                     CONF_ROOM_TEMP_SENSOR, data.get(CONF_ROOM_TEMP_SENSOR)
@@ -1144,6 +1164,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         self._init_data()
         errors: dict[str, str] = {}
 
+        own_climate_ids = get_own_climate_entity_ids(
+            getattr(self, "hass", None), config_entry=self.config_entry
+        )
+
         if user_input is not None:
             has_climate_input = (
                 CONF_CLIMATE_ENTITIES in user_input or CONF_CLIMATE_ENTITY in user_input
@@ -1159,6 +1183,8 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 )
             if has_climate_input and not climate_entities:
                 errors["base"] = "climate_required"
+            elif any(cid.lower() in own_climate_ids for cid in climate_entities):
+                errors["base"] = "climate_self_reference"
             else:
                 self.settings_data[CONF_CLIMATE_ENTITIES] = climate_entities
                 if climate_entities:
@@ -1178,16 +1204,26 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 self.settings_data[CONF_DEFAULT_PRESET] = user_input.get(
                     CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET
                 )
+                self.settings_data[CONF_ENABLE_CLIMATE_ENTITY] = bool(
+                    user_input.get(
+                        CONF_ENABLE_CLIMATE_ENTITY,
+                        self.settings_data.get(CONF_ENABLE_CLIMATE_ENTITY, DEFAULT_ENABLE_CLIMATE_ENTITY),
+                    )
+                )
                 self._ensure_valid_direct_presets_in_settings()
                 return await self.async_step_settings()
 
         self._ensure_valid_direct_presets_in_settings()
         preset_selector = self._build_preset_selector(include_none=False)
+        own_climate_exclude = sorted(own_climate_ids)
+        climate_selector_cfg = (
+            EntitySelectorConfig(domain="climate", multiple=True, exclude_entities=own_climate_exclude)
+            if own_climate_exclude
+            else EntitySelectorConfig(domain="climate", multiple=True)
+        )
         schema = vol.Schema(
             {
-                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(
-                    EntitySelectorConfig(domain="climate", multiple=True)
-                ),
+                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(climate_selector_cfg),
                 vol.Optional(CONF_ROOM_TEMP_SENSOR): EntitySelector(
                     EntitySelectorConfig(domain="sensor", device_class="temperature")
                 ),
@@ -1195,6 +1231,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     EntitySelectorConfig(domain=["binary_sensor", "switch", "input_boolean"])
                 ),
                 vol.Optional(CONF_DEFAULT_PRESET): preset_selector,
+                vol.Optional(CONF_ENABLE_CLIMATE_ENTITY): BooleanSelector(),
             }
         )
         return self.async_show_form(

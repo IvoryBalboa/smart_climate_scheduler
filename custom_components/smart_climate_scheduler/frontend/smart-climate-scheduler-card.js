@@ -1185,6 +1185,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
             this._data.profile_select_entity_id,
             this._data.anomaly_entity_id,
             this._data.heating_demand_entity_id,
+            this._data.virtual_climate_entity_id,
           ].filter(Boolean)
         )
       );
@@ -2016,10 +2017,21 @@ class SmartClimateSchedulerCard extends HTMLElement {
               ${windowBannerHtml}
               ${
                 activeOverrides.length > 0
-                  ? `<div class="override-banner">
-                      <span>${escapeHtml(t.overrideActive)}: ${escapeHtml(this._getPresetLabel(activeOverrides[0][1]?.preset))}</span>
-                      <button class="btn-inline-cancel" data-cancel-override="${escapeHtml(activeOverrides[0][0])}" type="button">${escapeHtml(t.cancelOverride)}</button>
-                    </div>`
+                  ? (() => {
+                      const [ovId, ovData] = activeOverrides[0];
+                      const hasTemp = ovData && ovData.temperature !== undefined && ovData.temperature !== null;
+                      const ovPreset = ovData?.preset;
+                      const ovLabel =
+                        hasTemp && (!ovPreset || ovPreset === "none")
+                          ? `${Number(ovData.temperature).toFixed(1)} °C`
+                          : this._getPresetLabel(ovPreset);
+                      const endStr = ovData?.end ? String(ovData.end).includes("T") ? String(ovData.end).slice(11, 16) : String(ovData.end).slice(0, 5) : "";
+                      const suffix = endStr ? ` (${endStr})` : "";
+                      return `<div class="override-banner">
+                      <span>${escapeHtml(t.overrideActive)}: ${escapeHtml(`${ovLabel}${suffix}`)}</span>
+                      <button class="btn-inline-cancel" data-cancel-override="${escapeHtml(ovId)}" type="button">${escapeHtml(t.cancelOverride)}</button>
+                    </div>`;
+                    })()
                   : ""
               }
               ${
@@ -3679,6 +3691,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
                 d.profile_select_entity_id,
                 d.anomaly_entity_id,
                 d.heating_demand_entity_id,
+                d.virtual_climate_entity_id,
               ].filter(Boolean)
             )
           );
@@ -4268,7 +4281,12 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         if (live.windowOpen) {
           phaseBadge = `<span class="ov-phase ov-phase-cool">🪟 ${escapeHtml(t.windowOpenBanner)}</span>`;
         } else if (live.activeOverrides.length > 0) {
-          phaseBadge = `<span class="ov-phase ov-phase-warn">${escapeHtml(t.overrideActive)}</span>`;
+          const ovData = live.activeOverrides[0][1];
+          const ovTempLabel =
+            ovData && ovData.temperature !== undefined && ovData.temperature !== null && (!ovData.preset || ovData.preset === "none")
+              ? ` ${Number(ovData.temperature).toFixed(1)}°`
+              : "";
+          phaseBadge = `<span class="ov-phase ov-phase-warn">${escapeHtml(`${t.overrideActive}${ovTempLabel}`)}</span>`;
         } else if (live.preheating) {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.preheating)}</span>`;
         } else if (live.coolingDown) {

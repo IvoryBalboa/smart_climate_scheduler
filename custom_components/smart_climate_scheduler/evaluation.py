@@ -43,6 +43,8 @@ from .const import (
     DEFAULT_AWAY_PRESET,
     DEFAULT_AWAY_NEAR_PRESET,
     DOMAIN,
+    MAX_TARGET_TEMP,
+    MIN_TARGET_TEMP,
 )
 from .zones import evaluate_zones
 from .timeline import format_slot, get_active_override, get_current_and_next_slot
@@ -188,19 +190,41 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         DEFAULT_FALLBACK_COOLING_RATE,
     )
 
+    def _extract_override_temp(slot: dict | None) -> float | None:
+        if not isinstance(slot, dict) or not slot.get("is_override"):
+            return None
+        raw_t = slot.get("temperature")
+        if raw_t is None:
+            return None
+        try:
+            parsed_t = float(raw_t)
+            if math.isnan(parsed_t) or math.isinf(parsed_t):
+                return None
+            return round(max(MIN_TARGET_TEMP, min(MAX_TARGET_TEMP, parsed_t)), 1)
+        except (ValueError, TypeError):
+            return None
+
     schedule_preset = active_slot.get("preset", "none") if active_slot else "none"
     if schedule_preset != "none":
         schedule_preset = resolve_preset_key(schedule_preset, config_entry)
 
-    active_temp = get_preset_temperature(
-        climate_state, schedule_preset, config_entry=config_entry, custom_presets=custom_presets
-    )
+    active_override_temp = _extract_override_temp(active_slot)
+    if active_override_temp is not None:
+        active_temp = active_override_temp
+    else:
+        active_temp = get_preset_temperature(
+            climate_state, schedule_preset, config_entry=config_entry, custom_presets=custom_presets
+        )
     next_preset_name = next_slot.get("preset") if next_slot else None
     if next_preset_name and next_preset_name != "none":
         next_preset_name = resolve_preset_key(next_preset_name, config_entry)
-    next_temp = get_preset_temperature(
-        climate_state, next_preset_name, config_entry=config_entry, custom_presets=custom_presets
-    )
+    next_override_temp = _extract_override_temp(next_slot)
+    if next_override_temp is not None:
+        next_temp = next_override_temp
+    else:
+        next_temp = get_preset_temperature(
+            climate_state, next_preset_name, config_entry=config_entry, custom_presets=custom_presets
+        )
 
     preheat_enabled = bool(options.get(CONF_PREHEAT_ENABLED, data.get(CONF_PREHEAT_ENABLED, True)))
     preheat_ignores_away = bool(
@@ -543,25 +567,40 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             except Exception:
                 pass
 
-    base_preset = (
-        schedule_preset
-        if schedule_preset != "none"
-        else resolve_preset_key("home", config_entry)
-    )
-
     is_active_override = bool(active_slot and active_slot.get("is_override"))
+    if is_active_override and active_override_temp is not None and schedule_preset == "none":
+        base_preset = "none"
+    else:
+        base_preset = (
+            schedule_preset
+            if schedule_preset != "none"
+            else resolve_preset_key("home", config_entry)
+        )
+
     if not is_active_override:
         # Zusätzliche Absicherung via get_active_override
         active_ov_id, active_ov_data = get_active_override(hass, config_entry, now_dt)
         if active_ov_data:
             is_active_override = True
-            base_preset = active_ov_data.get("preset", base_preset)
-            if base_preset != "none":
-                base_preset = resolve_preset_key(base_preset, config_entry)
+            ov_raw_preset = active_ov_data.get("preset")
+            if active_ov_data.get("temperature") is not None:
+                try:
+                    parsed_ov_t = float(active_ov_data["temperature"])
+                    if not math.isnan(parsed_ov_t) and not math.isinf(parsed_ov_t):
+                        active_override_temp = round(max(MIN_TARGET_TEMP, min(MAX_TARGET_TEMP, parsed_ov_t)), 1)
+                        active_temp = active_override_temp
+                except (ValueError, TypeError):
+                    pass
+            if ov_raw_preset and str(ov_raw_preset).strip().lower() != "none":
+                base_preset = resolve_preset_key(ov_raw_preset, config_entry)
+            elif active_override_temp is not None:
+                base_preset = "none"
             if active_slot:
                 active_slot["is_override"] = True
                 active_slot["override_id"] = active_ov_id
                 active_slot["preset"] = base_preset
+                if active_override_temp is not None:
+                    active_slot["temperature"] = active_override_temp
 
     next_is_override = bool(next_slot and next_slot.get("is_override"))
 
@@ -652,6 +691,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "current": real_measured_temp,
             "room_temp_source": room_temp_source,
             "active_target": active_temp,
+            "override_temperature": active_override_temp,
             "next_target": next_temp,
             "delta_to_next": delta_to_next,
             "outside": outside_temp,

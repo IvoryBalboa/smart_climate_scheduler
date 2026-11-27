@@ -9,7 +9,8 @@
           "climate_entities": "Thermostats / Entités Climate (Groupe)",
           "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
           "heating_active_sensor": "Capteur de chauffage / brûleur actif",
-          "default_preset": "Préréglage par défaut pour créneaux vides"
+          "default_preset": "Préréglage par défaut pour créneaux vides",
+          "enable_climate_entity": "Créer une entité thermostat de pièce optionnelle (Wrapper Climate : Auto / Chauffer / Arrêt)"
         }
       },
       "windows": {
@@ -58,7 +59,8 @@
     },
     "error": {
       "name_required": "Le nom de la pièce est requis.",
-      "climate_required": "Au moins un thermostat (entité climate) doit être sélectionné."
+      "climate_required": "Au moins un thermostat (entité climate) doit être sélectionné.",
+      "climate_self_reference": "Impossible de sélectionner le thermostat virtuel de Smart Climate Scheduler comme thermostat physique."
     }
   },
   "options": {
@@ -84,7 +86,8 @@
           "climate_entities": "Thermostats / Entités Climate (Groupe)",
           "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
           "heating_active_sensor": "Capteur de chauffage / brûleur actif",
-          "default_preset": "Préréglage par défaut pour créneaux vides"
+          "default_preset": "Préréglage par défaut pour créneaux vides",
+          "enable_climate_entity": "Créer une entité thermostat de pièce optionnelle (Wrapper Climate : Auto / Chauffer / Arrêt)"
         }
       },
       "settings_windows": {
@@ -252,7 +255,8 @@
       "profile_name_exists": "Un profil portant ce nom existe déjà.",
       "climate_required": "Au moins un thermostat (entité climate) doit être sélectionné.",
       "preset_name_empty": "Le nom du préréglage ne peut pas être vide.",
-      "cannot_delete_last_preset": "Au moins un préréglage personnalisé doit être conservé."
+      "cannot_delete_last_preset": "Au moins un préréglage personnalisé doit être conservé.",
+      "climate_self_reference": "Impossible de sélectionner le thermostat virtuel de Smart Climate Scheduler comme thermostat physique."
     }
   },
   "selector": {

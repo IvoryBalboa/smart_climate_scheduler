@@ -272,6 +272,13 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
         start_val = o_data.get("start", "")
         end_val = o_data.get("end", "")
         preset = o_data.get("preset")
+        raw_temp = o_data.get("temperature")
+        ov_temp: float | None = None
+        if raw_temp is not None:
+            try:
+                ov_temp = round(float(raw_temp), 1)
+            except (ValueError, TypeError):
+                ov_temp = None
         if not start_val or not end_val:
             continue
         try:
@@ -284,10 +291,10 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                     if ov_end.tzinfo is None:
                         ov_end = ov_end.replace(tzinfo=now_dt.tzinfo)
                 if ov_end > now_dt - timedelta(days=1):
-                    override_intervals.append({
+                    ov_item = {
                         "start": ov_start,
                         "end": ov_end,
-                        "preset": preset,
+                        "preset": preset if preset else "none",
                         "preheat": True,
                         "cooldown": False,
                         "is_override": True,
@@ -295,7 +302,10 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                         "from_str": ov_start.strftime("%H:%M"),
                         "to_str": ov_end.strftime("%H:%M"),
                         "date": ov_start.strftime("%Y-%m-%d"),
-                    })
+                    }
+                    if ov_temp is not None:
+                        ov_item["temperature"] = ov_temp
+                    override_intervals.append(ov_item)
             else:
                 start_str = start_val[:5]
                 end_str = end_val[:5]
@@ -318,10 +328,10 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                         ov_start = ov_start.replace(tzinfo=now_dt.tzinfo)
                         ov_end = ov_end.replace(tzinfo=now_dt.tzinfo)
                     if ov_end > now_dt - timedelta(days=1):
-                        override_intervals.append({
+                        ov_item = {
                             "start": ov_start,
                             "end": ov_end,
-                            "preset": preset,
+                            "preset": preset if preset else "none",
                             "preheat": True,
                             "cooldown": False,
                             "is_override": True,
@@ -329,7 +339,10 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
                             "from_str": start_str,
                             "to_str": end_str,
                             "date": ov_start.strftime("%Y-%m-%d"),
-                        })
+                        }
+                        if ov_temp is not None:
+                            ov_item["temperature"] = ov_temp
+                        override_intervals.append(ov_item)
         except Exception as e:
             _LOGGER.error("Fehler bei Override %s: %s", o_id, e)
 
@@ -411,6 +424,8 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
             payload["override_id"] = item.get("override_id")
             payload["preheat"] = True
             payload["cooldown"] = False
+            if item.get("temperature") is not None:
+                payload["temperature"] = item["temperature"]
         return payload
 
     active_item = timeline[active_idx]
@@ -427,3 +442,63 @@ def get_current_and_next_slot(hass, config_entry, now_dt: datetime) -> tuple[dic
     subsequent_slot = _build_slot_payload(subsequent_item)
 
     return active_slot, active_date, next_slot, next_date, subsequent_slot
+
+
+def get_next_regular_slot_start(config_entry, now_dt: datetime) -> datetime:
+    """Ermittelt den exakten Startzeitpunkt des nächsten regulären Zeitplan-Wechsels (ohne Overrides).
+
+    Falls der Zeitplan über den gesamten Zeitraum unverändert bleibt (z. B. reiner 24h-Fallback),
+    wird als sinnvolles Ende Mitternacht des nächsten Tages (00:00) zurückgegeben.
+    """
+    timeline: list[dict] = []
+    for day_offset in range(2):
+        check_date = now_dt.date() + timedelta(days=day_offset)
+        day_slots = get_day_slots_with_fallbacks(config_entry, check_date)
+        for s in day_slots:
+            from_t = parse_time(s["from"])
+            to_t = parse_time(s["to"])
+            if not from_t or not to_t:
+                continue
+            start_dt = datetime.combine(check_date, from_t)
+            end_dt = datetime.combine(check_date, to_t)
+            if to_t <= from_t:
+                end_dt += timedelta(days=1)
+            if now_dt.tzinfo:
+                start_dt = start_dt.replace(tzinfo=now_dt.tzinfo)
+                end_dt = end_dt.replace(tzinfo=now_dt.tzinfo)
+            timeline.append(
+                {
+                    "start": start_dt,
+                    "end": end_dt,
+                    "preset": s.get("preset", "none"),
+                }
+            )
+
+    timeline.sort(key=lambda x: x["start"])
+    merged: list[dict] = []
+    for item in timeline:
+        if not merged:
+            merged.append(item)
+        else:
+            last = merged[-1]
+            if last["preset"] == item["preset"] and last["end"] == item["start"]:
+                last["end"] = item["end"]
+            else:
+                merged.append(item)
+
+    next_midnight = datetime.combine(now_dt.date() + timedelta(days=1), time(0, 0))
+    if now_dt.tzinfo:
+        next_midnight = next_midnight.replace(tzinfo=now_dt.tzinfo)
+
+    for item in merged:
+        if item["start"] <= now_dt < item["end"]:
+            # Wenn ein durchgehender Fallback über >24h gemergt wurde, auf nächste Mitternacht begrenzen
+            if len(merged) == 1 and item["end"] > next_midnight:
+                return next_midnight
+            return item["end"]
+
+    for item in merged:
+        if item["start"] > now_dt:
+            return item["start"]
+
+    return next_midnight

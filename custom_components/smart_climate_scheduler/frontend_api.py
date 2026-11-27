@@ -32,6 +32,7 @@ from .helpers import (
     get_room_temp_sensor,
     get_window_delays,
     get_window_sensors,
+    is_climate_entity_enabled,
     normalize_custom_presets,
     parse_time,
     resolve_entry_entity_id,
@@ -199,6 +200,18 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         fallback_suffix="binary_heating_demand",
         runtime_key="heating_demand_binary_sensor",
     )
+    virtual_climate_entity_id = (
+        resolve_entry_entity_id(
+            hass,
+            entry_obj,
+            "climate",
+            "climate",
+            fallback_suffix="room_thermostat",
+            runtime_key="climate_entity",
+        )
+        if is_climate_entity_enabled(entry_obj)
+        else None
+    )
 
     profiles, active_profile = _normalize_all_profiles(entry_obj)
 
@@ -269,7 +282,20 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
     eval_preset, preheat, cooldown, active_slot, next_slot, next_action, debug_info = evaluate_state(
         hass, entry_obj
     )
-    if eval_preset:
+    automation_enabled = bool(domain_data.get("automation_enabled", False)) if isinstance(domain_data, dict) else False
+    climate_mode = domain_data.get("climate_mode") if isinstance(domain_data, dict) else None
+    manual_temperature = domain_data.get("manual_temperature") if isinstance(domain_data, dict) else None
+
+    if (
+        not automation_enabled
+        and is_climate_entity_enabled(entry_obj)
+        and climate_mode == "heat"
+        and manual_temperature is not None
+    ):
+        target_temp = round(_safe_float(manual_temperature, 20.0, allow_zero_or_negative=True), 1)
+    elif isinstance(active_slot, dict) and active_slot.get("is_override") and active_slot.get("temperature") is not None:
+        target_temp = round(_safe_float(active_slot.get("temperature"), 20.0, allow_zero_or_negative=True), 1)
+    elif eval_preset:
         target_temp = round(
             get_preset_temperature(
                 climate_state,
@@ -282,7 +308,6 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
     elif climate_state and (climate_state.attributes or {}).get("temperature") is not None:
         target_temp = _safe_float(climate_state.attributes.get("temperature"), 20.0, allow_zero_or_negative=True)
 
-    automation_enabled = bool(domain_data.get("automation_enabled", False)) if isinstance(domain_data, dict) else False
     overrides = copy.deepcopy(domain_data.get("overrides", {})) if isinstance(domain_data, dict) else {}
 
     raw_win_open, _ = get_raw_window_open(hass, entry_obj, climate_entities)
@@ -347,6 +372,8 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         "profile_select_entity_id": profile_select_entity_id,
         "anomaly_entity_id": anomaly_entity_id,
         "heating_demand_entity_id": heating_demand_entity_id,
+        "virtual_climate_entity_id": virtual_climate_entity_id,
+        "climate_mode": climate_mode,
         "is_heating": (
             False
             if (eff_win_open and win_pause_enabled)

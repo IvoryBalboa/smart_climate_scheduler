@@ -56,6 +56,7 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.BINARY_SENSOR,
     Platform.SELECT,
+    Platform.CLIMATE,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -249,9 +250,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if overrides_pruned:
         await storage.async_save_data({"overrides": active_overrides})
 
+    raw_climate_mode = str(stored_data.get("climate_mode") or "").strip().lower()
+    if automation_enabled:
+        climate_mode = "auto"
+    elif raw_climate_mode in ("heat", "off"):
+        climate_mode = raw_climate_mode
+    else:
+        climate_mode = "off"
+
+    manual_temperature = None
+    if stored_data.get("manual_temperature") is not None:
+        parsed_manual = _safe_float(stored_data.get("manual_temperature"), None, allow_zero_or_negative=True)
+        if parsed_manual is not None:
+            manual_temperature = round(parsed_manual, 1)
+
     hass.data[DOMAIN][entry.entry_id] = {
         "data": entry.data,
         "automation_enabled": automation_enabled,
+        "climate_mode": climate_mode,
+        "manual_temperature": manual_temperature,
         "overrides": active_overrides,
         "averages": norm_averages,
         "average": overall_avg,
@@ -717,6 +734,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
+        sensors_list = hass.data.get(f"{DOMAIN}_sensors")
+        if isinstance(sensors_list, list):
+            sensors_list[:] = [
+                ent
+                for ent in sensors_list
+                if not (
+                    getattr(ent, "config_entry", None)
+                    and ent.config_entry.entry_id == entry.entry_id
+                )
+            ]
         hass.data[DOMAIN].pop(entry.entry_id, None)
         if not hass.data[DOMAIN]:
             clear_startup_grace_state(hass)

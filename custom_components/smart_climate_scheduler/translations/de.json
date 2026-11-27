@@ -9,7 +9,8 @@
           "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
           "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
           "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
-          "default_preset": "Standard-Preset für leere Slots"
+          "default_preset": "Standard-Preset für leere Slots",
+          "enable_climate_entity": "Optionale Raum-Thermostat-Entität erstellen (Climate-Wrapper: Auto / Heizen / Aus)"
         }
       },
       "windows": {
@@ -58,7 +59,8 @@
     },
     "error": {
       "name_required": "Der Name des Raums darf nicht leer sein.",
-      "climate_required": "Es muss mindestens ein Thermostat (Climate-Entität) ausgewählt werden."
+      "climate_required": "Es muss mindestens ein Thermostat (Climate-Entität) ausgewählt werden.",
+      "climate_self_reference": "Die eigene virtuelle Thermostat-Entität von Smart Climate Scheduler kann nicht als physisches Thermostat ausgewählt werden."
     }
   },
   "options": {
@@ -84,7 +86,8 @@
           "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
           "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
           "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
-          "default_preset": "Standard-Preset für leere Slots"
+          "default_preset": "Standard-Preset für leere Slots",
+          "enable_climate_entity": "Optionale Raum-Thermostat-Entität erstellen (Climate-Wrapper: Auto / Heizen / Aus)"
         }
       },
       "settings_windows": {
@@ -252,7 +255,8 @@
       "profile_name_exists": "Ein Profil mit diesem Namen existiert bereits.",
       "climate_required": "Es muss mindestens ein Thermostat (Climate-Entität) ausgewählt werden.",
       "preset_name_empty": "Der Preset-Name darf nicht leer sein.",
-      "cannot_delete_last_preset": "Es muss mindestens ein eigenes Preset erhalten bleiben."
+      "cannot_delete_last_preset": "Es muss mindestens ein eigenes Preset erhalten bleiben.",
+      "climate_self_reference": "Die eigene virtuelle Thermostat-Entität von Smart Climate Scheduler kann nicht als physisches Thermostat ausgewählt werden."
     }
   },
   "selector": {

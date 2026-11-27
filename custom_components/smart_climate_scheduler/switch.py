@@ -168,6 +168,8 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = True
+        domain_data["climate_mode"] = "auto"
+        domain_data["_last_active_climate_mode"] = "auto"
         domain_data["is_setting_preset"] = False
         domain_data["is_setting_hvac"] = False
         
@@ -177,10 +179,14 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
             async def _save_status(store, enabled):
                 data = await store.async_get_data()
                 data["automation_enabled"] = enabled
+                data["climate_mode"] = "auto"
                 await store.async_save_data(data)
             self.hass.async_create_task(_save_status(storage, True))
 
         self.async_write_ha_state()
+        climate_ent = domain_data.get("climate_entity")
+        if climate_ent is not None:
+            async_write_ha_state_if_enabled(climate_ent)
 
         # Sofortiges Anwenden der Zieltemperatur und der Zwei-Punkt-Regelung
         apply_fn = domain_data.get("async_apply_schedule")
@@ -190,7 +196,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
             climate_entities = get_climate_entities(self.config_entry)
             custom_presets = get_custom_presets(self.config_entry)
             if self.hass and climate_entities:
-                preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
+                preset, _, _, active_slot, _, _, _ = evaluate_state(self.hass, self.config_entry)
                 entry_name = self.config_entry.title or self.config_entry.entry_id
                 cur_t, _ = get_room_current_temperature(self.hass, self.config_entry, climate_entities)
                 raw_win_open, _ = get_raw_window_open(self.hass, self.config_entry, climate_entities)
@@ -243,9 +249,12 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
                         continue
 
                     attrs = state_obj.attributes or {}
-                    tgt_t = get_preset_temperature(
-                        state_obj, preset, config_entry=self.config_entry, custom_presets=custom_presets
-                    )
+                    if isinstance(active_slot, dict) and active_slot.get("is_override") and active_slot.get("temperature") is not None:
+                        tgt_t = _safe_float(active_slot.get("temperature"), 20.0, allow_zero_or_negative=True)
+                    else:
+                        tgt_t = get_preset_temperature(
+                            state_obj, preset, config_entry=self.config_entry, custom_presets=custom_presets
+                        )
 
                     target_mode = get_target_hvac_mode(state_obj)
                     should_turn_on = False
@@ -313,17 +322,44 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         domain_data["opportunistic_kickstart"] = False
         domain_data["opportunistic_kickstart_done"] = False
         domain_data["opportunistic_kickstart_target"] = None
-        
+
+        # Abgeleiteten Climate-Modus aktualisieren ('heat' wenn mind. ein TRV aktiv, sonst 'off')
+        climate_entities = get_climate_entities(self.config_entry)
+        any_trv_active = False
+        first_trv_temp = None
+        states_mgr = getattr(self.hass, "states", None)
+        for cl_id in climate_entities:
+            st_obj = states_mgr.get(cl_id) if states_mgr else None
+            if not st_obj:
+                continue
+            m = str(getattr(st_obj, "state", "") or "").strip().lower()
+            if m not in ("off", "unavailable", "unknown", "none", ""):
+                any_trv_active = True
+                if first_trv_temp is None and (st_obj.attributes or {}).get("temperature") is not None:
+                    first_trv_temp = _safe_float(st_obj.attributes.get("temperature"), None, allow_zero_or_negative=True)
+        derived_mode = "heat" if any_trv_active else "off"
+        domain_data["climate_mode"] = derived_mode
+        if derived_mode == "heat" and domain_data.get("manual_temperature") is None and first_trv_temp is not None:
+            domain_data["manual_temperature"] = round(first_trv_temp, 1)
+
         # Persistent im Storage speichern (ohne Reload)
         storage = domain_data.get("storage")
         if storage:
-            async def _save_status(store, enabled):
+            async def _save_status(store, enabled, c_mode, m_temp):
                 data = await store.async_get_data()
                 data["automation_enabled"] = enabled
+                data["climate_mode"] = c_mode
+                if m_temp is not None:
+                    data["manual_temperature"] = m_temp
                 await store.async_save_data(data)
-            self.hass.async_create_task(_save_status(storage, False))
+            self.hass.async_create_task(
+                _save_status(storage, False, derived_mode, domain_data.get("manual_temperature"))
+            )
 
         self.async_write_ha_state()
+        climate_ent = domain_data.get("climate_entity")
+        if climate_ent is not None:
+            async_write_ha_state_if_enabled(climate_ent)
 
 
 class SmartClimateSchedulerOptionSwitch(SwitchEntity):
