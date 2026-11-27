@@ -1,4 +1,4 @@
-"""Zustands- und Thermik-Evaluierung für Smart Climate Scheduler (Version 2.0)."""
+"""Zustands- und Thermik-Evaluierung für Smart Climate Scheduler (Version 4.0.0)."""
 from __future__ import annotations
 
 import logging
@@ -52,14 +52,21 @@ from .cooldown import calculate_cooldown
 from .heating_rate import get_effective_heating_rate
 from .cooling_rate import get_effective_cooling_rate
 from .helpers import (
+    get_climate_entities,
+    get_custom_presets,
+    get_effective_window_open,
     get_forecast_temperature_for_window,
     get_ha_language,
-    get_numeric_entity_value,
+    get_preset_labels_map,
     get_preset_temperature,
+    get_raw_window_open,
     get_resolved_outside_info,
-    is_window_or_door_open,
+    get_room_current_temperature,
+    get_room_temp_sensor,
+    get_window_delays,
+    get_window_sensors,
     parse_time,
-    resolve_tolerance_entity,
+    resolve_preset_key,
     safe_float,
 )
 
@@ -109,10 +116,13 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     next_slot = format_slot(raw_next_slot, next_date)
     subsequent_slot = format_slot(raw_subsequent_slot)
 
-    climate_entity = (
-        config_entry.options.get(CONF_CLIMATE_ENTITY)
-        or config_entry.data.get(CONF_CLIMATE_ENTITY, "")
+    climate_entities = get_climate_entities(config_entry)
+    climate_entity = climate_entities[0] if climate_entities else (
+        options.get(CONF_CLIMATE_ENTITY)
+        or data.get(CONF_CLIMATE_ENTITY, "")
     )
+    custom_presets = get_custom_presets(config_entry)
+    custom_labels = get_preset_labels_map(config_entry)
 
     zone_home_entity = (
         config_entry.options.get(CONF_ZONE_HOME_ENTITY)
@@ -144,29 +154,18 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     min_distance_km = zone_status["min_distance_km"]
 
     climate_state = hass.states.get(climate_entity) if climate_entity and hass else None
-    attrs = climate_state.attributes if climate_state else {}
 
-    real_measured_temp = attrs.get("current_temperature")
-    if real_measured_temp is None:
-        real_measured_temp = attrs.get("external_temp_ema", 20.0)
-
-    try:
-        real_measured_temp = float(real_measured_temp)
-        if math.isnan(real_measured_temp) or math.isinf(real_measured_temp):
-            real_measured_temp = 20.0
-    except (ValueError, TypeError):
+    measured_temp, room_temp_source = get_room_current_temperature(hass, config_entry, climate_entities)
+    if measured_temp is None:
         real_measured_temp = 20.0
+    else:
+        real_measured_temp = measured_temp
 
     fallback_tolerance = _safe_val(
         options.get(CONF_FALLBACK_TOLERANCE, data.get(CONF_FALLBACK_TOLERANCE)),
         DEFAULT_FALLBACK_TOLERANCE,
     )
-    resolved_tol_entity, tol_entity_source = resolve_tolerance_entity(hass, config_entry)
-    tol_entity_val = get_numeric_entity_value(hass, resolved_tol_entity)
-    if tol_entity_val is not None:
-        tolerance = max(0.0, tol_entity_val)
-    else:
-        tolerance = max(0.0, _safe_val(attrs.get("tolerance"), fallback_tolerance))
+    tolerance = max(0.0, fallback_tolerance)
 
     # Außentemperatur ermitteln (Sensor hat Vorrang vor Wetter-Entität; Wetter nutzt Attribut 'temperature')
     outside_sensor = options.get(CONF_OUTSIDE_TEMP_SENSOR, data.get(CONF_OUTSIDE_TEMP_SENSOR))
@@ -190,10 +189,18 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     )
 
     schedule_preset = active_slot.get("preset", "none") if active_slot else "none"
+    if schedule_preset != "none":
+        schedule_preset = resolve_preset_key(schedule_preset, config_entry)
 
-    active_temp = get_preset_temperature(climate_state, schedule_preset)
+    active_temp = get_preset_temperature(
+        climate_state, schedule_preset, config_entry=config_entry, custom_presets=custom_presets
+    )
     next_preset_name = next_slot.get("preset") if next_slot else None
-    next_temp = get_preset_temperature(climate_state, next_preset_name)
+    if next_preset_name and next_preset_name != "none":
+        next_preset_name = resolve_preset_key(next_preset_name, config_entry)
+    next_temp = get_preset_temperature(
+        climate_state, next_preset_name, config_entry=config_entry, custom_presets=custom_presets
+    )
 
     preheat_enabled = bool(options.get(CONF_PREHEAT_ENABLED, data.get(CONF_PREHEAT_ENABLED, True)))
     preheat_ignores_away = bool(
@@ -234,7 +241,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
     )
 
     target_cooldown_preset = (
-        next_preset_name if (next_preset_name and next_preset_name != "none") else "eco"
+        next_preset_name if (next_preset_name and next_preset_name != "none") else resolve_preset_key("eco", config_entry)
     )
 
     cooldown = {
@@ -530,7 +537,11 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             except Exception:
                 pass
 
-    base_preset = schedule_preset if schedule_preset != "none" else "home"
+    base_preset = (
+        schedule_preset
+        if schedule_preset != "none"
+        else resolve_preset_key("home", config_entry)
+    )
 
     is_active_override = bool(active_slot and active_slot.get("is_override"))
     if not is_active_override:
@@ -539,6 +550,8 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         if active_ov_data:
             is_active_override = True
             base_preset = active_ov_data.get("preset", base_preset)
+            if base_preset != "none":
+                base_preset = resolve_preset_key(base_preset, config_entry)
             if active_slot:
                 active_slot["is_override"] = True
                 active_slot["override_id"] = active_ov_id
@@ -558,6 +571,8 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         or data.get(CONF_AWAY_NEAR_PRESET)
         or DEFAULT_AWAY_NEAR_PRESET
     )
+    away_preset = resolve_preset_key(away_preset, config_entry)
+    away_near_preset = resolve_preset_key(away_near_preset, config_entry)
 
     if is_active_override:
         # 1. Aktueller Slot ist ein Override -> Anwesenheit wird umgangen
@@ -583,6 +598,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         # 6. Vollständige Abwesenheit (konfigurierbares Preset, Standard: away)
         preset = away_preset
 
+    if preset != "none":
+        preset = resolve_preset_key(preset, config_entry)
+
     lang = get_ha_language(hass)
     next_action = calculate_next_action(
         preheat_duration=preheat_duration,
@@ -597,6 +615,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         base_preset=base_preset,
         now_dt=now_dt,
         lang=lang,
+        custom_labels=custom_labels,
     )
 
     delta_to_next = (
@@ -604,6 +623,12 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         if (next_temp is not None and real_measured_temp is not None)
         else None
     )
+
+    raw_win_open, _ = get_raw_window_open(hass, config_entry, climate_entities)
+    eff_win_open = get_effective_window_open(entry_data, hass, config_entry)
+    open_delay_min, close_delay_min, win_pause_enabled = get_window_delays(config_entry)
+    room_temp_sensor = get_room_temp_sensor(config_entry)
+    window_sensors = get_window_sensors(config_entry)
 
     debug_info = {
         "zones": {
@@ -619,6 +644,7 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
         },
         "temperatures": {
             "current": real_measured_temp,
+            "room_temp_source": room_temp_source,
             "active_target": active_temp,
             "next_target": next_temp,
             "delta_to_next": delta_to_next,
@@ -638,16 +664,18 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "fallback_heating_rate": fallback_rate,
             "fallback_cooling_rate": fallback_cooling_rate,
             "tolerance": tolerance,
-            "tolerance_entity": resolved_tol_entity,
-            "tolerance_entity_source": tol_entity_source,
-            "tolerance_backup": entry_data.get("tolerance_backup") if isinstance(entry_data, dict) else None,
         },
         "settings": {
             "climate_entity": climate_entity,
+            "climate_entities": climate_entities,
+            "room_temp_sensor": room_temp_sensor,
+            "window_sensors": window_sensors,
+            "window_open_delay_minutes": open_delay_min,
+            "window_close_delay_minutes": close_delay_min,
+            "window_pause_enabled": win_pause_enabled,
             "outside_temp_sensor": outside_sensor,
             "outside_weather_entity": outside_weather,
             "heating_active_sensor": options.get(CONF_HEATING_ACTIVE_SENSOR, data.get(CONF_HEATING_ACTIVE_SENSOR)),
-            "tolerance_entity": resolved_tol_entity,
             "max_preheat_minutes": max_preheat,
             "max_cooldown_minutes": max_cooldown,
             "preheat_enabled": preheat_enabled,
@@ -673,7 +701,9 @@ def evaluate_state(hass, config_entry) -> tuple[str, dict | None, dict | None, d
             "slot_cooldown_allowed": active_slot_cooldown,
             "effective_preheat_enabled": effective_preheat_enabled,
             "effective_cooldown_enabled": effective_cooldown_enabled,
-            "window_or_door_open": is_window_or_door_open(climate_state),
+            "window_or_door_open": bool(eff_win_open or raw_win_open),
+            "window_raw_open": bool(raw_win_open),
+            "window_effective_open": bool(eff_win_open),
             "selected_next_action": next_action,
             "final_state": preset,
         },

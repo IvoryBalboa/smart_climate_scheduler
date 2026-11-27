@@ -9,7 +9,9 @@ from typing import Any
 from .actions import PRESET_TRANSLATIONS
 from .anomaly import evaluate_and_update_anomaly
 from .const import (
-    CONF_CLIMATE_ENTITY,
+    CONF_AWAY_NEAR_PRESET,
+    CONF_AWAY_PRESET,
+    CONF_CUSTOM_PRESETS,
     CONF_DEFAULT_PRESET,
     DAYS,
     DEFAULT_FALLBACK_PRESET,
@@ -18,14 +20,22 @@ from .const import (
 )
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
-    async_restore_tolerance,
-    get_config_entry_slug,
+    get_climate_entities,
+    get_custom_presets,
+    get_effective_window_open,
+    get_group_hvac_heating,
     get_ha_language,
-    get_localized_slug_suffix,
     get_preset_temperature,
     get_profiles_and_active,
+    get_raw_window_open,
+    get_room_current_temperature,
+    get_room_temp_sensor,
+    get_window_delays,
+    get_window_sensors,
+    normalize_custom_presets,
     parse_time,
     resolve_entry_entity_id,
+    resolve_preset_key,
     safe_float as _safe_float,
 )
 
@@ -132,8 +142,7 @@ def _resolve_target_entry(hass: Any, entry_id: str | None = None, entity_id: str
                     continue
                 ce = hass.config_entries.async_get_entry(eid)
                 if ce:
-                    cl_id = ce.options.get(CONF_CLIMATE_ENTITY) or ce.data.get(CONF_CLIMATE_ENTITY)
-                    if cl_id == entity_id:
+                    if entity_id in get_climate_entities(ce):
                         target_eid = eid
                         break
 
@@ -185,61 +194,97 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
 
     profiles, active_profile = _normalize_all_profiles(entry_obj)
 
-    climate_entity = (
-        entry_obj.options.get(CONF_CLIMATE_ENTITY)
-        or entry_obj.data.get(CONF_CLIMATE_ENTITY, "")
-    ).strip()
+    climate_entities = get_climate_entities(entry_obj)
+    climate_entity = climate_entities[0] if climate_entities else ""
+    custom_presets = get_custom_presets(entry_obj)
+    room_temp_sensor = get_room_temp_sensor(entry_obj)
+    window_sensors = get_window_sensors(entry_obj)
+    open_delay_min, close_delay_min, win_pause_enabled = get_window_delays(entry_obj)
 
-    default_preset = entry_obj.options.get(
+    raw_default_preset = entry_obj.options.get(
         CONF_DEFAULT_PRESET,
         entry_obj.data.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET),
     )
+    default_preset = resolve_preset_key(raw_default_preset, entry_obj)
 
-    climate_state = hass.states.get(climate_entity) if climate_entity and getattr(hass, "states", None) else None
-    supported_presets = list(DEFAULT_PRESETS)
-    current_temp = None
+    states_mgr = getattr(hass, "states", None)
+    climate_state = states_mgr.get(climate_entity) if climate_entity and states_mgr else None
+    thermostat_states: list[dict[str, Any]] = []
+    for cl_id in climate_entities:
+        st = states_mgr.get(cl_id) if states_mgr else None
+        attrs = (getattr(st, "attributes", None) or {}) if st else {}
+        st_val = getattr(st, "state", None) if st else None
+        available = bool(
+            st is not None
+            and str(st_val or "").strip().lower() not in ("unavailable", "unknown", "none", "")
+        )
+        raw_t = attrs.get("current_temperature")
+        cur_t = _safe_float(raw_t, None, allow_zero_or_negative=True) if raw_t is not None else None
+        tgt_t = (
+            _safe_float(attrs.get("temperature"), None, allow_zero_or_negative=True)
+            if attrs.get("temperature") is not None
+            else None
+        )
+        thermostat_states.append(
+            {
+                "entity_id": cl_id,
+                "state": st_val,
+                "hvac_action": attrs.get("hvac_action"),
+                "current_temperature": cur_t,
+                "target_temperature": tgt_t,
+                "available": available,
+            }
+        )
+
+    current_temp, room_temp_source = get_room_current_temperature(hass, entry_obj, climate_entities)
     target_temp = None
-    hvac_mode = None
-    hvac_action = None
-
-    if climate_state:
-        attrs = climate_state.attributes or {}
-        raw_modes = attrs.get("preset_modes")
-        if isinstance(raw_modes, list) and raw_modes:
-            supported_presets = [str(m) for m in raw_modes if m is not None]
-        raw_cur = attrs.get("current_temperature")
-        if raw_cur is None:
-            raw_cur = attrs.get("external_temp_ema")
-        if raw_cur is not None:
-            current_temp = _safe_float(raw_cur, 20.0, allow_zero_or_negative=True)
-        hvac_mode = climate_state.state
-        hvac_action = attrs.get("hvac_action")
+    _, any_heating, group_hvac_mode = get_group_hvac_heating(hass, climate_entities)
+    hvac_mode = group_hvac_mode or (climate_state.state if climate_state else None)
+    hvac_action = "heating" if any_heating else (
+        (climate_state.attributes or {}).get("hvac_action") if climate_state else None
+    )
 
     preset_temperatures: dict[str, float] = {}
     preset_labels: dict[str, str] = {}
-    all_presets_for_meta = list(dict.fromkeys([*supported_presets, *DEFAULT_PRESETS, str(default_preset)]))
-    for p_key in all_presets_for_meta:
-        if climate_state:
-            preset_temperatures[p_key] = round(get_preset_temperature(climate_state, p_key), 1)
-        p_lower = p_key.lower().strip()
-        if p_lower in PRESET_TRANSLATIONS:
-            preset_labels[p_key] = PRESET_TRANSLATIONS[p_lower].get(lang, PRESET_TRANSLATIONS[p_lower]["en"])
-        else:
-            preset_labels[p_key] = p_key.replace("_", " ").title()
+    preset_colors: dict[str, str] = {}
+    supported_presets = [p["id"] for p in custom_presets]
+    for p in custom_presets:
+        p_id = p["id"]
+        preset_temperatures[p_id] = round(float(p["temperature"]), 1)
+        preset_labels[p_id] = p["name"]
+        preset_colors[p_id] = p["color"]
+    preset_labels.setdefault(
+        "none",
+        PRESET_TRANSLATIONS["none"].get(lang, PRESET_TRANSLATIONS["none"]["en"]),
+    )
 
     eval_preset, preheat, cooldown, active_slot, next_slot, next_action, debug_info = evaluate_state(
         hass, entry_obj
     )
-    if eval_preset and climate_state:
-        target_temp = round(get_preset_temperature(climate_state, eval_preset), 1)
+    if eval_preset:
+        target_temp = round(
+            get_preset_temperature(
+                climate_state,
+                eval_preset,
+                config_entry=entry_obj,
+                custom_presets=custom_presets,
+            ),
+            1,
+        )
     elif climate_state and (climate_state.attributes or {}).get("temperature") is not None:
         target_temp = _safe_float(climate_state.attributes.get("temperature"), 20.0, allow_zero_or_negative=True)
 
     automation_enabled = bool(domain_data.get("automation_enabled", False)) if isinstance(domain_data, dict) else False
     overrides = copy.deepcopy(domain_data.get("overrides", {})) if isinstance(domain_data, dict) else {}
 
+    raw_win_open, _ = get_raw_window_open(hass, entry_obj, climate_entities)
+    eff_win_open = get_effective_window_open(domain_data, hass, entry_obj)
+    w_state = domain_data.get("window_state") if isinstance(domain_data, dict) else None
+    win_pending_action = w_state.get("pending_action") if isinstance(w_state, dict) else None
+    win_pending_until = w_state.get("pending_until") if isinstance(w_state, dict) else None
+
     # List all configured rooms so users/editor can switch or inspect
-    available_rooms: list[dict[str, str]] = []
+    available_rooms: list[dict[str, Any]] = []
     for eid, ddata in hass.data.get(DOMAIN, {}).items():
         if not isinstance(ddata, dict) or eid.startswith("_"):
             continue
@@ -257,6 +302,7 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
                     "entry_id": eid,
                     "name": ce.title or ce.data.get("name") or eid,
                     "entity_id": r_sched,
+                    "climate_entities": get_climate_entities(ce),
                 }
             )
 
@@ -270,10 +316,24 @@ def _build_schedule_payload(hass: Any, entry_obj: Any, domain_data: dict | None)
         "profiles": profiles,
         "active_profile": active_profile,
         "default_preset": default_preset,
+        "custom_presets": custom_presets,
         "supported_presets": supported_presets,
         "preset_temperatures": preset_temperatures,
         "preset_labels": preset_labels,
+        "preset_colors": preset_colors,
         "climate_entity": climate_entity,
+        "climate_entities": climate_entities,
+        "thermostat_states": thermostat_states,
+        "room_temp_sensor": room_temp_sensor,
+        "room_temp_source": room_temp_source,
+        "window_sensors": window_sensors,
+        "window_open": eff_win_open,
+        "window_raw_open": raw_win_open,
+        "window_pending_action": win_pending_action,
+        "window_pending_until": win_pending_until,
+        "window_open_delay_minutes": open_delay_min,
+        "window_close_delay_minutes": close_delay_min,
+        "window_pause_enabled": win_pause_enabled,
         "schedule_entity_id": schedule_entity_id,
         "automation_switch_entity_id": automation_switch_entity_id,
         "profile_select_entity_id": profile_select_entity_id,
@@ -334,9 +394,9 @@ async def _async_persist_profiles_and_apply(
             resched()
 
 
-def _list_available_rooms(hass: Any) -> list[dict[str, str]]:
-    """Return all configured Smart Climate Scheduler rooms with config_entry id and climate entity."""
-    rooms: list[dict[str, str]] = []
+def _list_available_rooms(hass: Any) -> list[dict[str, Any]]:
+    """Return all configured Smart Climate Scheduler rooms with config_entry id and climate entities."""
+    rooms: list[dict[str, Any]] = []
     if not hass:
         return rooms
     for eid, ddata in hass.data.get(DOMAIN, {}).items():
@@ -352,7 +412,8 @@ def _list_available_rooms(hass: Any) -> list[dict[str, str]]:
             "schedule",
             runtime_key="main_sensor",
         )
-        cl_ent = (ce.options.get(CONF_CLIMATE_ENTITY) or ce.data.get(CONF_CLIMATE_ENTITY, "")).strip()
+        climate_entities = get_climate_entities(ce)
+        cl_ent = climate_entities[0] if climate_entities else ""
         rooms.append(
             {
                 "entry_id": eid,
@@ -360,6 +421,7 @@ def _list_available_rooms(hass: Any) -> list[dict[str, str]]:
                 "name": ce.title or ce.data.get("name") or eid,
                 "entity_id": r_sched,
                 "climate_entity": cl_ent,
+                "climate_entities": climate_entities,
             }
         )
     rooms.sort(key=lambda item: item["name"].lower())
@@ -552,9 +614,9 @@ async def _async_apply_automation_for_entry(
             domain_data["is_setting_hvac"] = False
         else:
             domain_data["two_point_target_reached"] = False
-            domain_data["tolerance_kickstart_done"] = False
-            domain_data["tolerance_kickstart_target"] = None
-            await async_restore_tolerance(hass, domain_data, reason="automation_disabled")
+            domain_data["opportunistic_kickstart"] = False
+            domain_data["opportunistic_kickstart_done"] = False
+            domain_data["opportunistic_kickstart_target"] = None
 
         storage = domain_data.get("storage")
         if storage and hasattr(storage, "async_save_data"):
@@ -604,6 +666,83 @@ async def async_ws_set_automation(hass: Any, msg: dict[str, Any]) -> tuple[dict[
 
     payload = await _async_apply_automation_for_entry(hass, entry_obj, domain_data, enabled)
     return payload, None
+
+
+async def async_ws_save_custom_presets(
+    hass: Any, msg: dict[str, Any]
+) -> tuple[dict[str, Any] | None, tuple[str, str] | None]:
+    """Validate and persist custom_presets for a room."""
+    entry_obj, domain_data = _resolve_target_entry(
+        hass,
+        entry_id=msg.get("config_entry") or msg.get("entry_id"),
+        entity_id=msg.get("entity_id"),
+    )
+    if not entry_obj:
+        return None, ("not_found", "Smart Climate Scheduler room entry not found")
+
+    raw_presets = msg.get("custom_presets")
+    normalized = normalize_custom_presets(raw_presets, fallback_to_default=False)
+    if not normalized:
+        return None, ("invalid_presets", "At least one valid custom preset is required")
+
+    new_options = dict(entry_obj.options)
+    new_data = dict(entry_obj.data)
+    new_options[CONF_CUSTOM_PRESETS] = normalized
+    new_data[CONF_CUSTOM_PRESETS] = copy.deepcopy(normalized)
+
+    profiles, active_profile = _normalize_all_profiles(entry_obj)
+    valid_ids = {p["id"] for p in normalized}
+    first_id = normalized[0]["id"]
+    raw_def = str(
+        new_options.get(CONF_DEFAULT_PRESET, new_data.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)) or ""
+    ).strip().lower()
+    new_def = raw_def if raw_def in valid_ids else ("eco" if "eco" in valid_ids else first_id)
+    new_options[CONF_DEFAULT_PRESET] = new_def
+    new_data[CONF_DEFAULT_PRESET] = new_def
+    for key in (CONF_AWAY_PRESET, CONF_AWAY_NEAR_PRESET):
+        cur_p = str(new_options.get(key, new_data.get(key, new_def)) or "").strip().lower()
+        if cur_p not in valid_ids:
+            new_options[key] = new_def
+            new_data[key] = new_def
+    for p_sched in profiles.values():
+        for d_slots in p_sched.values():
+            for slot in d_slots:
+                sp = str(slot.get("preset") or "none").strip().lower()
+                if sp != "none" and sp not in valid_ids:
+                    slot["preset"] = new_def
+
+    new_options["profiles"] = profiles
+    new_options["active_profile"] = active_profile
+    new_options["schedule"] = copy.deepcopy(profiles.get(active_profile, {d: [] for d in DAYS}))
+
+    if isinstance(domain_data, dict):
+        domain_data["_updating_from_card"] = True
+        invalidate_eval_cache(domain_data)
+
+    hass.config_entries.async_update_entry(entry_obj, data=new_data, options=new_options)
+
+    if isinstance(domain_data, dict):
+        main_sensor = domain_data.get("main_sensor")
+        if main_sensor and hasattr(main_sensor, "async_write_ha_state"):
+            main_sensor.async_write_ha_state()
+
+        prof_sel = domain_data.get("profile_select")
+        if prof_sel and hasattr(prof_sel, "async_write_ha_state"):
+            prof_sel.async_write_ha_state()
+
+        apply_fn = domain_data.get("async_apply_schedule")
+        if callable(apply_fn):
+            await apply_fn()
+
+        update_all = domain_data.get("update_all_entities")
+        if callable(update_all):
+            update_all()
+
+        resched = domain_data.get("reschedule_target_timer")
+        if callable(resched):
+            resched()
+
+    return _build_schedule_payload(hass, entry_obj, domain_data), None
 
 
 async def async_register_frontend_and_ws(hass: Any) -> None:
@@ -745,11 +884,29 @@ async def async_register_frontend_and_ws(hass: Any) -> None:
             else:
                 connection.send_result(msg["id"], res)
 
+        @websocket_api.websocket_command(
+            {
+                vol.Required("type"): f"{DOMAIN}/save_custom_presets",
+                vol.Optional("config_entry"): str,
+                vol.Optional("entry_id"): str,
+                vol.Optional("entity_id"): str,
+                vol.Required("custom_presets"): list,
+            }
+        )
+        @websocket_api.async_response
+        async def _ws_save_custom_presets(hass_obj, connection, msg):
+            res, err = await async_ws_save_custom_presets(hass_obj, msg)
+            if err:
+                connection.send_error(msg["id"], err[0], err[1])
+            else:
+                connection.send_result(msg["id"], res)
+
         websocket_api.async_register_command(hass, _ws_list_entries)
         websocket_api.async_register_command(hass, _ws_get_schedule)
         websocket_api.async_register_command(hass, _ws_save_day_slots)
         websocket_api.async_register_command(hass, _ws_copy_day_slots)
         websocket_api.async_register_command(hass, _ws_manage_profile)
         websocket_api.async_register_command(hass, _ws_set_automation)
+        websocket_api.async_register_command(hass, _ws_save_custom_presets)
     except Exception as err:
         _LOGGER.debug("WebSocket-Registrierung übersprungen (%s)", err)

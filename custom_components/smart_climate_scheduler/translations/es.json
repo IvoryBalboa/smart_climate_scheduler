@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Configuración inicial",
-        "description": "Configure el termostato, la fuente de temperatura exterior (el sensor tiene prioridad sobre el clima), la entidad de quemador/calefacción activa, el aprendizaje y las tasas por defecto.",
+        "title": "Smart Climate Scheduler - Configuración inicial",
+        "description": "Configure los termostatos, la fuente de temperatura exterior (el sensor tiene prioridad sobre el clima), la entidad de quemador/calefacción activa, el aprendizaje y las tasas por defecto.",
         "data": {
           "name": "Nombre de la habitación",
           "climate_entity": "Termostato / Entidad Climate",
+          "climate_entities": "Termostatos / Entidades Climate (Grupo)",
+          "room_temp_sensor": "Sensor de temperatura ambiente (Opcional - solo para térmica e histéresis SCS)",
+          "window_sensors": "Sensores de ventana / puerta (Opcional)",
+          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
+          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)",
+          "window_pause_enabled": "Pausar calefacción (HVAC Off) al abrir ventana",
           "outside_temp_sensor": "Sensor de temperatura exterior (prioridad sobre clima)",
           "outside_weather_entity": "Entidad meteorológica",
           "heating_active_sensor": "Entidad de calefacción / quemador activo",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
+          "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
-          "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
           "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
           "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "El nombre de la habitación es obligatorio."
+      "name_required": "El nombre de la habitación es obligatorio.",
+      "climate_required": "Debe seleccionar al menos un termostato (entidad climate)."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Ajustes generales y parámetros térmicos",
         "description": "Ajuste la fuente de temperatura exterior, el aprendizaje y las tasas de calentamiento y enfriamiento:",
         "data": {
+          "climate_entities": "Termostatos / Entidades Climate (Grupo)",
+          "room_temp_sensor": "Sensor de temperatura ambiente (Opcional - solo para térmica e histéresis SCS)",
+          "window_sensors": "Sensores de ventana / puerta (Opcional)",
+          "window_open_delay_minutes": "Retardo de ventana abierta antes de pausar (minutos)",
+          "window_close_delay_minutes": "Retardo de ventana cerrada antes de reanudar (minutos)",
+          "window_pause_enabled": "Pausar calefacción (HVAC Off) al abrir ventana",
           "outside_temp_sensor": "Sensor de temperatura exterior (prioridad sobre clima)",
           "outside_weather_entity": "Entidad meteorológica para temperatura exterior",
           "heating_active_sensor": "Entidad de calefacción / quemador activo",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Activar enfriamiento anticipado",
           "max_minutes_cooldown": "Tiempo máx. de enfriamiento (minutos)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
-          "fallback_tolerance": "Tolerancia de reactivación por defecto (K)",
+          "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
           "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
-          "tolerance_entity": "Entidad de tolerancia (Opcional - Detección automática por dispositivo si está vacío)",
           "use_weather_forecast_for_preheat": "Usar pronóstico del tiempo para precalentamiento (promedio horario)",
-          "preheat_ignores_away": "Precalentar antes de la llegada en ausencia (Anula ausente y cercano)",
+          "preheat_ignores_away": "Precalentar en ausencia",
           "anomaly_detection_enabled": "Activar supervisor de anomalías y hardware (sin calentamiento, termostato desconectado, sensor congelado)",
           "anomaly_no_heat_minutes": "Umbral sin calentamiento con quemador activo (minutos, 0 = desactivado)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Precalentar antes del inicio de la franja",
           "cooldown": "Enfriar antes del fin de la franja"
         }
+      },
+      "custom_presets": {
+        "title": "Gestionar presets personalizados ({presets_count})",
+        "description": "Presets de habitación configurados con temperaturas objetivo propias:{presets_list}",
+        "data": {
+          "preset_action": "Seleccionar acción"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Añadir preset personalizado",
+        "description": "Defina nombre, temperatura objetivo y color:",
+        "data": {
+          "name": "Nombre del preset",
+          "temperature": "Temperatura objetivo (°C)",
+          "color": "Color"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Seleccionar preset personalizado",
+        "description": "Elija el preset a editar o eliminar:",
+        "data": {
+          "selected_preset": "Seleccionar preset"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Editar preset personalizado",
+        "description": "Edite o elimine el preset personalizado seleccionado:",
+        "data": {
+          "action": "Seleccionar acción",
+          "name": "Nombre del preset",
+          "temperature": "Temperatura objetivo (°C)",
+          "color": "Color"
+        }
       }
     },
     "error": {
       "invalid_time_range": "La hora de fin debe ser posterior a la hora de inicio.",
       "profile_name_empty": "El nombre del perfil no puede estar vacío.",
-      "profile_name_exists": "Ya existe un perfil con este nombre."
+      "profile_name_exists": "Ya existe un perfil con este nombre.",
+      "climate_required": "Debe seleccionar al menos un termostato (entidad climate).",
+      "preset_name_empty": "El nombre del preset no puede estar vacío.",
+      "cannot_delete_last_preset": "Debe permanecer al menos un preset personalizado."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Gestionar horarios y perfiles",
+        "custom_presets": "🌡️ Gestionar presets propios",
         "settings": "⚙️ Ajustes (Sensores, Aprendizaje y Tasas)",
         "save": "💾 Guardar y salir"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Añadir preset personalizado",
+        "edit": "✏️ Editar o eliminar preset",
+        "back": "← Volver al menú principal"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Ámbar (#f59e0b)",
+        "#10b981": "Esmeralda (#10b981)",
+        "#6366f1": "Índigo (#6366f1)",
+        "#ef4444": "Rojo (#ef4444)",
+        "#0ea5e9": "Azul cielo (#0ea5e9)",
+        "#ec4899": "Rosa (#ec4899)",
+        "#8b5cf6": "Violeta (#8b5cf6)",
+        "#64748b": "Pizarra (#64748b)"
       }
     },
     "schedule_action": {

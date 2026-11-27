@@ -184,12 +184,22 @@ def get_localized_ui_text(key: str, lang: str = "en", **kwargs: Any) -> str:
     return template
 
 
-def _format_preset(preset: str | None, lang: str = "de") -> str:
-    """Formats and translates a preset mode according to Home Assistant standards."""
+def _format_preset(
+    preset: str | None,
+    lang: str = "de",
+    custom_labels: dict[str, str] | None = None,
+) -> str:
+    """Formats and translates a preset mode or custom preset display label."""
     if not preset:
         preset_key = "home"
     else:
         preset_key = str(preset).lower().strip().replace(" ", "_")
+
+    if isinstance(custom_labels, dict):
+        if str(preset) in custom_labels and custom_labels[str(preset)]:
+            return str(custom_labels[str(preset)])
+        if preset_key in custom_labels and custom_labels[preset_key]:
+            return str(custom_labels[preset_key])
 
     clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
     if preset_key in PRESET_TRANSLATIONS:
@@ -211,12 +221,13 @@ def calculate_next_action(
     base_preset: str,
     now_dt: datetime,
     lang: str = "de",
+    custom_labels: dict[str, str] | None = None,
 ) -> dict[str, str | None]:
     """Determines the next scheduled action and time with localized preset labels."""
     clean_lang = lang.lower().split("-")[0].split("_")[0] if isinstance(lang, str) else "de"
-    current_label = _format_preset(base_preset, clean_lang)
+    current_label = _format_preset(base_preset, clean_lang, custom_labels=custom_labels)
     next_preset_name = next_slot.get("preset") if next_slot else None
-    target_preset = _format_preset(next_preset_name, clean_lang)
+    target_preset = _format_preset(next_preset_name, clean_lang, custom_labels=custom_labels)
 
     preheat_start_str = preheat_start_dt.strftime("%H:%M") if preheat_start_dt else (next_slot.get("from") if next_slot else None)
     cooldown_start_str = cooldown_start_dt.strftime("%H:%M") if cooldown_start_dt else (next_slot.get("from") if next_slot else None)
@@ -232,7 +243,7 @@ def calculate_next_action(
         }
 
     if cooldown_duration > 0 and cooldown_start_dt and cooldown_start_dt > now_dt:
-        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang)
+        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang, custom_labels=custom_labels)
         return {
             "action": f"({cooldown_tag}) {current_label} -> {cooldown_target}",
             "time": cooldown_start_str,
@@ -245,7 +256,7 @@ def calculate_next_action(
         }
 
     if is_cooling_down:
-        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang)
+        cooldown_target = target_preset if (next_preset_name and next_preset_name != "none") else _format_preset("eco", clean_lang, custom_labels=custom_labels)
         return {
             "action": f"({cooldown_tag}) {current_label} -> {cooldown_target}",
             "time": slot_from_time,

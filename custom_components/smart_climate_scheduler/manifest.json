@@ -2,7 +2,6 @@
   "domain": "smart_climate_scheduler",
   "name": "Smart Climate Scheduler",
   "after_dependencies": [
-    "better_thermostat",
     "bluetooth",
     "calendar",
     "climate",
@@ -44,5 +43,5 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/IvoryBalboa/smart_climate_scheduler/issues",
-  "version": "3.3.1"
+  "version": "4.0.0"
 }

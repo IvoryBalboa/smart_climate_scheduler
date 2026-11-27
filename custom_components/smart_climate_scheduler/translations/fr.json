@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Configuration initiale",
-        "description": "Configurez le thermostat, la source de température extérieure (le capteur a priorité sur la météo), le capteur de chauffage actif, l'apprentissage et les taux par défaut.",
+        "title": "Smart Climate Scheduler - Configuration initiale",
+        "description": "Configurez les thermostats, la source de température extérieure (le capteur a priorité sur la météo), le capteur de chauffage actif, l'apprentissage et les taux par défaut.",
         "data": {
           "name": "Nom de la pièce",
           "climate_entity": "Thermostat / Entité Climate",
+          "climate_entities": "Thermostats / Entités Climate (Groupe)",
+          "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
+          "window_sensors": "Capteurs de fenêtre / porte (Optionnel)",
+          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
+          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)",
+          "window_pause_enabled": "Mettre en pause le chauffage (HVAC Off) si fenêtre ouverte",
           "outside_temp_sensor": "Capteur de température extérieure (priorité sur la météo)",
           "outside_weather_entity": "Entité météo",
           "heating_active_sensor": "Capteur de chauffage / brûleur actif",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
-          "fallback_tolerance": "Tolérance de réactivation de secours (K)",
+          "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
-          "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
           "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
           "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
           "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Le nom de la pièce est requis."
+      "name_required": "Le nom de la pièce est requis.",
+      "climate_required": "Au moins un thermostat (entité climate) doit être sélectionné."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Paramètres généraux & thermiques",
         "description": "Ajustez la source de température extérieure, l'apprentissage et les taux de chauffe et refroidissement par défaut :",
         "data": {
+          "climate_entities": "Thermostats / Entités Climate (Groupe)",
+          "room_temp_sensor": "Capteur de température ambiante (Optionnel - thermique & hystérésis SCS uniquement)",
+          "window_sensors": "Capteurs de fenêtre / porte (Optionnel)",
+          "window_open_delay_minutes": "Délai fenêtre ouverte avant pause (minutes)",
+          "window_close_delay_minutes": "Délai fenêtre fermée avant reprise (minutes)",
+          "window_pause_enabled": "Mettre en pause le chauffage (HVAC Off) si fenêtre ouverte",
           "outside_temp_sensor": "Capteur de température extérieure (priorité sur météo)",
           "outside_weather_entity": "Entité météo pour température extérieure",
           "heating_active_sensor": "Capteur de chauffage / brûleur actif",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Activer le refroidissement anticipé",
           "max_minutes_cooldown": "Temps max. de refroidissement (minutes)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
-          "fallback_tolerance": "Tolérance de réactivation de secours (K)",
+          "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
           "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
-          "tolerance_entity": "Entité de tolérance (Optionnel - Détection automatique via l'appareil si vide)",
           "use_weather_forecast_for_preheat": "Utiliser les prévisions météo pour le préchauffage (moyenne horaire)",
-          "preheat_ignores_away": "Préchauffer avant l'arrivée en absence (Outrepasse absence et zone proche)",
+          "preheat_ignores_away": "Préchauffer malgré l'absence",
           "anomaly_detection_enabled": "Activer la surveillance d'anomalies et matériel (sans chauffe, thermostat hors ligne, capteur figé)",
           "anomaly_no_heat_minutes": "Seuil sans chauffe avec brûleur actif (minutes, 0 = désactivé)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Préchauffer avant le début du créneau",
           "cooldown": "Refroidir avant la fin du créneau"
         }
+      },
+      "custom_presets": {
+        "title": "Gérer les préréglages personnalisés ({presets_count})",
+        "description": "Préréglages de pièce configurés avec leurs températures cibles :{presets_list}",
+        "data": {
+          "preset_action": "Sélectionner une action"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Ajouter un préréglage personnalisé",
+        "description": "Définissez un nom, une température cible et une couleur :",
+        "data": {
+          "name": "Nom du préréglage",
+          "temperature": "Température cible (°C)",
+          "color": "Couleur"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Sélectionner un préréglage personnalisé",
+        "description": "Choisissez le préréglage à modifier ou supprimer :",
+        "data": {
+          "selected_preset": "Sélectionner un préréglage"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Modifier un préréglage personnalisé",
+        "description": "Modifiez ou supprimez le préréglage personnalisé sélectionné :",
+        "data": {
+          "action": "Sélectionner une action",
+          "name": "Nom du préréglage",
+          "temperature": "Température cible (°C)",
+          "color": "Couleur"
+        }
       }
     },
     "error": {
       "invalid_time_range": "L'heure de fin doit être postérieure à l'heure de début.",
       "profile_name_empty": "Le nom du profil ne peut pas être vide.",
-      "profile_name_exists": "Un profil portant ce nom existe déjà."
+      "profile_name_exists": "Un profil portant ce nom existe déjà.",
+      "climate_required": "Au moins un thermostat (entité climate) doit être sélectionné.",
+      "preset_name_empty": "Le nom du préréglage ne peut pas être vide.",
+      "cannot_delete_last_preset": "Au moins un préréglage personnalisé doit être conservé."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Gérer les programmes et profils",
+        "custom_presets": "🌡️ Gérer les préréglages personnalisés",
         "settings": "⚙️ Paramètres (Capteurs, Apprentissage & Taux)",
         "save": "💾 Enregistrer et quitter"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Ajouter un préréglage personnalisé",
+        "edit": "✏️ Modifier ou supprimer un préréglage",
+        "back": "← Retour au menu principal"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Ambre (#f59e0b)",
+        "#10b981": "Émeraude (#10b981)",
+        "#6366f1": "Indigo (#6366f1)",
+        "#ef4444": "Rouge (#ef4444)",
+        "#0ea5e9": "Bleu ciel (#0ea5e9)",
+        "#ec4899": "Rose (#ec4899)",
+        "#8b5cf6": "Violet (#8b5cf6)",
+        "#64748b": "Ardoise (#64748b)"
       }
     },
     "schedule_action": {

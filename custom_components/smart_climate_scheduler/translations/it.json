@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Configurazione iniziale",
-        "description": "Configura il termostato, la sorgente della temperatura esterna (il sensore ha la precedenza sul meteo), il sensore di riscaldamento attivo, l'autoapprendimento e i tassi predefiniti.",
+        "title": "Smart Climate Scheduler - Configurazione iniziale",
+        "description": "Configura i termostati, la sorgente della temperatura esterna (il sensore ha la precedenza sul meteo), il sensore di riscaldamento attivo, l'autoapprendimento e i tassi predefiniti.",
         "data": {
           "name": "Nome della stanza",
           "climate_entity": "Termostato / Entità Climate",
+          "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
+          "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
+          "window_sensors": "Sensori finestra / porta (Opzionale)",
+          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
+          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)",
+          "window_pause_enabled": "Sospendi riscaldamento (HVAC Off) a finestra aperta",
           "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
           "outside_weather_entity": "Entità meteo",
           "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
-          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
+          "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
           "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
-          "tolerance_entity": "Entità tolleranza (Opzionale - Rilevamento automatico dal dispositivo se vuota)",
           "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
           "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
           "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Il nome della stanza è obbligatorio."
+      "name_required": "Il nome della stanza è obbligatorio.",
+      "climate_required": "Selezionare almeno un termostato (entità climate)."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Impostazioni generali e parametri termici",
         "description": "Regola la sorgente di temperatura esterna, l'apprendimento e i tassi di riscaldamento e raffreddamento:",
         "data": {
+          "climate_entities": "Termostati / Entità Climate (Gruppo stanza)",
+          "room_temp_sensor": "Sensore temperatura ambiente (Opzionale - solo per termica e isteresi SCS)",
+          "window_sensors": "Sensori finestra / porta (Opzionale)",
+          "window_open_delay_minutes": "Ritardo finestra aperta prima della pausa (minuti)",
+          "window_close_delay_minutes": "Ritardo finestra chiusa prima di riprendere (minuti)",
+          "window_pause_enabled": "Sospendi riscaldamento (HVAC Off) a finestra aperta",
           "outside_temp_sensor": "Sensore temperatura esterna (precedenza su meteo)",
           "outside_weather_entity": "Entità meteo per temperatura esterna",
           "heating_active_sensor": "Entità riscaldamento / bruciatore attivo",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Abilita raffreddamento anticipato",
           "max_minutes_cooldown": "Tempo massimo di raffreddamento (minuti)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
-          "fallback_tolerance": "Tolleranza di riattivazione di riserva (K)",
+          "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
           "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
-          "tolerance_entity": "Entità tolleranza (Opzionale - Rilevamento automatico dal dispositivo se vuota)",
           "use_weather_forecast_for_preheat": "Usa le previsioni meteo per il preriscaldamento (media oraria)",
-          "preheat_ignores_away": "Preriscalda prima dell'arrivo in assenza (Ignora assenza e zona vicina)",
+          "preheat_ignores_away": "Preriscalda anche in assenza",
           "anomaly_detection_enabled": "Abilita controllo anomalie e hardware (mancato riscaldamento, termostato offline, sensore bloccato)",
           "anomaly_no_heat_minutes": "Soglia senza riscaldamento con bruciatore attivo (minuti, 0 = disattivato)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Preriscalda prima dell'inizio della fascia",
           "cooldown": "Raffredda prima della fine della fascia"
         }
+      },
+      "custom_presets": {
+        "title": "Gestisci preset personalizzati ({presets_count})",
+        "description": "Preset stanza configurati con temperature target personalizzate:{presets_list}",
+        "data": {
+          "preset_action": "Seleziona azione"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Aggiungi preset personalizzato",
+        "description": "Definisci nome, temperatura target e colore:",
+        "data": {
+          "name": "Nome del preset",
+          "temperature": "Temperatura target (°C)",
+          "color": "Colore"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Seleziona preset personalizzato",
+        "description": "Scegli il preset da modificare o eliminare:",
+        "data": {
+          "selected_preset": "Seleziona preset"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Modifica preset personalizzato",
+        "description": "Modifica o elimina il preset personalizzato selezionato:",
+        "data": {
+          "action": "Seleziona azione",
+          "name": "Nome del preset",
+          "temperature": "Temperatura target (°C)",
+          "color": "Colore"
+        }
       }
     },
     "error": {
       "invalid_time_range": "L'ora di fine deve essere successiva all'ora di inizio.",
       "profile_name_empty": "Il nome del profilo non può essere vuoto.",
-      "profile_name_exists": "Esiste già un profilo con questo nome."
+      "profile_name_exists": "Esiste già un profilo con questo nome.",
+      "climate_required": "Selezionare almeno un termostato (entità climate).",
+      "preset_name_empty": "Il nome del preset non può essere vuoto.",
+      "cannot_delete_last_preset": "Deve rimanere almeno un preset personalizzato."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Gestisci programmi e profili",
+        "custom_presets": "🌡️ Gestisci preset personalizzati",
         "settings": "⚙️ Impostazioni (Sensori, Apprendimento e Tassi)",
         "save": "💾 Salva ed esci"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Aggiungi preset personalizzato",
+        "edit": "✏️ Modifica o elimina preset",
+        "back": "← Torna al menu principale"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Ambra (#f59e0b)",
+        "#10b981": "Smeraldo (#10b981)",
+        "#6366f1": "Indaco (#6366f1)",
+        "#ef4444": "Rosso (#ef4444)",
+        "#0ea5e9": "Azzurro cielo (#0ea5e9)",
+        "#ec4899": "Rosa (#ec4899)",
+        "#8b5cf6": "Viola (#8b5cf6)",
+        "#64748b": "Ardesia (#64748b)"
       }
     },
     "schedule_action": {

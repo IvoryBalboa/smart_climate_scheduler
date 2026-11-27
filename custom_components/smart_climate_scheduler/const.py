@@ -1,10 +1,17 @@
-"""Konstanten für den Smart Climate Scheduler (Version 2.0)."""
+"""Konstanten für den Smart Climate Scheduler (Version 4.0.0)."""
 from __future__ import annotations
 
 DOMAIN = "smart_climate_scheduler"
-VERSION = "3.3.1"
+VERSION = "4.0.0"
 
 CONF_CLIMATE_ENTITY = "climate_entity"
+CONF_CLIMATE_ENTITIES = "climate_entities"
+CONF_CUSTOM_PRESETS = "custom_presets"
+CONF_ROOM_TEMP_SENSOR = "room_temp_sensor"
+CONF_WINDOW_SENSORS = "window_sensors"
+CONF_WINDOW_OPEN_DELAY_MINUTES = "window_open_delay_minutes"
+CONF_WINDOW_CLOSE_DELAY_MINUTES = "window_close_delay_minutes"
+CONF_WINDOW_PAUSE_ENABLED = "window_pause_enabled"
 CONF_ZONE_HOME_ENTITY = "zone_home_entity"
 CONF_ZONE_AWAY_NEAR_ENTITY = "zone_away_near_entity"
 CONF_NEAR_DISTANCE = "near_distance"
@@ -15,7 +22,7 @@ CONF_PREHEAT_ENABLED = "preheat_enabled"
 CONF_COOLDOWN_ENABLED = "cooldown_enabled"
 CONF_ENABLE_SELF_LEARNING = "enable_self_learning"
 
-# Version 2.0: Außentemperatur-Quellen, Brenner-Sensor & Standard-Raten
+# Außentemperatur-Quellen, Brenner-Sensor & Standard-Raten
 CONF_OUTSIDE_TEMP_SENSOR = "outside_temp_sensor"
 CONF_OUTSIDE_WEATHER_ENTITY = "outside_weather_entity"
 CONF_HEATING_ACTIVE_SENSOR = "heating_active_sensor"
@@ -24,13 +31,36 @@ CONF_FALLBACK_COOLING_RATE = "fallback_cooling_rate"
 CONF_HVAC_OFF_ON_TARGET = "hvac_off_on_target"
 CONF_FALLBACK_TOLERANCE = "fallback_tolerance"
 CONF_OPPORTUNISTIC_HEATING = "opportunistic_heating"
-CONF_TOLERANCE_ENTITY = "tolerance_entity"
 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT = "use_weather_forecast_for_preheat"
 CONF_PREHEAT_IGNORES_AWAY = "preheat_ignores_away"
 CONF_AWAY_PRESET = "away_preset"
 CONF_AWAY_NEAR_PRESET = "away_near_preset"
 CONF_ANOMALY_DETECTION_ENABLED = "anomaly_detection_enabled"
 CONF_ANOMALY_NO_HEAT_MINUTES = "anomaly_no_heat_minutes"
+
+DEFAULT_WINDOW_OPEN_DELAY_MINUTES = 1
+DEFAULT_WINDOW_CLOSE_DELAY_MINUTES = 2
+DEFAULT_WINDOW_PAUSE_ENABLED = True
+MIN_TARGET_TEMP = 5.0
+MAX_TARGET_TEMP = 30.0
+DEFAULT_CUSTOM_PRESETS = [
+    {"id": "comfort", "name": "Komfort", "temperature": 21.0, "color": "#f59e0b"},
+    {"id": "home", "name": "Zuhause", "temperature": 20.5, "color": "#0ea5e9"},
+    {"id": "eco", "name": "Eco", "temperature": 18.0, "color": "#10b981"},
+    {"id": "sleep", "name": "Schlafen", "temperature": 17.0, "color": "#6366f1"},
+    {"id": "boost", "name": "Boost", "temperature": 23.0, "color": "#ef4444"},
+    {"id": "away", "name": "Abwesend", "temperature": 15.5, "color": "#64748b"},
+]
+CUSTOM_PRESET_PALETTE = [
+    "#f59e0b",
+    "#10b981",
+    "#6366f1",
+    "#ef4444",
+    "#0ea5e9",
+    "#ec4899",
+    "#8b5cf6",
+    "#64748b",
+]
 
 DEFAULT_FALLBACK_PRESET = "eco"
 DEFAULT_AWAY_PRESET = "away"
@@ -58,7 +88,7 @@ ANOMALY_FROZEN_IDLE_MINUTES = 360
 DEFAULT_FALLBACK_HEATING_RATE = 1.0
 DEFAULT_FALLBACK_COOLING_RATE = 0.2
 
-# Karenzzeit nach dem Start von Home Assistant, in der verzögerte Integrationen (z. B. Better Thermostat)
+# Karenzzeit nach dem Start von Home Assistant, in der verzögerte Integrationen (z. B. Zigbee-, Matter- oder Z-Wave-Thermostate)
 # noch initialisieren dürfen, ohne Unverfügbarkeits-Warnungen auszulösen
 STARTUP_GRACE_SECONDS = 90
 

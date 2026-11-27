@@ -1,5 +1,5 @@
 /**
- * Smart Climate Scheduler Card (v3.3.1)
+ * Smart Climate Scheduler Card (v4.0.0)
  * Embedded interactive 24h timeline & multi-room overview Lovelace cards for Home Assistant.
  * Self-contained ES module with Shadow DOM & zero external dependencies.
  */
@@ -103,6 +103,21 @@ const I18N = {
     anomalyBurnerOff: "Brenner aus",
     anomalyUnchangedSince: "Unverändert seit",
     filterAnomaly: "Warnungen",
+    customPresets: "Eigene Presets",
+    addPreset: "+ Preset",
+    presetName: "Name",
+    presetTemp: "Temperatur",
+    presetColor: "Farbe",
+    savePresets: "Presets speichern",
+    thermostatGroup: "Thermostate",
+    offline: "Offline",
+    roomSensorLabel: "Raumsensor",
+    thermostatsMeanLabel: "Gruppen-Ø",
+    scsInternalOnlyHint: "nur SCS-Thermik",
+    windowOpenBanner: "Fenster offen",
+    windowOpeningCountdown: "Fenster erkannt – Pause in {sec}s",
+    windowClosingCountdown: "Fenster zu – Wiederherstellung in {sec}s",
+    windowPauseNotice: "Heizung pausiert",
   },
   en: {
     daysShort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -194,6 +209,21 @@ const I18N = {
     anomalyBurnerOff: "Burner off",
     anomalyUnchangedSince: "Unchanged for",
     filterAnomaly: "Warnings",
+    customPresets: "Custom presets",
+    addPreset: "+ Preset",
+    presetName: "Name",
+    presetTemp: "Temperature",
+    presetColor: "Color",
+    savePresets: "Save presets",
+    thermostatGroup: "Thermostats",
+    offline: "Offline",
+    roomSensorLabel: "Room sensor",
+    thermostatsMeanLabel: "Group avg",
+    scsInternalOnlyHint: "SCS thermics only",
+    windowOpenBanner: "Window open",
+    windowOpeningCountdown: "Window detected – pausing in {sec}s",
+    windowClosingCountdown: "Window closed – restoring in {sec}s",
+    windowPauseNotice: "Heating paused",
   },
   fr: {
     daysShort: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -285,6 +315,21 @@ const I18N = {
     anomalyBurnerOff: "Brûleur arrêté",
     anomalyUnchangedSince: "Inchangé depuis",
     filterAnomaly: "Alertes",
+    customPresets: "Préréglages perso",
+    addPreset: "+ Préréglage",
+    presetName: "Nom",
+    presetTemp: "Température",
+    presetColor: "Couleur",
+    savePresets: "Enregistrer",
+    thermostatGroup: "Thermostats",
+    offline: "Hors ligne",
+    roomSensorLabel: "Capteur pièce",
+    thermostatsMeanLabel: "Moyenne groupe",
+    scsInternalOnlyHint: "thermique SCS uniq.",
+    windowOpenBanner: "Fenêtre ouverte",
+    windowOpeningCountdown: "Fenêtre détectée – pause dans {sec}s",
+    windowClosingCountdown: "Fenêtre fermée – reprise dans {sec}s",
+    windowPauseNotice: "Chauffage en pause",
   },
   es: {
     daysShort: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -376,6 +421,21 @@ const I18N = {
     anomalyBurnerOff: "Caldera apagada",
     anomalyUnchangedSince: "Sin cambios desde",
     filterAnomaly: "Alertas",
+    customPresets: "Preajustes propios",
+    addPreset: "+ Preajuste",
+    presetName: "Nombre",
+    presetTemp: "Temperatura",
+    presetColor: "Color",
+    savePresets: "Guardar preajustes",
+    thermostatGroup: "Termostatos",
+    offline: "Desconectado",
+    roomSensorLabel: "Sensor de sala",
+    thermostatsMeanLabel: "Media grupo",
+    scsInternalOnlyHint: "solo térmica SCS",
+    windowOpenBanner: "Ventana abierta",
+    windowOpeningCountdown: "Ventana detectada – pausa en {sec}s",
+    windowClosingCountdown: "Ventana cerrada – reanuda en {sec}s",
+    windowPauseNotice: "Calefacción en pausa",
   },
   it: {
     daysShort: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -467,6 +527,21 @@ const I18N = {
     anomalyBurnerOff: "Caldaia spenta",
     anomalyUnchangedSince: "Invariato da",
     filterAnomaly: "Avvisi",
+    customPresets: "Preset personalizzati",
+    addPreset: "+ Preset",
+    presetName: "Nome",
+    presetTemp: "Temperatura",
+    presetColor: "Colore",
+    savePresets: "Salva preset",
+    thermostatGroup: "Termostati",
+    offline: "Non disponibile",
+    roomSensorLabel: "Sensore stanza",
+    thermostatsMeanLabel: "Media gruppo",
+    scsInternalOnlyHint: "solo termica SCS",
+    windowOpenBanner: "Finestra aperta",
+    windowOpeningCountdown: "Finestra rilevata – pausa tra {sec}s",
+    windowClosingCountdown: "Finestra chiusa – ripristino tra {sec}s",
+    windowPauseNotice: "Riscaldamento in pausa",
   },
   nl: {
     daysShort: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -558,6 +633,21 @@ const I18N = {
     anomalyBurnerOff: "Brander uit",
     anomalyUnchangedSince: "Ongewijzigd sinds",
     filterAnomaly: "Waarschuwingen",
+    customPresets: "Eigen presets",
+    addPreset: "+ Preset",
+    presetName: "Naam",
+    presetTemp: "Temperatuur",
+    presetColor: "Kleur",
+    savePresets: "Presets opslaan",
+    thermostatGroup: "Thermostaten",
+    offline: "Offline",
+    roomSensorLabel: "Ruimtesensor",
+    thermostatsMeanLabel: "Groepsgem.",
+    scsInternalOnlyHint: "alleen SCS-thermiek",
+    windowOpenBanner: "Raam open",
+    windowOpeningCountdown: "Raam gedetecteerd – pauze over {sec}s",
+    windowClosingCountdown: "Raam dicht – herstel over {sec}s",
+    windowPauseNotice: "Verwarming gepauzeerd",
   },
   pl: {
     daysShort: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
@@ -649,6 +739,21 @@ const I18N = {
     anomalyBurnerOff: "Palnik wyłączony",
     anomalyUnchangedSince: "Bez zmian od",
     filterAnomaly: "Ostrzeżenia",
+    customPresets: "Własne presety",
+    addPreset: "+ Preset",
+    presetName: "Nazwa",
+    presetTemp: "Temperatura",
+    presetColor: "Kolor",
+    savePresets: "Zapisz presety",
+    thermostatGroup: "Termostaty",
+    offline: "Niedostępny",
+    roomSensorLabel: "Czujnik pokoju",
+    thermostatsMeanLabel: "Średnia grupy",
+    scsInternalOnlyHint: "tylko termika SCS",
+    windowOpenBanner: "Okno otwarte",
+    windowOpeningCountdown: "Wykryto okno – pauza za {sec}s",
+    windowClosingCountdown: "Okno zamknięte – wznowienie za {sec}s",
+    windowPauseNotice: "Ogrzewanie wstrzymane",
   },
 };
 
@@ -671,6 +776,43 @@ const PRESET_COLORS = {
 function getPresetColor(preset) {
   const key = String(preset || "none").toLowerCase().trim();
   return PRESET_COLORS[key] || { bg: "#d97706", bgMuted: "rgba(217, 119, 6, 0.72)", border: "#fbbf24", text: "#111827" };
+}
+
+const CUSTOM_PRESET_SWATCHES = ["#f59e0b", "#10b981", "#6366f1", "#ef4444", "#0ea5e9", "#ec4899", "#8b5cf6", "#64748b"];
+
+function buildHexPresetColor(hex) {
+  const raw = String(hex || "").trim();
+  const m = raw.match(/^#([0-9a-fA-F]{6})$/);
+  if (!m) return null;
+  const intVal = parseInt(m[1], 16);
+  const r = (intVal >> 16) & 255;
+  const g = (intVal >> 8) & 255;
+  const b = intVal & 255;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return {
+    bg: `#${m[1].toLowerCase()}`,
+    bgMuted: `rgba(${r}, ${g}, ${b}, 0.76)`,
+    border: `#${m[1].toLowerCase()}`,
+    text: lum > 0.62 ? "#111827" : "#ffffff",
+  };
+}
+
+function resolvePresetColor(data, preset) {
+  const colors = data?.preset_colors;
+  if (colors && typeof colors === "object") {
+    const exact = colors[preset];
+    const lower = colors[String(preset || "").toLowerCase().trim()];
+    const resolved = buildHexPresetColor(exact || lower);
+    if (resolved) return resolved;
+  }
+  return getPresetColor(preset);
+}
+
+function computeRemainingSeconds(isoTimestamp) {
+  if (!isoTimestamp) return null;
+  const ms = Date.parse(isoTimestamp);
+  if (Number.isNaN(ms)) return null;
+  return Math.max(0, Math.ceil((ms - Date.now()) / 1000));
 }
 
 function parseMinutes(hhmm) {
@@ -922,6 +1064,7 @@ const ICONS = {
   bolt: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
   plus: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
   chevron: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+  sliders: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>',
 };
 
 class SmartClimateSchedulerCard extends HTMLElement {
@@ -938,7 +1081,9 @@ class SmartClimateSchedulerCard extends HTMLElement {
     this._selectedDay = getTodayKey();
     this._selectedSlotIdx = null;
     this._draftSlot = null;
-    this._activePanel = null; // null | 'copy' | 'override' | 'profile'
+    this._activePanel = null; // null | 'copy' | 'override' | 'profile' | 'custom_presets'
+    this._draftPresets = [];
+    this._thermostatsDrawerOpen = false;
     this._copyTargets = new Set();
     this._overridePreset = "boost";
     this._overrideDurationMin = 60;
@@ -1021,20 +1166,27 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
     // Track relevant entity states cleanly without resetting active drag/edits
     if (this._data && !this._dragState) {
-      const watchedIds = [
-        this._data.schedule_entity_id,
-        this._data.climate_entity,
-        this._data.automation_switch_entity_id,
-        this._data.profile_select_entity_id,
-        this._data.anomaly_entity_id,
-      ].filter(Boolean);
+      const watchedIds = Array.from(
+        new Set(
+          [
+            this._data.schedule_entity_id,
+            this._data.climate_entity,
+            ...(Array.isArray(this._data.climate_entities) ? this._data.climate_entities : []),
+            this._data.room_temp_sensor,
+            ...(Array.isArray(this._data.window_sensors) ? this._data.window_sensors : []),
+            this._data.automation_switch_entity_id,
+            this._data.profile_select_entity_id,
+            this._data.anomaly_entity_id,
+          ].filter(Boolean)
+        )
+      );
 
       const sig = watchedIds
         .map((id) => {
           const st = hass.states?.[id];
           if (!st) return `${id}:missing`;
           const attrs = st.attributes || {};
-          return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.preset_mode}:${attrs.primary_type}:${attrs.heating_watch_minutes}`;
+          return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.preset_mode}:${attrs.primary_type}:${attrs.heating_watch_minutes}:${attrs.window_open}:${attrs.door_open}:${attrs.pending_action}`;
         })
         .join("|");
 
@@ -1132,17 +1284,65 @@ class SmartClimateSchedulerCard extends HTMLElement {
   _getLiveStatus() {
     const d = this._data || {};
     const st = this._hass?.states || {};
+    const climateIds = Array.isArray(d.climate_entities) && d.climate_entities.length > 0
+      ? d.climate_entities
+      : (d.climate_entity ? [d.climate_entity] : []);
     const clSt = d.climate_entity ? st[d.climate_entity] : null;
     const swSt = d.automation_switch_entity_id ? st[d.automation_switch_entity_id] : null;
     const schSt = d.schedule_entity_id ? st[d.schedule_entity_id] : null;
 
     const automationOn = swSt ? swSt.state === "on" : Boolean(d.automation_enabled);
-    const curTemp = clSt?.attributes?.current_temperature ?? d.current_temperature;
+    const thermostats = climateIds.map((eid) => {
+      const liveSt = st[eid];
+      const baseMeta = (Array.isArray(d.thermostat_states) ? d.thermostat_states : []).find((x) => x.entity_id === eid) || {};
+      if (liveSt) {
+        const attrs = liveSt.attributes || {};
+        const avail = !["unknown", "unavailable", "none", ""].includes(String(liveSt.state || "").toLowerCase());
+        return {
+          entity_id: eid,
+          state: liveSt.state,
+          hvac_action: attrs.hvac_action ?? baseMeta.hvac_action ?? null,
+          current_temperature: attrs.current_temperature ?? baseMeta.current_temperature ?? null,
+          target_temperature: attrs.temperature ?? baseMeta.target_temperature ?? null,
+          available: avail,
+        };
+      }
+      return {
+        entity_id: eid,
+        state: baseMeta.state || "unavailable",
+        hvac_action: baseMeta.hvac_action ?? null,
+        current_temperature: baseMeta.current_temperature ?? null,
+        target_temperature: baseMeta.target_temperature ?? null,
+        available: Boolean(baseMeta.available),
+      };
+    });
+
+    let liveRoomSensorTemp = null;
+    if (d.room_temp_sensor && st[d.room_temp_sensor]) {
+      const rSt = st[d.room_temp_sensor];
+      if (!["unknown", "unavailable", "none", ""].includes(String(rSt.state || "").toLowerCase())) {
+        const parsed = Number(rSt.state);
+        if (!Number.isNaN(parsed)) liveRoomSensorTemp = parsed;
+      }
+    }
+    const groupTemps = thermostats
+      .filter((trv) => trv.available && trv.current_temperature !== null && trv.current_temperature !== undefined)
+      .map((trv) => Number(trv.current_temperature))
+      .filter((n) => !Number.isNaN(n));
+    const groupMeanTemp = groupTemps.length > 0
+      ? groupTemps.reduce((acc, v) => acc + v, 0) / groupTemps.length
+      : null;
+
+    const curTemp = d.room_temp_sensor
+      ? (liveRoomSensorTemp ?? d.current_temperature)
+      : (groupMeanTemp ?? clSt?.attributes?.current_temperature ?? d.current_temperature);
     const tgtTemp = d.target_temperature ?? clSt?.attributes?.temperature;
     const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
-    const hvacAction = clSt?.attributes?.hvac_action ?? d.hvac_action;
+    const hvacAction = thermostats.some((trv) => trv.hvac_action === "heating")
+      ? "heating"
+      : (clSt?.attributes?.hvac_action ?? d.hvac_action);
     const anomaly = resolveLiveAnomaly(d, st);
 
     return {
@@ -1154,6 +1354,12 @@ class SmartClimateSchedulerCard extends HTMLElement {
       coolingDown,
       hvacAction,
       anomaly,
+      thermostats,
+      windowOpen: Boolean(d.window_open),
+      windowRawOpen: Boolean(d.window_raw_open),
+      windowPendingAction: d.window_pending_action || null,
+      windowPendingSeconds: computeRemainingSeconds(d.window_pending_until),
+      windowPauseEnabled: d.window_pause_enabled !== false,
     };
   }
 
@@ -1240,10 +1446,17 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
   async _handleStartOverride() {
     if (!this._hass || !this._data) return;
+    const avail = this._getAvailablePresets().filter((p) => p !== "none");
+    const selectVal = this.shadowRoot?.querySelector("#ov-preset")?.value;
+    const candidate = selectVal || this._overridePreset;
+    const chosenPreset = avail.includes(candidate)
+      ? candidate
+      : (avail[0] || candidate);
+    this._overridePreset = chosenPreset;
     try {
       await this._hass.callService(DOMAIN, "set_override", {
         entry_id: this._data.entry_id,
-        preset: this._overridePreset,
+        preset: chosenPreset,
         duration: { minutes: Number(this._overrideDurationMin) || 60 },
       });
       this._activePanel = null;
@@ -1287,6 +1500,50 @@ class SmartClimateSchedulerCard extends HTMLElement {
     this._render();
   }
 
+  async _handleSaveCustomPresets() {
+    if (!this._hass || !this._data) return;
+    const clean = (Array.isArray(this._draftPresets) ? this._draftPresets : [])
+      .map((p, idx) => {
+        const name = String(p?.name || "").trim() || `Preset ${idx + 1}`;
+        const rawTemp = Number(p?.temperature);
+        const temp = Number.isNaN(rawTemp)
+          ? 20.0
+          : Math.max(5.0, Math.min(30.0, Math.round(rawTemp * 10) / 10));
+        const color = /^#[0-9a-fA-F]{6}$/.test(String(p?.color || "").trim())
+          ? String(p.color).trim().toLowerCase()
+          : CUSTOM_PRESET_SWATCHES[idx % CUSTOM_PRESET_SWATCHES.length];
+        return {
+          id: String(p?.id || "").trim(),
+          name,
+          temperature: temp,
+          color,
+        };
+      });
+    if (clean.length === 0) return;
+    try {
+      const res = await this._hass.callWS({
+        type: `${DOMAIN}/save_custom_presets`,
+        entry_id: this._data.entry_id,
+        custom_presets: clean,
+      });
+      this._data = res;
+      this._activePanel = null;
+      this._error = null;
+      this._showToast(this._t().saved);
+    } catch (err) {
+      this._error = err?.message || "Save custom presets failed";
+    }
+    this._render();
+  }
+
+  _getAvailablePresets() {
+    const d = this._data || {};
+    if (Array.isArray(d.custom_presets) && d.custom_presets.length > 0) {
+      return Array.from(new Set([...d.custom_presets.map((p) => p.id), "none"]));
+    }
+    return Array.from(new Set([...(d.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS]));
+  }
+
   _selectSlot(idx) {
     const slots = this._getDaySlots();
     if (idx === null || idx < 0 || idx >= slots.length) {
@@ -1308,7 +1565,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
   async _addNewSlotAt(startMin, endMin) {
     const slots = this._getDaySlots().map((s) => ({ ...s }));
-    const presets = this._data?.supported_presets || DEFAULT_PRESETS;
+    const presets = this._getAvailablePresets();
     const defaultNewPreset = presets.includes("comfort")
       ? "comfort"
       : presets.find((p) => p !== "none" && p !== this._data?.default_preset) || presets[0] || "comfort";
@@ -1546,7 +1803,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
     const activeProfile = this._getActiveProfileName();
     const profileNames = Object.keys(d.profiles || { Standard: {} });
     const daySlots = this._getDaySlots(this._selectedDay);
-    const presets = Array.from(new Set([...(d.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS]));
+    const presets = this._getAvailablePresets();
     const activeOverrides = Object.entries(d.overrides || {});
     const isToday = this._selectedDay === getTodayKey();
     const nowDt = new Date();
@@ -1567,8 +1824,30 @@ class SmartClimateSchedulerCard extends HTMLElement {
     statusParts.push(`${presetLabel}${phaseSuffix}`);
     const anomalySummary = formatAnomalySummary(live.anomaly, t);
 
+    const onlineTrvs = live.thermostats.filter((x) => x.available).length;
+    const totalTrvs = live.thermostats.length;
+    const metaParts = [];
+    if (d.room_temp_sensor) {
+      metaParts.push(`${t.roomSensorLabel} (${t.scsInternalOnlyHint})`);
+    } else if (totalTrvs > 1) {
+      metaParts.push(t.thermostatsMeanLabel);
+    }
+    const showTrvToggle = totalTrvs > 1 || onlineTrvs < totalTrvs;
+
+    let windowBannerHtml = "";
+    if (live.windowOpen) {
+      const pausePart = live.windowPauseEnabled ? ` · ${t.windowPauseNotice}` : "";
+      const closeCountdown =
+        live.windowPendingAction === "close" && live.windowPendingSeconds !== null
+          ? ` · ${t.windowClosingCountdown.replace("{sec}", String(live.windowPendingSeconds))}`
+          : "";
+      windowBannerHtml = `<div class="window-banner active">🪟 ${escapeHtml(`${t.windowOpenBanner}${pausePart}${closeCountdown}`)}</div>`;
+    } else if (live.windowPendingAction === "open" && live.windowPendingSeconds !== null) {
+      windowBannerHtml = `<div class="window-banner pending">🪟 ${escapeHtml(t.windowOpeningCountdown.replace("{sec}", String(live.windowPendingSeconds)))}</div>`;
+    }
+
     const basePresetKey = d.default_preset || "eco";
-    const basePresetColor = getPresetColor(basePresetKey);
+    const basePresetColor = resolvePresetColor(d, basePresetKey);
     const basePresetLabel = this._getPresetLabel(basePresetKey);
     const baseTemp = this._getPresetTemp(basePresetKey);
     const baseTempText = baseTemp !== undefined ? ` ${Number(baseTemp).toFixed(1).replace(/\.0$/, "")}°` : "";
@@ -1600,7 +1879,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
           .map((seg) => {
             const leftPct = (seg.startMin / 1440) * 100;
             const widthPct = Math.max(0.8, ((seg.endMin - seg.startMin) / 1440) * 100);
-            const col = getPresetColor(seg.targetPreset);
+            const col = resolvePresetColor(d, seg.targetPreset);
             const pLabel = this._getPresetLabel(seg.targetPreset);
             const kindLabel = seg.kind === "preheat" ? t.preheatPreview : t.cooldownPreview;
             const timeStr = `${formatMinutes(seg.startMin, false)}–${formatMinutes(seg.endMin, false)}`;
@@ -1625,7 +1904,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
         const leftPct = (sMin / 1440) * 100;
         const widthPct = Math.max(1.2, ((eMin - sMin) / 1440) * 100);
         const isSel = idx === this._selectedSlotIdx;
-        const col = getPresetColor(slot.preset);
+        const col = resolvePresetColor(d, slot.preset);
         const pLabel = this._getPresetLabel(slot.preset);
         const timeStr = `${formatMinutes(sMin, false)}-${formatMinutes(eMin, false)}`;
         const showFullText = widthPct >= 9.5;
@@ -1682,6 +1961,21 @@ class SmartClimateSchedulerCard extends HTMLElement {
                 </span>
               </div>
               ${
+                metaParts.length > 0 || showTrvToggle
+                  ? `<div class="meta-line tabular">
+                      ${[
+                        ...metaParts.map((m) => `<span>${escapeHtml(m)}</span>`),
+                        ...(showTrvToggle
+                          ? [
+                              `<button type="button" id="btn-trvs-toggle" class="meta-link ${this._thermostatsDrawerOpen ? "open" : ""}">${escapeHtml(`${t.thermostatGroup}: ${onlineTrvs}/${totalTrvs}`)}</button>`,
+                            ]
+                          : []),
+                      ].join('<span class="sep">·</span>')}
+                    </div>`
+                  : ""
+              }
+              ${windowBannerHtml}
+              ${
                 activeOverrides.length > 0
                   ? `<div class="override-banner">
                       <span>${escapeHtml(t.overrideActive)}: ${escapeHtml(this._getPresetLabel(activeOverrides[0][1]?.preset))}</span>
@@ -1701,6 +1995,31 @@ class SmartClimateSchedulerCard extends HTMLElement {
               <span class="switch-label">${escapeHtml(t.automatic)}</span>
             </label>
           </div>
+          ${
+            this._thermostatsDrawerOpen && live.thermostats.length > 0
+              ? `<div class="trv-drawer">
+                  ${live.thermostats
+                    .map((trv) => {
+                      const tStr = trv.available
+                        ? [
+                            trv.state,
+                            trv.hvac_action,
+                            trv.current_temperature !== null && trv.current_temperature !== undefined
+                              ? `${Number(trv.current_temperature).toFixed(1)}°`
+                              : null,
+                            trv.target_temperature !== null && trv.target_temperature !== undefined
+                              ? `→ ${Number(trv.target_temperature).toFixed(1)}°`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : t.offline;
+                      return `<div class="trv-row tabular ${trv.available ? "" : "offline"}"><span class="trv-id">${escapeHtml(trv.entity_id)}</span><span>${escapeHtml(tStr)}</span></div>`;
+                    })
+                    .join("")}
+                </div>`
+              : ""
+          }
           ${
             live.anomaly?.active && this._anomalyDetailsOpen
               ? `<div class="anomaly-banner">⚠️ <strong>${escapeHtml(t.anomalyWarning)}:</strong> ${escapeHtml(anomalySummary.detailText)}</div>`
@@ -1725,6 +2044,7 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
             <div class="action-buttons">
               ${this._toast ? `<span class="toast-msg">${escapeHtml(this._toast)}</span>` : ""}
+              <button class="btn-icon ${this._activePanel === "custom_presets" ? "active" : ""}" id="btn-custom-presets" type="button" title="${escapeHtml(t.customPresets)}" aria-label="${escapeHtml(t.customPresets)}">${ICONS.sliders}</button>
               <button class="btn-icon ${this._activePanel === "copy" ? "active" : ""}" id="btn-copy-day" type="button" title="${escapeHtml(t.copyDay)}" aria-label="${escapeHtml(t.copyDay)}">${ICONS.copy}</button>
               ${
                 this._config?.show_override_bar !== false
@@ -1841,6 +2161,37 @@ class SmartClimateSchedulerCard extends HTMLElement {
       `;
     }
 
+    if (this._activePanel === "custom_presets") {
+      const list = Array.isArray(this._draftPresets) ? this._draftPresets : [];
+      return `
+        <div class="popover-panel">
+          <div class="popover-title">${escapeHtml(t.customPresets)}</div>
+          <div class="cp-list">
+            ${list
+              .map(
+                (p, idx) => `
+                  <div class="cp-row" data-cp-idx="${idx}">
+                    <input id="cp-name-${idx}" class="ctrl-input cp-name" data-cp-name="${idx}" type="text" value="${escapeHtml(p.name || "")}" placeholder="${escapeHtml(t.presetName)}" />
+                    <div class="cp-temp-wrap">
+                      <input id="cp-temp-${idx}" class="ctrl-input tabular cp-temp" data-cp-temp="${idx}" type="number" min="5" max="30" step="0.1" value="${Number(p.temperature ?? 20).toFixed(1)}" />
+                      <span class="unit-label">°C</span>
+                    </div>
+                    <input class="cp-color" data-cp-color="${idx}" type="color" value="${escapeHtml(/^#[0-9a-fA-F]{6}$/.test(p.color || "") ? p.color : CUSTOM_PRESET_SWATCHES[idx % CUSTOM_PRESET_SWATCHES.length])}" title="${escapeHtml(t.presetColor)}" />
+                    <button type="button" class="btn-outline danger cp-del" data-cp-del="${idx}" ${list.length <= 1 ? "disabled" : ""} title="${escapeHtml(t.delete)}">×</button>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+          <div class="popover-actions">
+            <button type="button" class="btn-outline" id="cp-add">${escapeHtml(t.addPreset)}</button>
+            <button type="button" class="btn-outline" id="panel-cancel">${escapeHtml(t.cancel)}</button>
+            <button type="button" class="btn-primary" id="cp-save">${escapeHtml(t.savePresets)}</button>
+          </div>
+        </div>
+      `;
+    }
+
     if (this._activePanel === "profile") {
       return `
         <div class="popover-panel">
@@ -1921,6 +2272,10 @@ class SmartClimateSchedulerCard extends HTMLElement {
     if (!root) return;
 
     root.querySelector("#auto-toggle")?.addEventListener("change", () => this._handleToggleAuto());
+    root.querySelector("#btn-trvs-toggle")?.addEventListener("click", () => {
+      this._thermostatsDrawerOpen = !this._thermostatsDrawerOpen;
+      this._render();
+    });
     root.querySelector("#btn-anomaly-toggle")?.addEventListener("click", () => {
       this._anomalyDetailsOpen = !this._anomalyDetailsOpen;
       this._render();
@@ -1932,6 +2287,17 @@ class SmartClimateSchedulerCard extends HTMLElement {
 
     root.querySelector("#btn-profile-manage")?.addEventListener("click", () => {
       this._activePanel = this._activePanel === "profile" ? null : "profile";
+      this._render();
+    });
+
+    root.querySelector("#btn-custom-presets")?.addEventListener("click", () => {
+      if (this._activePanel === "custom_presets") {
+        this._activePanel = null;
+      } else {
+        const src = Array.isArray(this._data?.custom_presets) ? this._data.custom_presets : [];
+        this._draftPresets = src.map((p) => ({ ...p }));
+        this._activePanel = "custom_presets";
+      }
       this._render();
     });
 
@@ -2071,6 +2437,49 @@ class SmartClimateSchedulerCard extends HTMLElement {
         profile: this._getActiveProfileName(),
       });
     });
+
+    // Custom Presets panel
+    root.querySelectorAll("[data-cp-name]").forEach((inp) => {
+      inp.addEventListener("input", (ev) => {
+        const idx = parseInt(inp.dataset.cpName, 10);
+        if (this._draftPresets[idx]) this._draftPresets[idx].name = ev.target.value;
+      });
+    });
+    root.querySelectorAll("[data-cp-temp]").forEach((inp) => {
+      inp.addEventListener("input", (ev) => {
+        const idx = parseInt(inp.dataset.cpTemp, 10);
+        const val = parseFloat(ev.target.value);
+        if (this._draftPresets[idx] && !Number.isNaN(val)) {
+          this._draftPresets[idx].temperature = Math.round(val * 10) / 10;
+        }
+      });
+    });
+    root.querySelectorAll("[data-cp-color]").forEach((inp) => {
+      inp.addEventListener("change", (ev) => {
+        const idx = parseInt(inp.dataset.cpColor, 10);
+        if (this._draftPresets[idx]) this._draftPresets[idx].color = ev.target.value;
+      });
+    });
+    root.querySelectorAll("[data-cp-del]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.cpDel, 10);
+        if (this._draftPresets.length > 1 && idx >= 0 && idx < this._draftPresets.length) {
+          this._draftPresets.splice(idx, 1);
+          this._render();
+        }
+      });
+    });
+    root.querySelector("#cp-add")?.addEventListener("click", () => {
+      const idx = this._draftPresets.length;
+      this._draftPresets.push({
+        id: "",
+        name: `Preset ${idx + 1}`,
+        temperature: 20.0,
+        color: CUSTOM_PRESET_SWATCHES[idx % CUSTOM_PRESET_SWATCHES.length],
+      });
+      this._render();
+    });
+    root.querySelector("#cp-save")?.addEventListener("click", () => this._handleSaveCustomPresets());
   }
 
   _getStyles() {
@@ -2141,6 +2550,105 @@ class SmartClimateSchedulerCard extends HTMLElement {
       }
       .sep {
         opacity: 0.55;
+      }
+      .meta-line {
+        font-size: 0.72rem;
+        color: var(--scs-muted);
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+      }
+      .meta-link {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: var(--scs-accent);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .window-banner {
+        font-size: 0.72rem;
+        border-radius: 6px;
+        padding: 3px 7px;
+        align-self: flex-start;
+        font-weight: 500;
+        margin-top: 2px;
+      }
+      .window-banner.active {
+        background: rgba(56, 189, 248, 0.14);
+        border: 1px solid rgba(56, 189, 248, 0.42);
+        color: #38bdf8;
+      }
+      .window-banner.pending {
+        background: rgba(245, 158, 11, 0.14);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #fbbf24;
+      }
+      .trv-drawer {
+        background: var(--scs-surface);
+        border: 1px solid var(--scs-border);
+        border-radius: 7px;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .trv-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.72rem;
+        color: var(--scs-muted);
+      }
+      .trv-row.offline {
+        color: color-mix(in srgb, #ef4444 75%, var(--scs-text));
+      }
+      .trv-id {
+        color: var(--scs-text);
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .cp-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+      }
+      .cp-name {
+        flex: 1;
+        min-width: 110px;
+      }
+      .cp-temp-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .cp-temp {
+        width: 68px;
+      }
+      .cp-color {
+        width: 30px;
+        height: 30px;
+        padding: 1px;
+        border-radius: 6px;
+        border: 1px solid var(--scs-border);
+        background: var(--scs-surface);
+        cursor: pointer;
+      }
+      .cp-del {
+        min-width: 28px;
+        padding: 0 6px;
       }
       .override-banner {
         display: inline-flex;
@@ -3085,19 +3593,26 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     if (this._roomsData.length > 0) {
       const sig = this._roomsData
         .map((d) => {
-          const ids = [
-            d.schedule_entity_id,
-            d.climate_entity,
-            d.automation_switch_entity_id,
-            d.profile_select_entity_id,
-            d.anomaly_entity_id,
-          ].filter(Boolean);
+          const ids = Array.from(
+            new Set(
+              [
+                d.schedule_entity_id,
+                d.climate_entity,
+                ...(Array.isArray(d.climate_entities) ? d.climate_entities : []),
+                d.room_temp_sensor,
+                ...(Array.isArray(d.window_sensors) ? d.window_sensors : []),
+                d.automation_switch_entity_id,
+                d.profile_select_entity_id,
+                d.anomaly_entity_id,
+              ].filter(Boolean)
+            )
+          );
           return ids
             .map((id) => {
               const st = hass.states?.[id];
               if (!st) return `${id}:missing`;
               const attrs = st.attributes || {};
-              return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.primary_type}`;
+              return `${id}:${st.state}:${attrs.current_temperature}:${attrs.temperature}:${attrs.hvac_action}:${attrs.profile}:${attrs.primary_type}:${attrs.window_open}`;
             })
             .join(",");
         })
@@ -3169,17 +3684,65 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
 
   _getRoomLive(d) {
     const st = this._hass?.states || {};
+    const climateIds = Array.isArray(d.climate_entities) && d.climate_entities.length > 0
+      ? d.climate_entities
+      : (d.climate_entity ? [d.climate_entity] : []);
     const clSt = d.climate_entity ? st[d.climate_entity] : null;
     const swSt = d.automation_switch_entity_id ? st[d.automation_switch_entity_id] : null;
     const schSt = d.schedule_entity_id ? st[d.schedule_entity_id] : null;
 
     const automationOn = swSt ? swSt.state === "on" : Boolean(d.automation_enabled);
-    const curTemp = clSt?.attributes?.current_temperature ?? d.current_temperature;
+    const thermostats = climateIds.map((eid) => {
+      const liveSt = st[eid];
+      const baseMeta = (Array.isArray(d.thermostat_states) ? d.thermostat_states : []).find((x) => x.entity_id === eid) || {};
+      if (liveSt) {
+        const attrs = liveSt.attributes || {};
+        const avail = !["unknown", "unavailable", "none", ""].includes(String(liveSt.state || "").toLowerCase());
+        return {
+          entity_id: eid,
+          state: liveSt.state,
+          hvac_action: attrs.hvac_action ?? baseMeta.hvac_action ?? null,
+          current_temperature: attrs.current_temperature ?? baseMeta.current_temperature ?? null,
+          target_temperature: attrs.temperature ?? baseMeta.target_temperature ?? null,
+          available: avail,
+        };
+      }
+      return {
+        entity_id: eid,
+        state: baseMeta.state || "unavailable",
+        hvac_action: baseMeta.hvac_action ?? null,
+        current_temperature: baseMeta.current_temperature ?? null,
+        target_temperature: baseMeta.target_temperature ?? null,
+        available: Boolean(baseMeta.available),
+      };
+    });
+
+    let liveRoomSensorTemp = null;
+    if (d.room_temp_sensor && st[d.room_temp_sensor]) {
+      const rSt = st[d.room_temp_sensor];
+      if (!["unknown", "unavailable", "none", ""].includes(String(rSt.state || "").toLowerCase())) {
+        const parsed = Number(rSt.state);
+        if (!Number.isNaN(parsed)) liveRoomSensorTemp = parsed;
+      }
+    }
+    const groupTemps = thermostats
+      .filter((trv) => trv.available && trv.current_temperature !== null && trv.current_temperature !== undefined)
+      .map((trv) => Number(trv.current_temperature))
+      .filter((n) => !Number.isNaN(n));
+    const groupMeanTemp = groupTemps.length > 0
+      ? groupTemps.reduce((acc, v) => acc + v, 0) / groupTemps.length
+      : null;
+
+    const curTemp = d.room_temp_sensor
+      ? (liveRoomSensorTemp ?? d.current_temperature)
+      : (groupMeanTemp ?? clSt?.attributes?.current_temperature ?? d.current_temperature);
     const tgtTemp = d.target_temperature ?? clSt?.attributes?.temperature;
     const activePreset = (schSt && !["unknown", "unavailable"].includes(schSt.state)) ? schSt.state : d.active_preset;
     const preheating = Boolean(d.preheat?.is_preheating);
     const coolingDown = Boolean(d.cooldown?.is_cooling_down);
-    const hvacAction = clSt?.attributes?.hvac_action ?? d.hvac_action ?? null;
+    const hvacAction = thermostats.some((trv) => trv.hvac_action === "heating")
+      ? "heating"
+      : (clSt?.attributes?.hvac_action ?? d.hvac_action ?? null);
     const isHeating = hvacAction === "heating";
     const activeOverrides = Object.entries(d.overrides || {});
     const tempDelta =
@@ -3202,6 +3765,10 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       anomaly,
       anomalyActive: Boolean(anomaly.active),
       anomalyType: anomaly.primary_type || null,
+      thermostats,
+      windowOpen: Boolean(d.window_open),
+      windowPendingAction: d.window_pending_action || null,
+      windowPendingSeconds: computeRemainingSeconds(d.window_pending_until),
     };
   }
 
@@ -3326,7 +3893,11 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const visible = this._getFilteredSortedRooms().map((x) => x.room);
     if (visible.length === 0) return;
 
-    const preset = this._bulkOverridePreset || "eco";
+    const bulkPresets = this._getBulkOverridePresets();
+    const selectVal = this.shadowRoot?.querySelector("#ov-bulk-ov-preset")?.value;
+    const candidate = selectVal || this._bulkOverridePreset;
+    const preset = bulkPresets.includes(candidate) ? candidate : (bulkPresets[0] || candidate || "eco");
+    this._bulkOverridePreset = preset;
     const minutes = Number(this._bulkOverrideDuration || 60);
     this._bulkPending = true;
     this._error = null;
@@ -3422,9 +3993,41 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     }
   }
 
+  _getRoomOverridePresets(room) {
+    if (!room) {
+      return DEFAULT_PRESETS.filter((p) => p !== "none");
+    }
+    if (Array.isArray(room.custom_presets) && room.custom_presets.length > 0) {
+      return room.custom_presets.map((p) => p.id);
+    }
+    return Array.from(new Set([...(room.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS])).filter(
+      (p) => p !== "none"
+    );
+  }
+
+  _getBulkOverridePresets() {
+    return Array.from(
+      new Set([
+        ...this._roomsData.flatMap((r) =>
+          Array.isArray(r.custom_presets) && r.custom_presets.length > 0
+            ? r.custom_presets.map((p) => p.id)
+            : (r.supported_presets || DEFAULT_PRESETS)
+        ),
+        ...DEFAULT_PRESETS,
+      ])
+    ).filter((p) => p !== "none");
+  }
+
   async _startOverride(entryId) {
     if (!this._hass) return;
-    const preset = this._overridePresets[entryId] || "boost";
+    const room = this._roomsData.find((r) => r.entry_id === entryId);
+    const presets = this._getRoomOverridePresets(room);
+    const selectEl = Array.from(this.shadowRoot?.querySelectorAll(".ov-ov-preset") || []).find(
+      (el) => el.dataset.ovPresetEntry === entryId
+    );
+    const candidate = selectEl?.value || this._overridePresets[entryId];
+    const preset = candidate && presets.includes(candidate) ? candidate : (presets[0] || candidate || "comfort");
+    this._overridePresets[entryId] = preset;
     const minutes = Number(this._overrideDurations[entryId] || 60);
     try {
       await this._hass.callService(DOMAIN, "set_override", {
@@ -3456,7 +4059,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const todayKey = getTodayKey();
     const activeProfile = d.active_profile || "Standard";
     const daySlots = d.profiles?.[activeProfile]?.[todayKey] || [];
-    const baseColor = getPresetColor(d.default_preset || "eco");
+    const baseColor = resolvePresetColor(d, d.default_preset || "eco");
     const nowDt = new Date();
     const nowPct = ((nowDt.getHours() * 60 + nowDt.getMinutes()) / 1440) * 100;
 
@@ -3466,7 +4069,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         const eMin = slot.to?.startsWith("23:59") ? 1440 : parseMinutes(slot.to);
         const leftPct = (sMin / 1440) * 100;
         const widthPct = Math.max(1, ((eMin - sMin) / 1440) * 100);
-        const col = getPresetColor(slot.preset);
+        const col = resolvePresetColor(d, slot.preset);
         return `<div class="ov-mini-slot" style="left:${leftPct}%;width:${widthPct}%;background:${col.bg};"></div>`;
       })
       .join("");
@@ -3476,7 +4079,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           .map((seg) => {
             const leftPct = (seg.startMin / 1440) * 100;
             const widthPct = Math.max(0.8, ((seg.endMin - seg.startMin) / 1440) * 100);
-            const col = getPresetColor(seg.targetPreset);
+            const col = resolvePresetColor(d, seg.targetPreset);
             return `<div class="ov-mini-thermal" style="left:${leftPct}%;width:${widthPct}%;--tp-color:${col.bg};--tp-border:${col.border};"></div>`;
           })
           .join("")
@@ -3532,9 +4135,10 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const allProfileNames = Array.from(
       new Set(visibleEntries.flatMap(({ room }) => Object.keys(room.profiles || {})))
     );
-    const bulkPresets = Array.from(
-      new Set([...(this._roomsData[0]?.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS])
-    ).filter((p) => p !== "none");
+    const bulkPresets = this._getBulkOverridePresets();
+    const selBulkPreset = bulkPresets.includes(this._bulkOverridePreset)
+      ? this._bulkOverridePreset
+      : (bulkPresets[0] || "eco");
 
     const filterChips = [
       { key: "all", label: `${t.filterAll} (${countAll})` },
@@ -3549,18 +4153,21 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
     const roomsHtml = visibleEntries
       .map(({ room: d, live }) => {
         const expanded = this._expandedRoomId === d.entry_id;
-        const presetCol = getPresetColor(live.activePreset);
+        const presetCol = resolvePresetColor(d, live.activePreset);
         const presetLabel = this._getPresetLabel(d, live.activePreset);
         const profileNames = Object.keys(d.profiles || { Standard: {} });
         const activeProfile = d.active_profile || "Standard";
-        const presets = Array.from(new Set([...(d.supported_presets || DEFAULT_PRESETS), ...DEFAULT_PRESETS])).filter(
-          (p) => p !== "none"
-        );
-        const selOvPreset = this._overridePresets[d.entry_id] || "boost";
+        const presets = this._getRoomOverridePresets(d);
+        const storedOvPreset = this._overridePresets[d.entry_id];
+        const selOvPreset = storedOvPreset && presets.includes(storedOvPreset)
+          ? storedOvPreset
+          : (presets[0] || "comfort");
         const selOvDur = Number(this._overrideDurations[d.entry_id] || 60);
 
         let phaseBadge = "";
-        if (live.activeOverrides.length > 0) {
+        if (live.windowOpen) {
+          phaseBadge = `<span class="ov-phase ov-phase-cool">🪟 ${escapeHtml(t.windowOpenBanner)}</span>`;
+        } else if (live.activeOverrides.length > 0) {
           phaseBadge = `<span class="ov-phase ov-phase-warn">${escapeHtml(t.overrideActive)}</span>`;
         } else if (live.preheating) {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.preheating)}</span>`;
@@ -3569,6 +4176,12 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
         } else if (live.isHeating) {
           phaseBadge = `<span class="ov-phase ov-phase-heat">${escapeHtml(t.heatingActive)}</span>`;
         }
+
+        const onlineTrvs = live.thermostats.filter((x) => x.available).length;
+        const totalTrvs = live.thermostats.length;
+        const trvCountBadge = totalTrvs > 1
+          ? `<span class="ov-trv-count tabular">${onlineTrvs}/${totalTrvs} TRV</span>`
+          : "";
 
         const anomalySummary = formatAnomalySummary(live.anomaly, t);
         const anomalyBadge = live.anomalyActive
@@ -3587,6 +4200,14 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
           ? `${t.nextAction}: ${nextAct.action} (${nextAct.time})`
           : "";
 
+        const drawerMetaParts = [];
+        if (d.room_temp_sensor) drawerMetaParts.push(`${t.roomSensorLabel}: ${d.room_temp_sensor}`);
+        else if (totalTrvs > 1) drawerMetaParts.push(t.thermostatsMeanLabel);
+        if (live.windowPendingAction && live.windowPendingSeconds !== null) {
+          const msgKey = live.windowPendingAction === "open" ? t.windowOpeningCountdown : t.windowClosingCountdown;
+          drawerMetaParts.push(msgKey.replace("{sec}", String(live.windowPendingSeconds)));
+        }
+
         return `
           <div class="ov-room ${expanded ? "expanded" : ""} ${live.anomalyActive ? "has-anomaly" : ""}" data-room-id="${escapeHtml(d.entry_id)}">
             <div class="ov-row" data-toggle-expand="${escapeHtml(d.entry_id)}">
@@ -3595,6 +4216,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
                   <span class="ov-room-name">${escapeHtml(d.room_name || d.entry_id)}</span>
                   <span class="ov-preset-dot" style="background:${presetCol.bg};border-color:${presetCol.border};color:${presetCol.text};">${escapeHtml(presetLabel)}</span>
                   ${phaseBadge}
+                  ${trvCountBadge}
                   ${anomalyBadge}
                   <span class="ov-temps tabular">${escapeHtml(tempStr)}</span>
                 </div>
@@ -3613,6 +4235,17 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
               expanded
                 ? `<div class="ov-drawer">
                     ${live.anomalyActive ? `<div class="ov-anomaly-detail">⚠️ <strong>${escapeHtml(t.anomalyWarning)}:</strong> ${escapeHtml(anomalySummary.detailText)}</div>` : ""}
+                    ${drawerMetaParts.length > 0 ? `<div class="ov-next-action tabular">${escapeHtml(drawerMetaParts.join(" · "))}</div>` : ""}
+                    ${
+                      live.thermostats.length > 1
+                        ? `<div class="ov-trv-list tabular">${live.thermostats
+                            .map(
+                              (trv) =>
+                                `${trv.entity_id} (${trv.available ? `${trv.state}${trv.target_temperature !== null && trv.target_temperature !== undefined ? ` ${Number(trv.target_temperature).toFixed(1)}°` : ""}` : t.offline})`
+                            )
+                            .join(" · ")}</div>`
+                        : ""
+                    }
                     ${nextActionLine ? `<div class="ov-next-action tabular">${escapeHtml(nextActionLine)}</div>` : ""}
                     <div class="ov-drawer-controls">
                       <label class="ov-ctrl-group">
@@ -3709,7 +4342,7 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
                     ${bulkPresets
                       .map(
                         (p) =>
-                          `<option value="${escapeHtml(p)}" ${p === this._bulkOverridePreset ? "selected" : ""}>${escapeHtml(this._getPresetLabel(this._roomsData[0], p))}</option>`
+                          `<option value="${escapeHtml(p)}" ${p === selBulkPreset ? "selected" : ""}>${escapeHtml(this._getPresetLabel(this._roomsData[0], p))}</option>`
                       )
                       .join("")}
                   </select>
@@ -4097,6 +4730,14 @@ class SmartClimateSchedulerOverviewCard extends HTMLElement {
       }
       .ov-next-action {
         font-size: 0.74rem;
+        color: var(--scs-muted);
+      }
+      .ov-trv-count {
+        font-size: 0.68rem;
+        color: var(--scs-muted);
+      }
+      .ov-trv-list {
+        font-size: 0.7rem;
         color: var(--scs-muted);
       }
       .ov-drawer-controls {

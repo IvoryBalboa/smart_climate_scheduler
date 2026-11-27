@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Eerste installatie",
-        "description": "Configureer de thermostaat, buitentemperatuurbron (sensor heeft voorrang op weer-entiteit), brander/verwarmingsentiteit, zelflerende functie en standaardsnelheden.",
+        "title": "Smart Climate Scheduler - Eerste installatie",
+        "description": "Configureer de thermostaten, buitentemperatuurbron (sensor heeft voorrang op weer-entiteit), brander/verwarmingsentiteit, zelflerende functie en standaardsnelheden.",
         "data": {
           "name": "Kamernaam",
           "climate_entity": "Thermostaat / Climate-entiteit",
+          "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
+          "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
+          "window_sensors": "Raam- / deursensoren (Optioneel)",
+          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
+          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)",
+          "window_pause_enabled": "Verwarming pauzeren (HVAC Off) bij open raam",
           "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer-entiteit)",
           "outside_weather_entity": "Weer-entiteit",
           "heating_active_sensor": "Brander- / verwarming actief sensor",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
-          "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
+          "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
-          "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
           "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
           "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
           "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Kamernaam is verplicht."
+      "name_required": "Kamernaam is verplicht.",
+      "climate_required": "Selecteer ten minste één thermostaat (climate-entiteit)."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Algemene instellingen & thermische parameters",
         "description": "Pas buitentemperatuurbron, leren en standaard opwarm- en afkoelsnelheden aan:",
         "data": {
+          "climate_entities": "Thermostaten / Climate-entiteiten (Kamergroep)",
+          "room_temp_sensor": "Kamertemperatuursensor (Optioneel - alleen voor SCS-thermiek & hysterese)",
+          "window_sensors": "Raam- / deursensoren (Optioneel)",
+          "window_open_delay_minutes": "Vertraging raam open voor pauze (minuten)",
+          "window_close_delay_minutes": "Vertraging raam dicht voor hervatten (minuten)",
+          "window_pause_enabled": "Verwarming pauzeren (HVAC Off) bij open raam",
           "outside_temp_sensor": "Buitentemperatuursensor (voorrang op weer)",
           "outside_weather_entity": "Weer-entiteit voor buitentemperatuur",
           "heating_active_sensor": "Brander- / verwarming actief sensor",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Vroegtijdig afkoelen inschakelen",
           "max_minutes_cooldown": "Max. afkoeltijd (minuten)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
-          "fallback_tolerance": "Herinschakeltolerantie fallback (K)",
+          "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
           "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
-          "tolerance_entity": "Tolerantie-entiteit (Optioneel - Automatische herkenning via apparaat indien leeg)",
           "use_weather_forecast_for_preheat": "Weersverwachting gebruiken voor voorverwarmen (uurgemiddelde)",
-          "preheat_ignores_away": "Voorverwarmen voor aankomst bij afwezigheid (Overschrijft afwezig en nabij)",
+          "preheat_ignores_away": "Voorverwarmen ondanks afwezigheid",
           "anomaly_detection_enabled": "Anomalie- & hardwarebewaking inschakelen (geen opwarming, thermostaat offline, sensor bevroren)",
           "anomaly_no_heat_minutes": "Drempel zonder opwarming bij actieve brander (minuten, 0 = uit)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Voorverwarmen voor start tijdvak",
           "cooldown": "Afkoelen voor einde tijdvak"
         }
+      },
+      "custom_presets": {
+        "title": "Eigen kamerpresets beheren ({presets_count})",
+        "description": "Geconfigureerde kamerpresets met eigen doeltemperaturen:{presets_list}",
+        "data": {
+          "preset_action": "Selecteer actie"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Eigen preset toevoegen",
+        "description": "Stel naam, doeltemperatuur en kleur in:",
+        "data": {
+          "name": "Presetnaam",
+          "temperature": "Doeltemperatuur (°C)",
+          "color": "Kleur"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Eigen preset selecteren",
+        "description": "Kies een preset om te bewerken of te verwijderen:",
+        "data": {
+          "selected_preset": "Selecteer preset"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Eigen preset bewerken",
+        "description": "Bewerk of verwijder de geselecteerde eigen preset:",
+        "data": {
+          "action": "Selecteer actie",
+          "name": "Presetnaam",
+          "temperature": "Doeltemperatuur (°C)",
+          "color": "Kleur"
+        }
       }
     },
     "error": {
       "invalid_time_range": "Eindtijd moet na starttijd liggen.",
       "profile_name_empty": "De profielnaam mag niet leeg zijn.",
-      "profile_name_exists": "Er bestaat al een profiel met deze naam."
+      "profile_name_exists": "Er bestaat al een profiel met deze naam.",
+      "climate_required": "Selecteer ten minste één thermostaat (climate-entiteit).",
+      "preset_name_empty": "De presetnaam mag niet leeg zijn.",
+      "cannot_delete_last_preset": "Er moet minimaal één eigen preset behouden blijven."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Schema's en profielen beheren",
+        "custom_presets": "🌡️ Eigen presets beheren",
         "settings": "⚙️ Instellingen (Sensoren, Leren & Snelheden)",
         "save": "💾 Opslaan en sluiten"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Eigen preset toevoegen",
+        "edit": "✏️ Preset bewerken of verwijderen",
+        "back": "← Terug naar hoofdmenu"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Amber (#f59e0b)",
+        "#10b981": "Smaragd (#10b981)",
+        "#6366f1": "Indigo (#6366f1)",
+        "#ef4444": "Rood (#ef4444)",
+        "#0ea5e9": "Hemelsblauw (#0ea5e9)",
+        "#ec4899": "Roze (#ec4899)",
+        "#8b5cf6": "Violet (#8b5cf6)",
+        "#64748b": "Leisteen (#64748b)"
       }
     },
     "schedule_action": {

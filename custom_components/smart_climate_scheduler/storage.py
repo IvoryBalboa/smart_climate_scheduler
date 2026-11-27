@@ -1,9 +1,8 @@
-"""Persistenter Speicher für gelernte Aufheizraten und Scheduler-Zustände (Version 2.0)."""
+"""Persistenter Speicher für gelernte Aufheizraten und Scheduler-Zustände (Version 4.0.0)."""
 from __future__ import annotations
 
 import logging
 import math
-from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
@@ -32,25 +31,6 @@ def _clean_rate(val: any, default: float = DEFAULT_FALLBACK_HEATING_RATE) -> flo
         return default
 
 
-def _clean_tolerance_backup(raw: Any) -> dict | None:
-    """Validiert ein gespeichertes Toleranz-Backup (nur positive Originalwerte > 0)."""
-    if not isinstance(raw, dict):
-        return None
-    entity_id = raw.get("entity_id")
-    if not isinstance(entity_id, str) or not entity_id.strip():
-        return None
-    try:
-        orig_val = float(raw.get("original_value"))
-        if math.isnan(orig_val) or math.isinf(orig_val) or orig_val <= 0:
-            return None
-        return {
-            "entity_id": entity_id.strip(),
-            "original_value": round(orig_val, 3),
-        }
-    except (ValueError, TypeError):
-        return None
-
-
 class ClimateSchedulerStorage:
     """Verwaltet das Laden und Speichern der gelernten Aufheiz- und Abkühlraten-Matrix und Einstellungen."""
 
@@ -75,7 +55,6 @@ class ClimateSchedulerStorage:
                 "cooling_averages": {},
                 "cooling_average": DEFAULT_FALLBACK_COOLING_RATE,
                 "overrides": {},
-                "tolerance_backup": None,
             }
             await self._store.async_save(data)
         else:
@@ -96,7 +75,10 @@ class ClimateSchedulerStorage:
             data["automation_enabled"] = bool(data.get("automation_enabled", False))
             raw_ov = data.get("overrides")
             data["overrides"] = dict(raw_ov) if isinstance(raw_ov, dict) else {}
-            data["tolerance_backup"] = _clean_tolerance_backup(data.get("tolerance_backup"))
+            # Legacy v3 tolerance_backup bereinigen
+            if "tolerance_backup" in data:
+                data.pop("tolerance_backup", None)
+                await self._store.async_save(data)
 
         self._cached_data = data
         return data
@@ -104,10 +86,11 @@ class ClimateSchedulerStorage:
     async def async_save_data(self, patch: dict) -> None:
         """Speichert Daten partiell ab und verhindert Überschreib-Konflikte im RAM."""
         current = await self.async_get_data()
-        
-        # Sanitize patch before saving to ensure strict JSON validity
+
         cleaned_patch = {}
         for k, v in patch.items():
+            if k == "tolerance_backup":
+                continue
             if k == "average":
                 cleaned_patch[k] = _clean_rate(v, DEFAULT_FALLBACK_HEATING_RATE)
             elif k == "cooling_average":
@@ -118,11 +101,10 @@ class ClimateSchedulerStorage:
                 cleaned_patch[k] = normalize_matrix(v)
             elif k == "overrides" and isinstance(v, dict):
                 cleaned_patch[k] = dict(v)
-            elif k == "tolerance_backup":
-                cleaned_patch[k] = _clean_tolerance_backup(v)
             else:
                 cleaned_patch[k] = v
 
         current.update(cleaned_patch)
+        current.pop("tolerance_backup", None)
         self._cached_data = current
         await self._store.async_save(current)

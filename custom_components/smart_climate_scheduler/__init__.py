@@ -1,6 +1,7 @@
-"""Smart Climate Scheduler Integration (Version 2.0)."""
+"""Smart Climate Scheduler Integration (Version 4.0.0)."""
 from __future__ import annotations
 
+import copy
 import logging
 from datetime import datetime, timedelta
 from homeassistant.config_entries import ConfigEntry
@@ -16,7 +17,10 @@ from .helpers import (
     async_write_ha_state_if_enabled,
     calculate_overall_average,
     clear_startup_grace_state,
+    convert_legacy_seconds_to_delay_minutes,
+    get_climate_entities,
     get_profiles_and_active,
+    normalize_custom_presets,
     normalize_matrix,
     parse_time,
     safe_float as _safe_float,
@@ -25,11 +29,24 @@ from .evaluation import invalidate_eval_cache
 from .frontend_api import async_register_frontend_and_ws
 
 from .const import (
+    CONF_AWAY_NEAR_PRESET,
+    CONF_AWAY_PRESET,
+    CONF_CLIMATE_ENTITIES,
     CONF_CLIMATE_ENTITY,
+    CONF_CUSTOM_PRESETS,
+    CONF_DEFAULT_PRESET,
     CONF_FALLBACK_COOLING_RATE,
     CONF_FALLBACK_HEATING_RATE,
+    CONF_WINDOW_CLOSE_DELAY_MINUTES,
+    CONF_WINDOW_OPEN_DELAY_MINUTES,
+    DEFAULT_AWAY_NEAR_PRESET,
+    DEFAULT_AWAY_PRESET,
+    DEFAULT_CUSTOM_PRESETS,
     DEFAULT_FALLBACK_COOLING_RATE,
     DEFAULT_FALLBACK_HEATING_RATE,
+    DEFAULT_FALLBACK_PRESET,
+    DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+    DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
     DOMAIN,
 )
 from .storage import ClimateSchedulerStorage
@@ -42,6 +59,107 @@ PLATFORMS: list[Platform] = [
 ]
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migriert bestehende v1/v2/v3 Config Entries automatisch und verlustfrei auf v4.0.0."""
+    current_version = getattr(config_entry, "version", 1)
+    if current_version >= 4:
+        return True
+
+    _LOGGER.info(
+        "Migriere Smart Climate Scheduler Eintrag '%s' von Version %s auf Version 4 (v4.0.0)",
+        getattr(config_entry, "title", config_entry.entry_id),
+        current_version,
+    )
+
+    new_data = copy.deepcopy(dict(getattr(config_entry, "data", {}) or {}))
+    new_options = copy.deepcopy(dict(getattr(config_entry, "options", {}) or {}))
+
+    # 1. Thermostat-Liste aus legacy climate_entity / climate_entities vereinheitlichen
+    climate_entities = get_climate_entities(config_entry)
+    if climate_entities:
+        new_data[CONF_CLIMATE_ENTITIES] = list(climate_entities)
+        new_data[CONF_CLIMATE_ENTITY] = climate_entities[0]
+        if CONF_CLIMATE_ENTITIES in new_options or CONF_CLIMATE_ENTITY in new_options:
+            new_options[CONF_CLIMATE_ENTITIES] = list(climate_entities)
+            new_options[CONF_CLIMATE_ENTITY] = climate_entities[0]
+
+    # 2. Eigene Raum-Presets sicherstellen (mit Starter-Defaults falls bisher noch keine vorhanden)
+    raw_presets = new_options.get(CONF_CUSTOM_PRESETS)
+    if raw_presets is None:
+        raw_presets = new_data.get(CONF_CUSTOM_PRESETS)
+    presets = normalize_custom_presets(raw_presets, fallback_to_default=True)
+    if not presets:
+        presets = [dict(p) for p in DEFAULT_CUSTOM_PRESETS]
+    new_data[CONF_CUSTOM_PRESETS] = copy.deepcopy(presets)
+    if new_options or CONF_CUSTOM_PRESETS in new_options:
+        new_options[CONF_CUSTOM_PRESETS] = copy.deepcopy(presets)
+
+    valid_ids = {p["id"] for p in presets}
+    first_id = presets[0]["id"]
+    for key, fallback_id in (
+        (CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET),
+        (CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET),
+        (CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET),
+    ):
+        for target_dict in (new_data, new_options):
+            if key in target_dict:
+                cur_val = str(target_dict.get(key) or "").strip().lower()
+                if cur_val not in valid_ids:
+                    target_dict[key] = fallback_id if fallback_id in valid_ids else first_id
+
+    # 3. Fenster-/Tür-Verzögerungen von Sekunden auf ganze Minuten migrieren
+    for sec_key, min_key, default_min in (
+        ("window_open_delay_seconds", CONF_WINDOW_OPEN_DELAY_MINUTES, DEFAULT_WINDOW_OPEN_DELAY_MINUTES),
+        ("window_close_delay_seconds", CONF_WINDOW_CLOSE_DELAY_MINUTES, DEFAULT_WINDOW_CLOSE_DELAY_MINUTES),
+    ):
+        if min_key not in new_data:
+            if sec_key in new_data:
+                new_data[min_key] = convert_legacy_seconds_to_delay_minutes(new_data.get(sec_key), default_min)
+            else:
+                new_data[min_key] = default_min
+        if min_key not in new_options and sec_key in new_options:
+            new_options[min_key] = convert_legacy_seconds_to_delay_minutes(new_options.get(sec_key), default_min)
+        new_data.pop(sec_key, None)
+        new_options.pop(sec_key, None)
+
+    # 4. Veraltete v3-Altlasten entfernen (control_mode, tolerance_entity)
+    for legacy_key in ("control_mode", "tolerance_entity"):
+        new_data.pop(legacy_key, None)
+        new_options.pop(legacy_key, None)
+
+    # 5. ConfigEntry aktualisieren (kompatibel mit HA >=2024.1 version-kwarg und Test-Mocks)
+    try:
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            options=new_options,
+            version=4,
+        )
+    except TypeError:
+        config_entry.version = 4
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            options=new_options,
+        )
+
+    # 6. Persistentes Storage von eventuellen tolerance_backup-Resten bereinigen
+    try:
+        storage = ClimateSchedulerStorage(hass, config_entry.entry_id)
+        stored = await storage.async_get_data()
+        if isinstance(stored, dict) and "tolerance_backup" in stored:
+            stored.pop("tolerance_backup", None)
+            await storage.async_save_data(stored)
+    except Exception as err:
+        _LOGGER.debug("Storage-Bereinigung während v4-Migration übersprungen: %s", err)
+
+    _LOGGER.info(
+        "Smart Climate Scheduler Eintrag '%s' erfolgreich auf Version 4 migriert.",
+        getattr(config_entry, "title", config_entry.entry_id),
+    )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -131,9 +249,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if overrides_pruned:
         await storage.async_save_data({"overrides": active_overrides})
 
-    raw_tol_backup = stored_data.get("tolerance_backup")
-    tolerance_backup = dict(raw_tol_backup) if isinstance(raw_tol_backup, dict) else None
-
     hass.data[DOMAIN][entry.entry_id] = {
         "data": entry.data,
         "automation_enabled": automation_enabled,
@@ -146,9 +261,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "active_session": None,
         "active_cooling_session": None,
         "last_heating_off_time": None,
-        "tolerance_backup": tolerance_backup,
-        "tolerance_kickstart_done": False,
-        "tolerance_kickstart_target": None,
+        "opportunistic_kickstart": False,
+        "opportunistic_kickstart_done": False,
+        "opportunistic_kickstart_target": None,
         "anomaly_state": {},
     }
 
@@ -254,11 +369,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 for eid, store in hass.data[DOMAIN].items():
                     entry_obj = hass.config_entries.async_get_entry(eid)
                     if entry_obj:
-                        c_entity = entry_obj.options.get(CONF_CLIMATE_ENTITY) or entry_obj.data.get(CONF_CLIMATE_ENTITY)
-                        if c_entity == ent_id:
+                        c_entities = get_climate_entities(entry_obj)
+                        if ent_id in c_entities:
                             resolved.add(eid)
                     store_data = store.get("data", {})
-                    if store_data.get(CONF_CLIMATE_ENTITY) == ent_id:
+                    if store_data.get(CONF_CLIMATE_ENTITY) == ent_id or ent_id in (store_data.get("climate_entities") or []):
                         resolved.add(eid)
 
         if resolved:

@@ -1,11 +1,12 @@
-"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 2.3.5)."""
+"""Zentrale Hilfs-, Geräte- und Matrix-Funktionen für den Smart Climate Scheduler (Version 4.0.0)."""
 from __future__ import annotations
 
 import json
 import logging
 import math
+import re
 import time as time_mod
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Any, Callable
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import callback as ha_callback
@@ -13,16 +14,31 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
     CONF_ANOMALY_DETECTION_ENABLED,
+    CONF_CLIMATE_ENTITIES,
     CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
+    CONF_CUSTOM_PRESETS,
+    CONF_DEFAULT_PRESET,
     CONF_ENABLE_SELF_LEARNING,
     CONF_PREHEAT_ENABLED,
-    CONF_TOLERANCE_ENTITY,
+    CONF_ROOM_TEMP_SENSOR,
+    CONF_WINDOW_CLOSE_DELAY_MINUTES,
+    CONF_WINDOW_OPEN_DELAY_MINUTES,
+    CONF_WINDOW_PAUSE_ENABLED,
+    CONF_WINDOW_SENSORS,
+    CUSTOM_PRESET_PALETTE,
     DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_COOLDOWN_ENABLED,
+    DEFAULT_CUSTOM_PRESETS,
     DEFAULT_ENABLE_SELF_LEARNING,
+    DEFAULT_FALLBACK_PRESET,
     DEFAULT_PREHEAT_ENABLED,
+    DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+    DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+    DEFAULT_WINDOW_PAUSE_ENABLED,
     DOMAIN,
+    MAX_TARGET_TEMP,
+    MIN_TARGET_TEMP,
     STARTUP_GRACE_SECONDS,
     VERSION,
 )
@@ -474,57 +490,589 @@ def get_device_info(config_entry) -> DeviceInfo:
     )
 
 
-def get_preset_temperature(climate_state, preset_name: str | None) -> float:
-    """Sucht die Zieltemperatur für ein Preset aus den Climate-Attributen heraus."""
-    if not climate_state or not preset_name:
+def get_climate_entities(config_entry: Any) -> list[str]:
+    """Gibt die normalisierte, deduplizierte Liste aller konfigurierten Thermostate zurück."""
+    if not config_entry:
+        return []
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+
+    raw_list = options.get(CONF_CLIMATE_ENTITIES)
+    if raw_list is None:
+        raw_list = data.get(CONF_CLIMATE_ENTITIES)
+
+    candidates: list[str] = []
+    if isinstance(raw_list, (list, tuple, set)):
+        for item in raw_list:
+            if isinstance(item, str) and item.strip():
+                candidates.append(item.strip())
+    elif isinstance(raw_list, str) and raw_list.strip():
+        candidates.extend([p.strip() for p in raw_list.split(",") if p.strip()])
+
+    legacy_single = options.get(CONF_CLIMATE_ENTITY)
+    if legacy_single is None:
+        legacy_single = data.get(CONF_CLIMATE_ENTITY)
+    if isinstance(legacy_single, str) and legacy_single.strip():
+        legacy_str = legacy_single.strip()
+        if not candidates:
+            candidates.append(legacy_str)
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for ent_id in candidates:
+        if ent_id not in seen:
+            seen.add(ent_id)
+            deduped.append(ent_id)
+    return deduped
+
+
+def get_primary_climate_entity(config_entry: Any) -> str:
+    """Gibt das primäre (erste) Thermostat aus der Gruppenliste zurück."""
+    entities = get_climate_entities(config_entry)
+    return entities[0] if entities else ""
+
+
+def slugify_preset_id(raw_name: str, existing_ids: set[str] | None = None) -> str:
+    """Erzeugt eine eindeutige, ENUM-konforme Kleinbuchstaben-ID ([a-z0-9_]) für eigene Presets."""
+    s = str(raw_name or "").strip().lower()
+    s = s.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+    s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
+    if not s or s == "none":
+        s = "preset"
+    base = s[:36]
+    if existing_ids is None:
+        return base
+    candidate = base
+    idx = 2
+    while candidate in existing_ids or candidate == "none":
+        candidate = f"{base}_{idx}"
+        idx += 1
+    return candidate
+
+
+def _clamp_preset_temp(raw_temp: Any, default: float = 20.0) -> float:
+    """Klemmt Zieltemperaturen auf [5.0, 30.0] und rundet exakt auf 0.1 °C."""
+    try:
+        val = float(raw_temp)
+        if math.isnan(val) or math.isinf(val):
+            return round(default, 1)
+    except (ValueError, TypeError):
+        return round(default, 1)
+    return round(max(MIN_TARGET_TEMP, min(MAX_TARGET_TEMP, val)), 1)
+
+
+def _normalize_hex_color(raw_color: Any, index: int = 0) -> str:
+    if isinstance(raw_color, str):
+        c = raw_color.strip()
+        if re.fullmatch(r"#[0-9a-fA-F]{6}", c):
+            return c.lower()
+    return CUSTOM_PRESET_PALETTE[index % len(CUSTOM_PRESET_PALETTE)]
+
+
+def normalize_custom_presets(
+    raw_presets: Any,
+    fallback_to_default: bool = True,
+) -> list[dict[str, Any]]:
+    """Validiert und normalisiert die freie Preset-Liste eines Raums (0.1 °C Schritte)."""
+    if isinstance(raw_presets, str):
+        try:
+            raw_presets = json.loads(raw_presets)
+        except Exception:
+            raw_presets = None
+
+    items: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    if isinstance(raw_presets, list):
+        for idx, entry in enumerate(raw_presets):
+            if not isinstance(entry, dict):
+                continue
+            raw_name = str(entry.get("name") or entry.get("label") or entry.get("id") or "").strip()
+            if not raw_name:
+                continue
+            raw_id = str(entry.get("id") or "").strip().lower()
+            clean_id = slugify_preset_id(raw_id or raw_name, seen_ids)
+            seen_ids.add(clean_id)
+            temp_val = _clamp_preset_temp(entry.get("temperature"), 20.0)
+            color_val = _normalize_hex_color(entry.get("color"), idx)
+            items.append(
+                {
+                    "id": clean_id,
+                    "name": raw_name[:40],
+                    "temperature": temp_val,
+                    "color": color_val,
+                }
+            )
+
+    if not items and fallback_to_default:
+        return [dict(p) for p in DEFAULT_CUSTOM_PRESETS]
+    return items
+
+
+def get_custom_presets(config_entry: Any) -> list[dict[str, Any]]:
+    """Liest die konfigurierten eigenen Raum-Presets (mit Starter-Defaults bei Direkttemperatur)."""
+    if not config_entry:
+        return [dict(p) for p in DEFAULT_CUSTOM_PRESETS]
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+    raw = options.get(CONF_CUSTOM_PRESETS)
+    if raw is None:
+        raw = data.get(CONF_CUSTOM_PRESETS)
+    if raw is None:
+        return [dict(p) for p in DEFAULT_CUSTOM_PRESETS]
+    normalized = normalize_custom_presets(raw, fallback_to_default=False)
+    return normalized if normalized else [dict(p) for p in DEFAULT_CUSTOM_PRESETS]
+
+
+def get_custom_presets_map(config_entry: Any) -> dict[str, dict[str, Any]]:
+    """Liefert ein Dict {preset_id: {id, name, temperature, color}}."""
+    return {p["id"]: p for p in get_custom_presets(config_entry)}
+
+
+def get_preset_labels_map(config_entry: Any) -> dict[str, str]:
+    """Liefert die Anzeigenamen-Zuordnung der konfigurierten Raum-Presets."""
+    if not config_entry:
+        return {}
+    return {p["id"]: p["name"] for p in get_custom_presets(config_entry)}
+
+
+def resolve_preset_key(
+    preset_name: str | None,
+    config_entry: Any = None,
+    fallback_preset: str | None = None,
+) -> str:
+    """Löst einen Preset-Key robust gegen die Raum-Presets auf und fängt gelöschte Presets sicher ab."""
+    key = str(preset_name or "none").strip().lower()
+    if key == "none":
+        return "none"
+    custom_list = get_custom_presets(config_entry)
+    valid_ids = {p["id"] for p in custom_list}
+    if key in valid_ids:
+        return key
+    if fallback_preset and str(fallback_preset).strip().lower() in valid_ids:
+        return str(fallback_preset).strip().lower()
+    options = getattr(config_entry, "options", None) or {} if config_entry else {}
+    data = getattr(config_entry, "data", None) or {} if config_entry else {}
+    def_p = str(options.get(CONF_DEFAULT_PRESET, data.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)) or "").strip().lower()
+    if def_p in valid_ids:
+        return def_p
+    return custom_list[0]["id"] if custom_list else "eco"
+
+
+def get_room_temp_sensor(config_entry: Any) -> str | None:
+    """Liest die optionale externe Raumtemperatursensor-Entität."""
+    if not config_entry:
+        return None
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+    raw = options.get(CONF_ROOM_TEMP_SENSOR)
+    if raw is None:
+        raw = data.get(CONF_ROOM_TEMP_SENSOR)
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return None
+
+
+def get_room_temp_with_timestamp(
+    hass: Any,
+    config_entry: Any,
+    climate_entities: list[str] | None = None,
+) -> tuple[float | None, str | None, datetime | None]:
+    """Ermittelt die Raumtemperatur für SCS-Thermik/Hysterese: externer Sensor (Vorrang) oder Mittelwert der Thermostate."""
+    states_mgr = getattr(hass, "states", None) if hass else None
+    if not states_mgr:
+        return None, None, None
+
+    ext_sensor = get_room_temp_sensor(config_entry)
+    if ext_sensor:
+        st = states_mgr.get(ext_sensor)
+        if st and getattr(st, "state", None) not in ("unavailable", "unknown", "None", None, ""):
+            try:
+                val = float(st.state)
+                if not math.isnan(val) and not math.isinf(val):
+                    return round(val, 2), ext_sensor, getattr(st, "last_updated", None)
+            except (ValueError, TypeError):
+                pass
+
+    entities = climate_entities if climate_entities is not None else get_climate_entities(config_entry)
+    temps: list[float] = []
+    sources: list[str] = []
+    timestamps: list[datetime] = []
+    for ent_id in entities:
+        st = states_mgr.get(ent_id)
+        if not st or str(getattr(st, "state", "") or "").strip().lower() in ("unavailable", "unknown", "none"):
+            continue
+        attrs = getattr(st, "attributes", None) or {}
+        raw_t = attrs.get("current_temperature")
+        if raw_t is None:
+            continue
+        try:
+            f_val = float(raw_t)
+            if not math.isnan(f_val) and not math.isinf(f_val):
+                temps.append(f_val)
+                sources.append(ent_id)
+                lu = getattr(st, "last_updated", None)
+                if isinstance(lu, datetime):
+                    timestamps.append(lu)
+        except (ValueError, TypeError):
+            continue
+
+    if not temps:
+        return None, None, None
+
+    mean_temp = round(sum(temps) / len(temps), 2)
+    src_label = sources[0] if len(sources) == 1 else "thermostat_group"
+    latest_ts = max(timestamps) if timestamps else None
+    return mean_temp, src_label, latest_ts
+
+
+def get_room_current_temperature(
+    hass: Any,
+    config_entry: Any,
+    climate_entities: list[str] | None = None,
+) -> tuple[float | None, str | None]:
+    """Ermittelt aktuelle Raumtemperatur + aktive Quelle (externer Sensor oder Thermostat-Gruppe)."""
+    temp, src, _ = get_room_temp_with_timestamp(hass, config_entry, climate_entities)
+    return temp, src
+
+
+def get_group_hvac_heating(hass: Any, climate_entities: list[str]) -> tuple[bool, bool, str | None]:
+    """Prüft Verfügbarkeit & Heizaktivität über alle Thermostate einer Raumgruppe."""
+    states_mgr = getattr(hass, "states", None) if hass else None
+    if not states_mgr or not climate_entities:
+        return False, False, None
+
+    any_available = False
+    any_heating = False
+    first_mode: str | None = None
+    for ent_id in climate_entities:
+        st = states_mgr.get(ent_id)
+        if not st:
+            continue
+        st_str = str(getattr(st, "state", "") or "").strip().lower()
+        if st_str in ("unavailable", "unknown", "none", ""):
+            continue
+        any_available = True
+        if first_mode is None:
+            first_mode = st_str
+        attrs = getattr(st, "attributes", None) or {}
+        hvac_act = attrs.get("hvac_action")
+        if hvac_act is not None and str(hvac_act).strip() != "":
+            if str(hvac_act).strip().lower() == "heating":
+                any_heating = True
+        elif st_str == "heat":
+            any_heating = True
+
+    return any_available, any_heating, ("heat" if any_heating else first_mode)
+
+
+def get_window_sensors(config_entry: Any) -> list[str]:
+    """Liest die konfigurierten optionalen Fenster-/Tür-Sensoren eines Raums."""
+    if not config_entry:
+        return []
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+    raw = options.get(CONF_WINDOW_SENSORS)
+    if raw is None:
+        raw = data.get(CONF_WINDOW_SENSORS)
+    result: list[str] = []
+    if isinstance(raw, (list, tuple, set)):
+        for item in raw:
+            if isinstance(item, str) and item.strip() and item.strip() not in result:
+                result.append(item.strip())
+    elif isinstance(raw, str) and raw.strip():
+        for part in raw.split(","):
+            p = part.strip()
+            if p and p not in result:
+                result.append(p)
+    return result
+
+
+def convert_legacy_seconds_to_delay_minutes(raw_seconds: Any, default_minutes: int) -> int:
+    """Konvertiert veraltete Sekunden-Verzögerungen aus v3.x sauber in ganze Minuten (0..60)."""
+    if raw_seconds is None or raw_seconds == "":
+        return default_minutes
+    try:
+        sec = float(raw_seconds)
+        if math.isnan(sec) or math.isinf(sec):
+            return default_minutes
+        if sec <= 0:
+            return 0
+        return max(1, min(60, int(round(sec / 60.0))))
+    except (ValueError, TypeError):
+        return default_minutes
+
+
+def get_window_delays(config_entry: Any) -> tuple[int, int, bool]:
+    """Gibt (open_delay_minutes, close_delay_minutes, window_pause_enabled) zurück (ganze Minuten 0..60)."""
+    if not config_entry:
+        return (
+            DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+            DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+            DEFAULT_WINDOW_PAUSE_ENABLED,
+        )
+    options = getattr(config_entry, "options", None) or {}
+    data = getattr(config_entry, "data", None) or {}
+
+    def _parse_delay_minutes(min_key: str, legacy_sec_key: str, default: int) -> int:
+        raw = options.get(min_key)
+        if raw is None:
+            raw = data.get(min_key)
+        if raw is not None:
+            try:
+                return max(0, min(60, int(round(float(raw)))))
+            except (ValueError, TypeError):
+                return default
+        # Rückfall für noch nicht migrierte v3-Strukturen in Tests/Alt-Konfigs
+        legacy_raw = options.get(legacy_sec_key)
+        if legacy_raw is None:
+            legacy_raw = data.get(legacy_sec_key)
+        if legacy_raw is not None:
+            return convert_legacy_seconds_to_delay_minutes(legacy_raw, default)
+        return default
+
+    open_delay = _parse_delay_minutes(
+        CONF_WINDOW_OPEN_DELAY_MINUTES,
+        "window_open_delay_seconds",
+        DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+    )
+    close_delay = _parse_delay_minutes(
+        CONF_WINDOW_CLOSE_DELAY_MINUTES,
+        "window_close_delay_seconds",
+        DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+    )
+    pause_enabled = bool(
+        options.get(
+            CONF_WINDOW_PAUSE_ENABLED,
+            data.get(CONF_WINDOW_PAUSE_ENABLED, DEFAULT_WINDOW_PAUSE_ENABLED),
+        )
+    )
+    return open_delay, close_delay, pause_enabled
+
+
+def is_sensor_window_open(state_obj: Any) -> bool:
+    """Prüft, ob ein Fenster-/Tür-Binary-Sensor als geöffnet gilt."""
+    if not state_obj:
+        return False
+    st_val = str(getattr(state_obj, "state", "") or "").strip().lower()
+    return st_val in ("on", "open", "true", "1", "detected", "tilted")
+
+
+def get_raw_window_open(
+    hass: Any,
+    config_entry: Any,
+    climate_entities: list[str] | None = None,
+) -> tuple[bool, list[str]]:
+    """Prüft unverzögert, ob mindestens ein konfigurierter Fenster-/Tür-Sensor 'offen' meldet."""
+    states_mgr = getattr(hass, "states", None) if hass else None
+    if not states_mgr:
+        return False, []
+
+    open_sources: list[str] = []
+    for ws_id in get_window_sensors(config_entry):
+        st = states_mgr.get(ws_id)
+        if is_sensor_window_open(st):
+            open_sources.append(ws_id)
+
+    return bool(open_sources), open_sources
+
+
+def clear_window_debounce_timer(domain_data: dict[str, Any] | None) -> None:
+    """Bricht einen laufenden Fenster-Entprell-Timer sauber ab."""
+    if not isinstance(domain_data, dict):
+        return
+    w_state = domain_data.get("window_state")
+    if not isinstance(w_state, dict):
+        return
+    handle = w_state.pop("timer_handle", None)
+    if handle is not None:
+        if callable(handle):
+            try:
+                handle()
+            except Exception:
+                pass
+        elif hasattr(handle, "cancel"):
+            try:
+                handle.cancel()
+            except Exception:
+                pass
+
+
+def evaluate_window_debounce(
+    domain_data: dict[str, Any] | None,
+    raw_open: bool,
+    open_delay_seconds: int,
+    close_delay_seconds: int,
+    now_mono: float | None = None,
+    now_dt: datetime | None = None,
+    schedule_fn: Callable[[float], Any] | None = None,
+) -> dict[str, Any]:
+    """Entprellungs-Zustandsautomat für verzögerte Fenster-Auf- und Fenster-Zu-Reaktion."""
+    now_m = time_mod.monotonic() if now_mono is None else float(now_mono)
+    cur_dt = now_dt or datetime.now()
+
+    if not isinstance(domain_data, dict):
+        return {
+            "raw_open": bool(raw_open),
+            "effective_open": bool(raw_open),
+            "pending_action": None,
+            "pending_until": None,
+            "pending_until_mono": None,
+            "transition": None,
+        }
+
+    w_state = domain_data.setdefault(
+        "window_state",
+        {
+            "raw_open": bool(raw_open),
+            "effective_open": False,
+            "pending_action": None,
+            "pending_until": None,
+            "pending_until_mono": None,
+            "timer_handle": None,
+            "saved_hvac_modes": {},
+            "initialized": False,
+        },
+    )
+
+    open_delay = max(0, int(open_delay_seconds))
+    close_delay = max(0, int(close_delay_seconds))
+    prev_effective = bool(w_state.get("effective_open", False))
+    transition: str | None = None
+
+    if not w_state.get("initialized"):
+        w_state["initialized"] = True
+        w_state["raw_open"] = bool(raw_open)
+        if not raw_open or open_delay == 0:
+            w_state["effective_open"] = bool(raw_open)
+            w_state["pending_action"] = None
+            w_state["pending_until"] = None
+            w_state["pending_until_mono"] = None
+            if raw_open:
+                transition = "opened"
+            return {
+                "raw_open": bool(raw_open),
+                "effective_open": bool(w_state["effective_open"]),
+                "pending_action": None,
+                "pending_until": None,
+                "pending_until_mono": None,
+                "transition": transition,
+            }
+
+    w_state["raw_open"] = bool(raw_open)
+
+    if raw_open != prev_effective:
+        target_action = "pause" if raw_open else "resume"
+        delay_sec = open_delay if raw_open else close_delay
+
+        if delay_sec <= 0:
+            clear_window_debounce_timer(domain_data)
+            w_state["effective_open"] = bool(raw_open)
+            w_state["pending_action"] = None
+            w_state["pending_until"] = None
+            w_state["pending_until_mono"] = None
+            transition = "opened" if raw_open else "closed"
+        else:
+            pending_until_mono = w_state.get("pending_until_mono")
+            if w_state.get("pending_action") != target_action or pending_until_mono is None:
+                clear_window_debounce_timer(domain_data)
+                until_mono = now_m + delay_sec
+                until_dt = cur_dt + timedelta(seconds=delay_sec)
+                w_state["pending_action"] = target_action
+                w_state["pending_until_mono"] = until_mono
+                w_state["pending_until"] = until_dt.isoformat()
+                if callable(schedule_fn):
+                    w_state["timer_handle"] = schedule_fn(delay_sec)
+            elif now_m >= float(pending_until_mono):
+                clear_window_debounce_timer(domain_data)
+                w_state["effective_open"] = bool(raw_open)
+                w_state["pending_action"] = None
+                w_state["pending_until"] = None
+                w_state["pending_until_mono"] = None
+                transition = "opened" if raw_open else "closed"
+    else:
+        # Rohzustand entspricht bereits dem effektiven Zustand -> laufende Gegen-Verzögerung abbrechen
+        if w_state.get("pending_action") is not None:
+            clear_window_debounce_timer(domain_data)
+            w_state["pending_action"] = None
+            w_state["pending_until"] = None
+            w_state["pending_until_mono"] = None
+
+    return {
+        "raw_open": bool(w_state.get("raw_open", False)),
+        "effective_open": bool(w_state.get("effective_open", False)),
+        "pending_action": w_state.get("pending_action"),
+        "pending_until": w_state.get("pending_until"),
+        "pending_until_mono": w_state.get("pending_until_mono"),
+        "transition": transition,
+    }
+
+
+def get_effective_window_open(
+    domain_data: dict[str, Any] | None,
+    hass: Any = None,
+    config_entry: Any = None,
+) -> bool:
+    """Liest den wirksamen (ggf. entprellten) Fenster-Offen-Zustand eines Raums."""
+    if isinstance(domain_data, dict):
+        w_state = domain_data.get("window_state")
+        if isinstance(w_state, dict) and w_state.get("initialized"):
+            return bool(w_state.get("effective_open", False))
+    if hass and config_entry:
+        raw_open, _ = get_raw_window_open(hass, config_entry)
+        open_delay, _, _ = get_window_delays(config_entry)
+        if not raw_open:
+            return False
+        if open_delay == 0 or not get_window_sensors(config_entry):
+            return True
+    return False
+
+
+def get_preset_temperature(
+    climate_state: Any,
+    preset_name: str | None,
+    config_entry: Any = None,
+    custom_presets: list[dict[str, Any]] | None = None,
+) -> float:
+    """Ermittelt die Zieltemperatur für ein Raum-Preset aus der konfigurierten Preset-Liste."""
+    if not preset_name:
         return 20.0
 
-    attrs = climate_state.attributes
+    p_clean = str(preset_name).strip()
+    p_lower = p_clean.lower()
 
-    raw_heat_temps = attrs.get("bt_preset_heat_temperatures") or attrs.get("preset_temperatures")
+    preset_list = custom_presets
+    if preset_list is None and config_entry is not None:
+        preset_list = get_custom_presets(config_entry)
 
-    if isinstance(raw_heat_temps, str):
-        try:
-            raw_heat_temps = json.loads(raw_heat_temps)
-        except Exception:
-            raw_heat_temps = {}
+    if isinstance(preset_list, list) and preset_list:
+        for item in preset_list:
+            if str(item.get("id", "")).strip().lower() == p_lower:
+                return _clamp_preset_temp(item.get("temperature"), 20.0)
+        if config_entry is not None:
+            resolved_key = resolve_preset_key(p_lower, config_entry)
+            for item in preset_list:
+                if str(item.get("id", "")).strip().lower() == resolved_key:
+                    return _clamp_preset_temp(item.get("temperature"), 20.0)
 
-    if isinstance(raw_heat_temps, dict) and preset_name in raw_heat_temps:
-        try:
-            return float(raw_heat_temps[preset_name])
-        except (ValueError, TypeError):
-            pass
-
-    raw_cool_temps = attrs.get("bt_preset_cool_temperatures")
-    if isinstance(raw_cool_temps, str):
-        try:
-            raw_cool_temps = json.loads(raw_cool_temps)
-        except Exception:
-            raw_cool_temps = {}
-
-    if isinstance(raw_cool_temps, dict) and preset_name in raw_cool_temps:
-        try:
-            return float(raw_cool_temps[preset_name])
-        except (ValueError, TypeError):
-            pass
-
-    attr_key = f"{preset_name}_temperature"
-    if attr_key in attrs:
-        try:
-            return float(attrs[attr_key])
-        except (ValueError, TypeError):
-            pass
+    if climate_state is not None:
+        attrs = getattr(climate_state, "attributes", None) or {}
+        attr_key = f"{p_clean}_temperature"
+        if attr_key in attrs:
+            try:
+                return round(float(attrs[attr_key]), 1)
+            except (ValueError, TypeError):
+                pass
 
     defaults = {
         "comfort": 21.0,
         "home": 21.0,
         "eco": 18.0,
         "sleep": 17.0,
-        "away": 15.0,
+        "away": 15.5,
         "boost": 23.0,
         "none": 20.0,
     }
-    return defaults.get(preset_name, 20.0)
+    return defaults.get(p_lower, 20.0)
 
 
 def get_outside_temperature(
@@ -980,24 +1528,6 @@ def get_target_hvac_mode(climate_state: Any) -> str:
     return "heat"
 
 
-def is_window_or_door_open(climate_state: Any) -> bool:
-    """Prüft, ob am Climate Entity (z. B. Better Thermostat) window_open oder door_open aktiv ist."""
-    if not climate_state:
-        return False
-    attrs = getattr(climate_state, "attributes", None) or {}
-    if not isinstance(attrs, dict):
-        return False
-    for key in ("window_open", "door_open"):
-        val = attrs.get(key)
-        if val is True:
-            return True
-        if isinstance(val, (int, float)) and not isinstance(val, bool) and val == 1:
-            return True
-        if isinstance(val, str) and val.strip().lower() in ("true", "on", "open", "1"):
-            return True
-    return False
-
-
 async def async_sync_entity_registry_disabled(hass: Any, config_entry: Any) -> None:
     """Synchronisiert den Deaktiviert-Status in der Entity Registry basierend auf den Optionen."""
     if not hass or not config_entry:
@@ -1141,252 +1671,6 @@ def async_write_ha_state_if_enabled(entity: Any) -> None:
     if getattr(entity, "enabled", True) is False:
         return
     entity.async_write_ha_state()
-
-
-def get_numeric_entity_value(hass: Any, entity_id: str | None) -> float | None:
-    """Liest den numerischen Zustand einer Entität (z. B. number.* Toleranz-Entität)."""
-    if not hass or not entity_id or not isinstance(entity_id, str):
-        return None
-    states_mgr = getattr(hass, "states", None)
-    if not states_mgr:
-        return None
-    st = states_mgr.get(entity_id)
-    if not st or st.state in ("unavailable", "unknown", "None", None, ""):
-        return None
-    try:
-        val = float(st.state)
-        if math.isnan(val) or math.isinf(val):
-            return None
-        return round(val, 3)
-    except (ValueError, TypeError):
-        return None
-
-
-def resolve_tolerance_entity(hass: Any, config_entry: Any) -> tuple[str | None, str]:
-    """Ermittelt die Better-Thermostat-Toleranz-Entität (manuelle Wahl vor Auto-Discovery via Gerät)."""
-    if not config_entry:
-        return None, "none"
-
-    options = getattr(config_entry, "options", {}) or {}
-    data = getattr(config_entry, "data", {}) or {}
-
-    raw_manual = options.get(CONF_TOLERANCE_ENTITY)
-    if raw_manual is None:
-        raw_manual = data.get(CONF_TOLERANCE_ENTITY)
-    if isinstance(raw_manual, str):
-        manual_entity = raw_manual.strip()
-        if manual_entity and manual_entity.startswith("number."):
-            return manual_entity, "manual"
-
-    climate_entity = (options.get(CONF_CLIMATE_ENTITY) or data.get(CONF_CLIMATE_ENTITY) or "").strip()
-    if not hass or not climate_entity:
-        return None, "none"
-
-    try:
-        from homeassistant.helpers import entity_registry as er
-
-        ent_reg = er.async_get(hass)
-        if not ent_reg:
-            return None, "none"
-        cl_reg = ent_reg.async_get(climate_entity)
-        device_id = getattr(cl_reg, "device_id", None) if cl_reg else None
-        if not isinstance(device_id, str) or not device_id.strip():
-            return None, "none"
-
-        device_entries: list[Any] = []
-        if hasattr(er, "async_entries_for_device"):
-            raw_entries = er.async_entries_for_device(ent_reg, device_id)
-            if isinstance(raw_entries, (list, tuple, set)):
-                device_entries.extend(raw_entries)
-        if not device_entries and isinstance(getattr(ent_reg, "entities", None), dict):
-            for entry in ent_reg.entities.values():
-                if getattr(entry, "device_id", None) == device_id:
-                    device_entries.append(entry)
-
-        best_entity: str | None = None
-        best_score = -1
-        states_mgr = getattr(hass, "states", None)
-
-        for reg_entry in device_entries:
-            ent_id = getattr(reg_entry, "entity_id", None)
-            if not isinstance(ent_id, str) or not ent_id.startswith("number."):
-                continue
-            disabled_by = getattr(reg_entry, "disabled_by", None)
-            if disabled_by is not None and disabled_by is not False:
-                continue
-            if getattr(reg_entry, "disabled", False) is True:
-                continue
-
-            ent_lower = ent_id.lower()
-            t_key = str(getattr(reg_entry, "translation_key", "") or "").lower()
-            u_id = str(getattr(reg_entry, "unique_id", "") or "").lower()
-            o_name = str(getattr(reg_entry, "original_name", "") or "").lower()
-
-            matches = (
-                "tolerance" in ent_lower
-                or "toleranz" in ent_lower
-                or "tolerance" in t_key
-                or "toleranz" in t_key
-                or "tolerance" in u_id
-                or "toleranz" in u_id
-                or "tolerance" in o_name
-                or "toleranz" in o_name
-            )
-            if not matches:
-                continue
-
-            score = 1
-            if t_key == "tolerance":
-                score += 4
-            if ent_lower.endswith("_tolerance") or ent_lower.endswith("_toleranz"):
-                score += 2
-            if states_mgr and states_mgr.get(ent_id) is not None:
-                score += 1
-
-            if score > best_score:
-                best_score = score
-                best_entity = ent_id
-
-        if best_entity:
-            return best_entity, "auto"
-    except Exception as err:
-        _LOGGER.debug("Fehler bei der Auto-Erkennung der Toleranz-Entität für '%s': %s", climate_entity, err)
-
-    return None, "none"
-
-
-async def async_backup_and_zero_tolerance(
-    hass: Any,
-    domain_data: dict,
-    tolerance_entity: str,
-) -> bool:
-    """Sichert die positive Ausgangstoleranz persistent und setzt die Toleranz-Entität auf 0."""
-    if not hass or not isinstance(domain_data, dict) or not tolerance_entity:
-        return False
-
-    st = hass.states.get(tolerance_entity) if getattr(hass, "states", None) else None
-    cur_val = get_numeric_entity_value(hass, tolerance_entity)
-    if st is None or cur_val is None:
-        return False
-
-    attrs = getattr(st, "attributes", None) or {}
-    raw_min = attrs.get("min")
-    if raw_min is not None:
-        try:
-            if float(raw_min) > 0.0:
-                _LOGGER.debug(
-                    "Toleranz-Entität '%s' erlaubt kein 0.0 (min=%s) -> Fallback nutzen",
-                    tolerance_entity,
-                    raw_min,
-                )
-                return False
-        except (ValueError, TypeError):
-            pass
-
-    existing_backup = domain_data.get("tolerance_backup")
-
-    if cur_val <= 0:
-        # Bereits auf 0 -> nur True zurückgeben, falls bereits ein gültiges Backup existiert
-        return bool(
-            isinstance(existing_backup, dict)
-            and existing_backup.get("entity_id") == tolerance_entity
-            and safe_float(existing_backup.get("original_value"), 0.0, allow_zero_or_negative=True) > 0
-        )
-
-    # Nur positiven Wert sichern und bestehendes Backup derselben Entität niemals überschreiben
-    if (
-        not isinstance(existing_backup, dict)
-        or existing_backup.get("entity_id") != tolerance_entity
-        or safe_float(existing_backup.get("original_value"), 0.0, allow_zero_or_negative=True) <= 0
-    ):
-        backup = {
-            "entity_id": tolerance_entity,
-            "original_value": round(cur_val, 3),
-        }
-        domain_data["tolerance_backup"] = backup
-        storage = domain_data.get("storage")
-        if storage and hasattr(storage, "async_save_data"):
-            await storage.async_save_data({"tolerance_backup": backup})
-        _LOGGER.info(
-            "Opportunistisches Mitheizen [%s]: Original-Toleranz %.2f K persistent gesichert -> Setze Toleranz auf 0.0 K",
-            tolerance_entity,
-            cur_val,
-        )
-    else:
-        _LOGGER.info(
-            "Opportunistisches Mitheizen [%s]: Setze Toleranz auf 0.0 K (gesichertes Original: %.2f K)",
-            tolerance_entity,
-            existing_backup["original_value"],
-        )
-
-    await hass.services.async_call(
-        "number",
-        "set_value",
-        service_data={"value": 0.0},
-        target={"entity_id": tolerance_entity},
-        blocking=False,
-    )
-    return True
-
-
-async def async_restore_tolerance(
-    hass: Any,
-    domain_data: dict,
-    reason: str = "",
-) -> bool:
-    """Stellt die persistent gesicherte Original-Toleranz wieder her und bereinigt das Backup."""
-    if not hass or not isinstance(domain_data, dict):
-        return False
-
-    backup = domain_data.get("tolerance_backup")
-    if not isinstance(backup, dict):
-        return False
-
-    ent_id = backup.get("entity_id")
-    orig_val = safe_float(backup.get("original_value"), 0.0, allow_zero_or_negative=True)
-
-    if not isinstance(ent_id, str) or not ent_id.strip() or orig_val <= 0:
-        domain_data["tolerance_backup"] = None
-        storage = domain_data.get("storage")
-        if storage and hasattr(storage, "async_save_data"):
-            await storage.async_save_data({"tolerance_backup": None})
-        return False
-
-    ent_id = ent_id.strip()
-    st = hass.states.get(ent_id) if getattr(hass, "states", None) else None
-    if st is not None and getattr(st, "attributes", None):
-        attrs = st.attributes
-        try:
-            if attrs.get("min") is not None:
-                orig_val = max(float(attrs["min"]), orig_val)
-            if attrs.get("max") is not None:
-                orig_val = min(float(attrs["max"]), orig_val)
-        except (ValueError, TypeError):
-            pass
-
-    restore_val = round(orig_val, 3)
-
-    # Zuerst Backup lokal + persistent bereinigen, um Doppel-Aufrufe bei Event-Kaskaden auszuschließen
-    domain_data["tolerance_backup"] = None
-    storage = domain_data.get("storage")
-    if storage and hasattr(storage, "async_save_data"):
-        await storage.async_save_data({"tolerance_backup": None})
-
-    _LOGGER.info(
-        "Opportunistisches Mitheizen [%s]: Stelle Original-Toleranz %.2f K wieder her (%s)",
-        ent_id,
-        restore_val,
-        reason or "restore",
-    )
-
-    await hass.services.async_call(
-        "number",
-        "set_value",
-        service_data={"value": restore_val},
-        target={"entity_id": ent_id},
-        blocking=False,
-    )
-    return True
 
 
 def resolve_entry_entity_id(

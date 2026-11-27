@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Ersteinrichtung",
-        "description": "Konfigurieren Sie das Thermostat, die Außentemperatur-Quelle (Sensor hat Vorrang vor Wetter-Entität), den Brenner-Sensor sowie Lernen und Standard-Raten.",
+        "title": "Smart Climate Scheduler - Ersteinrichtung",
+        "description": "Konfigurieren Sie die Thermostate, die Außentemperatur-Quelle (Sensor hat Vorrang vor Wetter-Entität), den Brenner-Sensor sowie Lernen und Standard-Raten.",
         "data": {
           "name": "Name des Raums",
           "climate_entity": "Thermostat / Climate-Entität",
+          "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
+          "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
+          "window_sensors": "Fenster- / Tür-Sensoren (Optional)",
+          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
+          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)",
+          "window_pause_enabled": "Heizung bei geöffnetem Fenster pausieren (HVAC Off)",
           "outside_temp_sensor": "Außentemperatur-Sensor (Vorrang vor Wetter-Entität)",
           "outside_weather_entity": "Wetter-Entität",
           "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
-          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
+          "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
           "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
-          "tolerance_entity": "Toleranz-Entität (Optional – Automatische Erkennung über Gerät wenn leer)",
           "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
           "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
           "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Der Name des Raums darf nicht leer sein."
+      "name_required": "Der Name des Raums darf nicht leer sein.",
+      "climate_required": "Es muss mindestens ein Thermostat (Climate-Entität) ausgewählt werden."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Allgemeine Einstellungen & Thermik",
         "description": "Passen Sie Außentemperatur-Quelle, Lernen sowie Standard-Aufheiz- und Verlustrate an:",
         "data": {
+          "climate_entities": "Thermostate / Climate-Entitäten (Raumgruppe)",
+          "room_temp_sensor": "Raumtemperatur-Sensor (Optional – nur für SCS-Thermik & Hysterese)",
+          "window_sensors": "Fenster- / Tür-Sensoren (Optional)",
+          "window_open_delay_minutes": "Verzögerung bei Fenster offen bis Pause (Minuten)",
+          "window_close_delay_minutes": "Verzögerung bei Fenster zu bis Fortsetzen (Minuten)",
+          "window_pause_enabled": "Heizung bei geöffnetem Fenster pausieren (HVAC Off)",
           "outside_temp_sensor": "Außentemperatur-Sensor (Vorrang vor Wetter-Entität)",
           "outside_weather_entity": "Wetter-Entität für Außentemperatur",
           "heating_active_sensor": "Brenner- / Heizung-Aktiv-Entität",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Abkühlen aktivieren",
           "max_minutes_cooldown": "Max. Abkühlzeit (Minuten)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
-          "fallback_tolerance": "Wiedereinschalt-Toleranz / Fallback (K)",
+          "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
           "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
-          "tolerance_entity": "Toleranz-Entität (Optional – Automatische Erkennung über Gerät wenn leer)",
           "use_weather_forecast_for_preheat": "Wettervorhersage für Vorheizen nutzen (stündlicher Fensterschnitt)",
-          "preheat_ignores_away": "Vorheizen vor Ankunft trotz Abwesenheit (Überstimmt Abwesend & Nahbereich)",
+          "preheat_ignores_away": "Vorheizen trotz Abwesenheit",
           "anomaly_detection_enabled": "Anomalie- & Hardware-Wächter aktivieren (Keine Erwärmung, Thermostat offline, Sensor eingefroren)",
           "anomaly_no_heat_minutes": "Warnschwelle ohne Erwärmung bei aktivem Brenner (Minuten, 0 = aus)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Vor Slot-Start vorheizen",
           "cooldown": "Vor Slot-Ende auskühlen"
         }
+      },
+      "custom_presets": {
+        "title": "Eigene Raum-Presets verwalten ({presets_count})",
+        "description": "Konfigurierte Raum-Presets mit eigenen Zieltemperaturen:{presets_list}",
+        "data": {
+          "preset_action": "Aktion auswählen"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Eigenes Preset hinzufügen",
+        "description": "Vergeben Sie Namen, Zieltemperatur und Farbe:",
+        "data": {
+          "name": "Preset-Name",
+          "temperature": "Zieltemperatur (°C)",
+          "color": "Farbe"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Eigenes Preset auswählen",
+        "description": "Wählen Sie das zu bearbeitende oder zu löschende Preset:",
+        "data": {
+          "selected_preset": "Preset auswählen"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Eigenes Preset bearbeiten",
+        "description": "Bearbeiten oder löschen Sie das gewählte Raum-Preset:",
+        "data": {
+          "action": "Aktion auswählen",
+          "name": "Preset-Name",
+          "temperature": "Zieltemperatur (°C)",
+          "color": "Farbe"
+        }
       }
     },
     "error": {
       "invalid_time_range": "Die Endzeit muss nach der Startzeit liegen.",
       "profile_name_empty": "Der Profilname darf nicht leer sein.",
-      "profile_name_exists": "Ein Profil mit diesem Namen existiert bereits."
+      "profile_name_exists": "Ein Profil mit diesem Namen existiert bereits.",
+      "climate_required": "Es muss mindestens ein Thermostat (Climate-Entität) ausgewählt werden.",
+      "preset_name_empty": "Der Preset-Name darf nicht leer sein.",
+      "cannot_delete_last_preset": "Es muss mindestens ein eigenes Preset erhalten bleiben."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Zeitpläne & Profile verwalten",
+        "custom_presets": "🌡️ Eigene Presets verwalten",
         "settings": "⚙️ Einstellungen (Sensoren, Lernen & Raten)",
         "save": "💾 Speichern & Beenden"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Eigenes Preset hinzufügen",
+        "edit": "✏️ Preset bearbeiten oder löschen",
+        "back": "← Zurück zum Hauptmenü"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Bernstein (#f59e0b)",
+        "#10b981": "Smaragd (#10b981)",
+        "#6366f1": "Indigo (#6366f1)",
+        "#ef4444": "Rot (#ef4444)",
+        "#0ea5e9": "Himmelblau (#0ea5e9)",
+        "#ec4899": "Pink (#ec4899)",
+        "#8b5cf6": "Violett (#8b5cf6)",
+        "#64748b": "Schiefer (#64748b)"
       }
     },
     "schedule_action": {

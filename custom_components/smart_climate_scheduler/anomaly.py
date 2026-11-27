@@ -19,7 +19,14 @@ from .const import (
     DEFAULT_ANOMALY_DETECTION_ENABLED,
     DEFAULT_ANOMALY_NO_HEAT_MINUTES,
 )
-from .helpers import is_in_startup_grace, is_window_or_door_open
+from .helpers import (
+    get_climate_entities,
+    get_effective_window_open,
+    get_group_hvac_heating,
+    get_raw_window_open,
+    get_room_temp_with_timestamp,
+    is_in_startup_grace,
+)
 
 BURNER_ACTIVE_STATES = ("on", "true", "active", "heat", "heating")
 
@@ -69,7 +76,7 @@ def evaluate_and_update_anomaly(
     domain_data: dict[str, Any] | None,
     now_dt: datetime | None = None,
 ) -> dict[str, Any]:
-    """Wertet Hardware- & Heiz-Anomalien unter strikter Berücksichtigung des optionalen Brenner-Sensors aus."""
+    """Wertet Hardware- & Heiz-Anomalien über Thermostatgruppen, optionalen Raumsensor, Fenstersensoren & Brenner aus."""
     now = now_dt or dt_util.now()
     enabled = bool(_get_opt(config_entry, CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED))
 
@@ -79,7 +86,11 @@ def evaluate_and_update_anomaly(
     except (ValueError, TypeError):
         no_heat_minutes = DEFAULT_ANOMALY_NO_HEAT_MINUTES
 
-    climate_entity = str(_get_opt(config_entry, CONF_CLIMATE_ENTITY, "") or "").strip()
+    climate_entities = get_climate_entities(config_entry)
+    climate_entity = climate_entities[0] if climate_entities else str(_get_opt(config_entry, CONF_CLIMATE_ENTITY, "") or "").strip()
+    if not climate_entities and climate_entity:
+        climate_entities = [climate_entity]
+
     raw_burner = _get_opt(config_entry, CONF_HEATING_ACTIVE_SENSOR, None)
     heating_active_sensor = str(raw_burner).strip() if isinstance(raw_burner, str) and raw_burner.strip() else None
 
@@ -109,18 +120,31 @@ def evaluate_and_update_anomaly(
             "thermostat_heating": False,
             "window_open": False,
             "climate_state": None,
+            "climate_entities": climate_entities,
+            "unavailable_entities": [],
         }
         tracker["snapshot"] = snapshot
         return snapshot
 
     states_mgr = getattr(hass, "states", None) if hass else None
-    cl_state = states_mgr.get(climate_entity) if (states_mgr and climate_entity) else None
     in_grace = is_in_startup_grace(hass)
 
-    cl_state_str = str(getattr(cl_state, "state", "") or "").strip().lower() if cl_state else None
-    is_unavailable = bool(
-        climate_entity and (cl_state is None or cl_state_str in ("unavailable", "unknown"))
-    )
+    unavailable_entities: list[str] = []
+    available_states: list[tuple[str, Any]] = []
+    primary_state_str: str | None = None
+
+    for idx, cl_id in enumerate(climate_entities):
+        st = states_mgr.get(cl_id) if states_mgr else None
+        st_str = str(getattr(st, "state", "") or "").strip().lower() if st else None
+        if idx == 0:
+            primary_state_str = st_str
+        if st is None or st_str in ("unavailable", "unknown"):
+            unavailable_entities.append(cl_id)
+        else:
+            available_states.append((cl_id, st))
+
+    is_any_unavailable = bool(unavailable_entities)
+    is_all_unavailable = bool(climate_entities) and len(unavailable_entities) == len(climate_entities)
 
     active_anomalies: list[str] = []
     thermostat_heating = False
@@ -134,11 +158,12 @@ def evaluate_and_update_anomaly(
     unchanged_minutes = 0.0
     unavailable_minutes = 0.0
 
-    # 1. Thermostat nicht verfügbar (mit 90s-Start-Karenzzeit + Entprell-Wartezeit gegen kurze Aussetzer)
-    if is_unavailable:
-        tracker["heating_watch_start"] = None
-        tracker["heating_baseline_temp"] = None
-        tracker["heating_max_temp"] = None
+    # 1. Mindestens ein Thermostat nicht verfügbar (mit 90s-Start-Karenzzeit + Entprell-Wartezeit gegen kurze Aussetzer)
+    if is_any_unavailable:
+        if is_all_unavailable:
+            tracker["heating_watch_start"] = None
+            tracker["heating_baseline_temp"] = None
+            tracker["heating_max_temp"] = None
         if not in_grace:
             if not isinstance(tracker.get("unavailable_since"), datetime):
                 tracker["unavailable_since"] = now
@@ -150,21 +175,21 @@ def evaluate_and_update_anomaly(
     else:
         tracker["unavailable_since"] = None
 
-    # 2. Sensorwerte & Heiz-/Brennerstatus prüfen (nur wenn Thermostat verfügbar)
-    if not is_unavailable and cl_state is not None:
-        attrs = getattr(cl_state, "attributes", None) or {}
-        curr_temp = _to_float_or_none(attrs.get("current_temperature"))
-        if curr_temp is None:
-            curr_temp = _to_float_or_none(attrs.get("external_temp_ema"))
-        target_temp = _to_float_or_none(attrs.get("temperature"))
+    # 2. Sensorwerte & Heiz-/Brennerstatus über verfügbare Thermostate + externen Raumsensor prüfen
+    if available_states or not is_all_unavailable:
+        _, thermostat_heating, _ = get_group_hvac_heating(hass, climate_entities)
+        curr_temp, _, temp_last_updated = get_room_temp_with_timestamp(hass, config_entry, climate_entities)
 
-        hvac_act = attrs.get("hvac_action")
-        if hvac_act is not None and str(hvac_act).strip() != "":
-            thermostat_heating = str(hvac_act).strip().lower() == "heating"
-        else:
-            thermostat_heating = cl_state_str == "heat"
+        valid_targets: list[float] = []
+        for _, st in available_states:
+            t_val = _to_float_or_none((getattr(st, "attributes", None) or {}).get("temperature"))
+            if t_val is not None:
+                valid_targets.append(t_val)
+        target_temp = max(valid_targets) if valid_targets else None
 
-        window_open = is_window_or_door_open(cl_state)
+        raw_win_open, _ = get_raw_window_open(hass, config_entry, climate_entities)
+        eff_win_open = get_effective_window_open(domain_data, hass, config_entry)
+        window_open = bool(eff_win_open or raw_win_open)
 
         if burner_configured and states_mgr:
             b_state = states_mgr.get(heating_active_sensor)
@@ -174,7 +199,7 @@ def evaluate_and_update_anomaly(
             # Ohne separaten Brenner-Sensor folgt der Brenner-Status dem heizenden Ventil
             burner_active = thermostat_heating
 
-        # 2a. Eingefrorener Temperatursensor
+        # 2a. Eingefrorener Temperatursensor (beachtet externen Raumsensor vor Thermostat-Mittelwert)
         if curr_temp is not None:
             prev_temp = tracker.get("last_temp")
             if prev_temp is None or abs(curr_temp - prev_temp) >= 0.05:
@@ -186,9 +211,8 @@ def evaluate_and_update_anomaly(
                 unchanged_minutes = _elapsed_minutes(tracker.get("last_temp_change_ts"), now)
 
             stale_updated_minutes = 0.0
-            last_updated = getattr(cl_state, "last_updated", None)
-            if isinstance(last_updated, datetime):
-                stale_updated_minutes = _elapsed_minutes(last_updated, now)
+            if isinstance(temp_last_updated, datetime):
+                stale_updated_minutes = _elapsed_minutes(temp_last_updated, now)
 
             has_temp_demand = bool(
                 (thermostat_heating and burner_active and not window_open)
@@ -287,7 +311,9 @@ def evaluate_and_update_anomaly(
         "burner_active": burner_active,
         "thermostat_heating": thermostat_heating,
         "window_open": window_open,
-        "climate_state": cl_state_str,
+        "climate_state": primary_state_str,
+        "climate_entities": climate_entities,
+        "unavailable_entities": unavailable_entities,
     }
     tracker["snapshot"] = snapshot
     return snapshot

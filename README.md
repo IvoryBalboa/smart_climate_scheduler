@@ -1,26 +1,24 @@
-# Smart Climate Scheduler (v3.3.1)
+# Smart Climate Scheduler (v4.0.0)
 
 [![GitHub Release](https://img.shields.io/github/v/release/IvoryBalboa/smart_climate_scheduler?style=for-the-badge&color=amber)](https://github.com/IvoryBalboa/smart_climate_scheduler/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![Hassfest Validation](https://img.shields.io/github/actions/workflow/status/IvoryBalboa/smart_climate_scheduler/validate.yml?branch=main&label=Hassfest&style=for-the-badge)](https://github.com/IvoryBalboa/smart_climate_scheduler/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-**Smart Climate Scheduler** ist eine intelligente, adaptive Heizungs- und Raumklima-Automatisierung für Home Assistant. Sie kombiniert einen komfortablen, vollintegrierten Wochen-Zeitplaner mit einer selbstlernenden thermodynamischen Berechnung, damit deine Räume immer zur gewünschten Uhrzeit exakt die richtige Wohlfühltemperatur haben.
+**Smart Climate Scheduler** ist eine universelle, adaptive Heizungs- und Raumklima-Automatisierung für Home Assistant. Sie kombiniert einen komfortablen, vollintegrierten Wochen-Zeitplaner mit einer selbstlernenden thermodynamischen Berechnung, Thermostat-Gruppen, Fenster-/Tür-Pausierung und eigenen Raum-Presets – komplett unabhängig von Drittanbieter-Wrappern.
 
-> ### 💡 Erweiterung für Better Thermostat
-> **Smart Climate Scheduler ist primär als leistungsstarke Zeitplan- und Thermik-Erweiterung für die beliebte Home Assistant Integration [Better Thermostat](https://github.com/kartoteket/better-thermostat) konzipiert.**
-> 
-> * **Better Thermostat** übernimmt die Raumkalibrierung, externe Temperatursensoren, Fenster-Offen-Erkennung und TRV-Ansteuerung.
-> * **Smart Climate Scheduler** steuert die übergeordnete Wochen-Planung, das adaptive Vorheizen (Preheat), vorzeitige Absenken (Cooldown) und schaltet dynamisch die Presets (`comfort`, `eco`, `sleep`, `away`, `boost`) von Better Thermostat.
+> ### 🔥 Universelle Thermostat-Steuerung (v4.0.0)
+> **Smart Climate Scheduler v4.0.0 arbeitet vollständig autark mit jedem Home Assistant `climate.*`-Thermostat – ganz ohne zusätzliche Wrapper-Integrationen.**
 >
-> ℹ️ **Hinweis für reguläre Thermostate (z. B. Zigbee / Z-Wave TRVs):**  
-> Da Smart Climate Scheduler nativ auf der Preset-Architektur und den Solltemperatur-Tabellen von Better Thermostat aufsetzt (`climate.set_preset_mode`), empfehlen wir dringend, herkömmliche Thermostate (z. B. über ZHA, Zigbee2MQTT, Homematic, Shelly TRV) zuerst in **Better Thermostat** einzubinden und die resultierende `climate.*`-Entität hier zu nutzen. *(Ein universeller Standalone-Modus mit direkter `climate.set_temperature`-Steuerung für Thermostate ohne Presets ist für ein zukünftiges Update auf der Roadmap notiert).*
+> * Kompatibel mit **Zigbee2MQTT**, **ZHA**, **Matter**, **Homematic**, **Z-Wave**, **Shelly TRV**, **ESPHome** und allen weiteren Standard-`climate`-Entitäten.
+> * **Direkte Sollwert- & HVAC-Steuerung**: Regelt Zieltemperaturen (`climate.set_temperature`) und Heizmodus (`heat` / `off`) direkt für einzelne Thermostate oder synchronisierte Thermostat-Gruppen.
+> * **Automatische Migration von v3**: Bestehende v3-Raumkonfigurationen werden beim Upgrade auf v4.0.0 automatisch übernommen und bereinigt.
 
 ---
 
 ## 🎯 Was macht der Smart Climate Scheduler?
 
-Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit ein – beispielsweise um **07:00 Uhr** morgens auf Komforttemperatur (21 °C). 
+Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit ein – beispielsweise um **07:00 Uhr** morgens auf Komforttemperatur (21 °C).
 * **Das Problem**: Im tiefen Winter bei -10 °C Außentemperatur braucht ein Raum oft 90 Minuten zum Aufheizen – um 07:00 Uhr ist es noch kalt. Im milden Frühjahr bei +12 °C reichen dagegen oft schon 20 Minuten. Zudem heizt die Heizung bis zur letzten Minute vor dem Verlassen des Hauses auf voller Leistung, obwohl die Restwärme noch lange vorhalten würde.
 * **Die Lösung**: Smart Climate Scheduler lernt kontinuierlich die reale Wärmekapazität deines Raumes (**Aufheizrate in Kelvin pro Stunde, K/h**) und den Wärmeverlust (**Abkühlrate in Kelvin pro Stunde, K/h**) – und das differenziert nach der jeweiligen Außentemperatur.
 
@@ -32,48 +30,33 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 
 ## ✨ Alle Kern-Features im Überblick
 
-### 1. 🤝 Perfektes Zusammenspiel mit Better Thermostat
-* **Native Preset-Steuerung**: Schaltet direkt die Better Thermostat Presets (`comfort`, `eco`, `sleep`, `away`, `boost`, `none`).
-* **Automatische Temperatur-Übernahme**: Liest die in Better Thermostat hinterlegten Solltemperaturen je Preset (`bt_preset_heat_temperatures`) automatisch aus – keine doppelte Pflege von Zieltemperaturen.
-* **Präzise Sensor-Glättung**: Nutzt das Better Thermostat Attribut `external_temp_ema` (geglättete Temperatur externer Sensoren) für hochstabile Vorheiz- und Lernberechnungen.
+### 1. 🌡️ Universelle Steuerung, eigene Presets & Thermostat-Gruppen
+* **Freie Raum-Presets**: Jeder Raum definiert seine eigene Preset-Liste mit individuellem Namen, Zieltemperatur (`5,0–30,0 °C`) und Farbe – pflegbar im Options-Flow oder direkt inline auf der Lovelace-Karte.
+* **Synchronisierte Thermostat-Gruppen**: Verknüpfe ein oder mehrere `climate.*`-Thermostate pro Raum. Alle Geräte werden synchron geregelt; fällt ein Thermostat kurzzeitig aus, arbeiten die übrigen nahtlos weiter.
+* **Optionaler externer Raumtemperatursensor**: Ein separater Temperatursensor (`sensor` mit `device_class=temperature`) speist ausschließlich die interne SCS-Thermik, Hysterese und Abschaltung – ohne Kalibrierungsdaten an die Thermostate zu senden. Ist kein externer Sensor gesetzt, nutzt SCS den Mittelwert der verfügbaren Gruppenthermostate.
 
-### 2. 📅 Integrierte Zeitpläne (Schedules) mit Kopierfunktion
-* **Direkt in der Integration**: Du benötigst keine externen Scheduler-Addons, YAML-Konfigurationen oder Hilfssensoren. Die Zeitpläne werden direkt in der Integration gepflegt.
-* **Flexible Zeitfenster (Slots)**: Teile jeden Tag in beliebige Zeitfenster mit individuellen Start-/Endzeiten und zugeordneten Presets ein.
-* **Kopierfunktion für Tage**: 
-  * Ein erstellter Zeitplan (z. B. für Montag) kann mit einem Klick auf alle weiteren Wochentage übertragen werden.
-  * Wochenend-Tage lassen sich duplizieren oder anpassen.
-  * Dies spart viel Zeit bei der Ersteinrichtung und bei saisonalen Anpassungen.
-* **Wochentags-Modus**: Individuelle Tagespläne für jeden Wochentag (Mo, Di, Mi, Do, Fr, Sa, So) mit komfortabler Übertragung per Kopierfunktion.
+### 2. 🪟 Fenster- & Tür-Erkennung mit Minuten-Verzögerung
+* **Strikte Kontakt-Auswahl**: Optionale Fenster- und Türsensoren (`binary_sensor` mit `device_class=window` oder `door`) pausieren die Heizung automatisch beim Lüften (`hvac_mode: off`) und stellen den vorherigen Zustand nach dem Schließen sauber wieder her.
+* **Getrennte Auf-/Zu-Verzögerungen in Minuten**: Konfiguriere getrennt, wie viele Minuten ein Fenster oder eine Tür geöffnet sein muss, bevor pausiert wird (Standard: **1 Min**), und wie viele Minuten nach dem Schließen gewartet wird, bevor wieder geheizt wird (Standard: **2 Min**).
 
-### 3. 🔥 Dual-Matrix Thermik-Lernengine (K/h)
-* **Aufheiz-Matrix**: Erfasst bei aktiver Heizung kontinuierlich die tatsächliche Aufheizgeschwindigkeit des Raumes in Kelvin pro Stunde (K/h), sortiert nach Außentemperatur-Clustern (z. B. `< -5 °C`, `0 °C`, `+5 °C`, `+12 °C`).
-* **Abkühl-Matrix**: Misst, wie schnell der Raum bei inaktiver Heizung Wärme verliert (in K/h).
-* **Rolling Average mit ±5%-Ausreißerfilter**: Messungen werden geglättet; extreme Spikes (z. B. durch kurzes Stoßlüften) verfälschen die gelernten Daten nicht.
-* **Automatischer Fallback**: Liegen für einen Außentemperaturbereich noch keine Messwerte vor, greift die Integration stabil auf den hinterlegten Standardwert (Default: 1,0 K/h) zurück.
+### 3. 📅 Integrierte Zeitpläne (Schedules) & Profile mit Kopierfunktion
+* **Direkt in der Integration**: Keine externen Scheduler-Addons, YAML-Konfigurationen oder Hilfssensoren nötig.
+* **Flexible Zeitfenster (Slots) & Profile**: Verwalte mehrere Zeitplan-Profile (z. B. *Standard*, *Homeoffice*, *Urlaub*) mit individuellen Zeitfenstern je Wochentag (Mo–So).
+* **Kopierfunktion für Tage**: Übertrage Tagespläne mit einem Klick auf Mo–Fr, Sa–So oder einzelne Wochentage.
 
-### 4. 📍 Zonen-, Distanz- & Anwesenheitserkennung
-* Erkennt automatisch die Anwesenheit von Bewohnern über konfigurierte Zonen (`home`, `away`) und GPS-Distanzen.
-* Bei Abwesenheit wird energieeffizient auf das `away`- oder `eco`-Preset gewechselt.
-* Nähert sich eine Person dem Zuhause (`near_distance`), kann die Vorheizung bereits vor dem eigentlichen Eintreffen starten.
+### 4. 🔥 Dual-Matrix Thermik-Lernengine & opportunistisches Mitheizen
+* **Aufheiz- & Abkühl-Matrix (K/h)**: Misst fortlaufend die reale Aufheiz- und Abkühlgeschwindigkeit je Außentemperatur-Cluster mit Rolling Average und ±5%-Ausreißerfilter.
+* **Rein interne SCS-Hysterese & Mitheizen**: Bei aktivem zentralem Brenner-Sensor überwindet SCS das Regel-Totband rein intern per temporärem Sollwert-Kickstart und stellt sofort nach dem Öffnen des Ventils (`hvac_action=heating`), bei Brenner-Aus oder Fensteröffnung die reguläre Zieltemperatur wieder her.
+* **Brenner-sensitiver Anomalie-Wächter**: Warnt über einen eigenen Diagnose-Binärsensor (`_anomaly`) bei nicht verfügbaren Thermostaten, eingefrorenen Sensoren oder ausbleibender Erwärmung trotz aktivem Ventil und Brenner.
 
-### 5. 🎛️ Temporäre Overrides (Party-, Gäste- & Home-Office-Modus)
-* Manuelle Abweichungen vom regulären Zeitplan können jederzeit per Service-Aufruf oder Dashboard-Schalter aktiviert werden:
-  * Dauer-Override: z. B. *"Heize für die nächsten 2 Stunden auf Boost"*.
-  * Zeitfenster-Override: z. B. *"Halte bis 23:00 Uhr die Komfort-Temperatur"*.
-* Nach Ablauf der gewählten Zeitspanne kehrt das System automatisch in den regulären Zeitplan zurück.
+### 5. 📍 Zonen-, Distanz- & Anwesenheitserkennung
+* Erkennt die Anwesenheit von Bewohnern über Home-Assistant-Personen/Zonen (`home`, `away`) und GPS-Distanzen (`near_distance`).
+* Konfigurierbare Presets für *Unterwegs (nah)* und *Abwesend* sowie Option **„Vorheizen trotz Abwesenheit“**.
 
-### 6. 🎨 Eingebettete Lovelace-Karte (24h-Zeitleiste & Drag-&-Drop)
-* **Automatisch integriert**: Die benutzerdefinierte Lovelace-Karte **`smart-climate-scheduler-card`** wird direkt mit der Integration ausgeliefert und automatisch im Home Assistant Frontend registriert – es ist kein HACS-Frontend-Download nötig.
-* **Raumauswahl über `config_entry`**: Im visuellen Karten-Editor wählst du direkt den gewünschten Raum (**Config Entry**) aus – unabhängig von umbenannten Sensor-IDs.
-* **Interaktive 24h-Zeitleiste**: Wochentag-Tabs (Mo–So), farbcodierte Zeitblöcke, neue Slots per Klick anlegen sowie Start-/Endzeiten per Drag-&-Drop im 5-, 15- oder 30-Minuten-Raster anpassen.
-* **Komplette Steuerung auf dem Dashboard**: Vorheizen & Auskühlen pro Slot schalten, Tagespläne mit einem Klick auf Mo–Fr / Sa–So / einzelne Tage kopieren, Profile wechseln oder neu anlegen, Automatik ein-/ausschalten und Schnell-Overrides direkt starten.
-
-### 7. 🎚️ Volle Kontrolle: Automatik-Schalter, Toleranz-Steuerung & Matrix-Pflege
-* **Schalter `switch.<name>_automatic`**: Aktiviert oder pausiert die gesamte Automatik für den Raum bequem vom Dashboard aus.
-* **Better Thermostat Toleranz-Steuerung**: Verknüpft (automatisch per Gerät oder optional gewählt) die Toleranz-Entität (`number.*`), setzt sie bei opportunistischem Mitheizen temporär auf `0` K und stellt den Originalwert beim Heizstart (`heating`) zuverlässig wieder her.
-* **Lernen konfigurieren (Options-Flow)**: Wer feste Aufheiz- oder Abkühlwerte bevorzugt, schaltet das adaptive Lernen in den Integrations-Optionen (*Einstellungen > Geräte & Dienste > Smart Climate Scheduler > Konfigurieren*) ab. Die Vorheizung rechnet dann stabil mit den vorgegebenen Standard-Raten.
-* **Dienste zur Matrix-Pflege**: Einzelne K/h-Werte pro Außentemperatur können jederzeit gezielt per Home Assistant Service eingesehen, manuell gesetzt oder zurückgesetzt werden.
+### 6. 🎨 Eingebettete Lovelace-Karten (Raum-Timeline & Multi-Raum-Übersicht)
+* **Automatisch integriert**: Beide Karten (`custom:smart-climate-scheduler-card` & `custom:smart-climate-scheduler-overview-card`) werden direkt mit der Integration ausgeliefert und automatisch im Home Assistant Frontend registriert.
+* **Interaktive 24h-Zeitleiste**: Wochentag-Tabs (Mo–So), Drag-&-Drop-Slots, Live-Thermik-Vorschau, Inline-Verwaltung eigener Presets, Profilwechsel, Fenster-Countdown und Schnell-Overrides.
+* **Multi-Raum-Übersicht**: Filter (Alle, Automatik An, Heizt, Override, Warnungen), manuelle oder dynamische Sortierung sowie Sammelaktionen für alle angezeigten Räume.
 
 ---
 
@@ -90,7 +73,7 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 5. Klicke auf **Hinzufügen**, suche nach **Smart Climate Scheduler**, klicke auf **Herunterladen** und starte Home Assistant neu.
 
 ### Methode 2: Manuelle Installation
-1. Lade das Release-ZIP `smart_climate_scheduler_v3.3.1.zip` herunter.
+1. Lade das Release-ZIP `smart_climate_scheduler_v4.0.0.zip` herunter.
 2. Entpacke den Ordner `smart_climate_scheduler` in dein Home Assistant Verzeichnis:
    ```text
    /config/custom_components/smart_climate_scheduler/
@@ -101,32 +84,35 @@ Herkömmliche Thermostat-Zeitpläne schalten starr zu einer festgelegten Uhrzeit
 
 ## ⚙️ Schnelleinrichtung (Config Flow)
 
-1. **Voraussetzung**: Richte zunächst deine Räume in **Better Thermostat** ein (oder verknüpfe ein Thermostat mit Preset-Unterstützung).
-2. Navigiere in Home Assistant zu **Einstellungen** > **Geräte & Dienste** > **Integration hinzufügen**.
-3. Suche nach **Smart Climate Scheduler**.
-4. Folge dem Einrichtungsassistenten:
-   * **Klimagerät (`climate.*`)**: Wähle dein Better Thermostat (z. B. `climate.better_thermostat_wohnzimmer`).
-   * **Außentemperatur**: Wähle deinen Außensensor (`sensor.*_temperature`) oder deinen Wetterdienst (`weather.*`).
-   * **Brenner-/Heizaktiv-Sensor (Optional)**: Sensor, der anzeigt, ob der Heizkörper aktiv warm wird.
-   * **Zeitpläne einrichten**: Richte deine Zeitfenster direkt im Assistenten oder bequem über die integrierte Lovelace-Karte ein.
+1. Navigiere in Home Assistant zu **Einstellungen** > **Geräte & Dienste** > **Integration hinzufügen**.
+2. Suche nach **Smart Climate Scheduler**.
+3. Folge dem Einrichtungsassistenten:
+   * **Thermostate (`climate.*`)**: Wähle ein oder mehrere Thermostate für den Raum (z. B. `climate.wohnzimmer_trv`).
+   * **Externer Raumtemperatursensor (Optional)**: Wähle einen Temperatursensor (`device_class=temperature`) für die interne SCS-Thermik.
+   * **Fenster-/Türsensoren (Optional)**: Wähle einen oder mehrere Kontakte (`device_class=window` oder `door`) samt Auf-/Zu-Verzögerung in Minuten.
+   * **Außentemperatur**: Wähle deinen Außentemperatursensor (`device_class=temperature`) oder eine Wetter-Entität (`weather.*`).
+   * **Brenner-/Heizaktiv-Sensor (Optional)**: Sensor, der anzeigt, ob die zentrale Heizung aktiv Wärme liefert.
+   * **Presets & Zeitpläne**: Passe deine Raum-Presets und Zeitfenster direkt im Options-Flow oder bequem über die eingebettete Lovelace-Karte an.
 
 ---
 
-## 🎨 Lovelace-Karte zum Dashboard hinzufügen
+## 🎨 Lovelace-Karten zum Dashboard hinzufügen
 
-Nach der Installation und einem Home Assistant Neustart steht die Karte **„Smart Climate Scheduler Card“** automatisch im Dashboard-Editor (*Karte hinzufügen*) zur Verfügung:
+Nach der Installation und einem Home Assistant Neustart stehen **„Smart Climate Scheduler Card“** und **„Smart Climate Scheduler Overview Card“** automatisch im Dashboard-Editor (*Karte hinzufügen*) zur Verfügung:
 
-1. Öffne dein Dashboard und wähle **Dashboard bearbeiten > + Karte hinzufügen**.
-2. Suche nach **Smart Climate Scheduler Card** und wähle im visuellen Editor den gewünschten **Raum / Config Entry** aus.
-3. Optional per YAML-Konfiguration einbinden:
-   ```yaml
-   type: custom:smart-climate-scheduler-card
-   config_entry: <DEINE_CONFIG_ENTRY_ID>
-   snap_minutes: 15
-   show_override_bar: true
-   ```
+```yaml
+type: custom:smart-climate-scheduler-card
+config_entry: <DEINE_CONFIG_ENTRY_ID>
+snap_minutes: 15
+show_override_bar: true
+```
 
-> 💡 **Tipp:** Auf der 24h-Zeitleiste legst du per Klick auf freie Fläche neue Zeit-Slots an, verschiebst oder skalierst Blöcke per Drag-&-Drop an den Rändern und passt im unteren Inspektor Start/Ende, Preset sowie *Vor Start vorheizen* und *Vor Ende auskühlen* an.
+```yaml
+type: custom:smart-climate-scheduler-overview-card
+title: Heizungs-Übersicht
+show_mini_timeline: true
+show_bulk_actions: true
+```
 
 ---
 
@@ -137,24 +123,19 @@ Die Integration erzeugt für jeden konfigurierten Raum ein sauberes Set an echte
 | Entität | Typ | Funktion & Details | Dashboard-Empfehlung |
 | :--- | :--- | :--- | :--- |
 | `switch.<name>_automatic` | Schalter | Hauptschalter für die Zeitplan-Automatik des Raumes | **Auf Dashboard anzeigen** |
-| `sensor.<name>_schedule` | Sensor | Aktives Soll-Preset (`comfort`, `eco`, etc.) mit Attributen `active_slot` & `next_slot` | **Auf Dashboard anzeigen** |
-| `sensor.<name>_heating_rate` | Sensor (K/h) | Gemessene & gelernte Aufheizrate in K/h (Attribute: `averages`-Matrix & `average`) | **Diagnose / Charts** |
-| `sensor.<name>_cooling_rate` | Sensor (K/h) | Gemessene & gelernte Abkühlrate in K/h (Attribute: `averages`-Matrix & `average`) | **Diagnose / Charts** |
+| `sensor.<name>_schedule` | Sensor | Aktives Soll-Preset mit Attributen `active_slot`, `next_slot` & `thermostats` | **Auf Dashboard anzeigen** |
+| `select.<name>_profile` | Auswahl | Aktives Zeitplan-Profil des Raumes | **Auf Dashboard anzeigen** |
+| `sensor.<name>_heating_rate` | Sensor (K/h) | Gemessene & gelernte Aufheizrate in K/h | **Diagnose / Charts** |
+| `sensor.<name>_cooling_rate` | Sensor (K/h) | Gemessene & gelernte Abkühlrate in K/h | **Diagnose / Charts** |
 | `sensor.<name>_next_action` | Sensor | Nächste geplante Aktion (`preheat`, `cooldown`, etc.) mit Attribut `time` | **Auf Dashboard anzeigen** |
-| `binary_sensor.<name>_preheat` | Binärsensor | `on`, wenn intelligente Vorheizung aktiv ist (Attribute: `duration_minutes`, `start_time`) | **Trigger für Automationen** |
-| `binary_sensor.<name>_cooldown` | Binärsensor | `on`, wenn vorzeitiges Absenken aktiv ist (Attribute: `duration_minutes`, `start_time`) | **Statusanzeige** |
+| `binary_sensor.<name>_preheat` | Binärsensor | `on`, wenn intelligente Vorheizung aktiv ist | **Trigger für Automationen** |
+| `binary_sensor.<name>_cooldown` | Binärsensor | `on`, wenn vorzeitiges Absenken aktiv ist | **Statusanzeige** |
+| `binary_sensor.<name>_anomaly` | Binärsensor | Diagnose-Problem-Sensor (Thermostat offline, keine Erwärmung, Sensor eingefroren) | **Benachrichtigungen** |
 | `sensor.<name>_debug` | Sensor | Internzustand & Diagnoseparameter (Kategorie Diagnose) | *Standardmäßig deaktiviert* |
-
-> ℹ️ **Praxis-Tipps:**
-> * **Lernen anpassen**: Das adaptive Lernen wird nicht über einen Schalter, sondern zentral in den **Integrations-Optionen** (*Einstellungen > Geräte & Dienste > Smart Climate Scheduler > Konfigurieren*) über das Häkchen *Lernen aktivieren* gesteuert.
-> * **Vorheizdauer ablesen**: Die berechnete Vorheizzeit in Minuten steht direkt als Attribut `duration_minutes` am Binärsensor `binary_sensor.<name>_preheat` zur Verfügung.
-> * **Entitäten umbenennen**: Du kannst die technische `entity_id` jederzeit unter *Einstellungen > Geräte & Dienste > Entitäten > Zahnrad* an dein persönliches Schema anpassen.
 
 ---
 
 ## 🎛️ Verfügbare Dienste (Services)
-
-Die Dienste nutzen ein übersichtliches, verpflichtendes **Geräte-Feld** (`device_id`), sodass im Home Assistant Aktions-Picker direkt der jeweilige Raum als Pflichtfeld ausgewählt wird (ohne Checkbox und ohne Entitäten-Picker):
 
 ### 1. `smart_climate_scheduler.set_override`
 Aktiviert einen temporären Override für ein Zimmer:
@@ -195,24 +176,13 @@ data:
 
 ---
 
-## 🗺️ Roadmap & Zukünftige Erweiterungen
-
-Für zukünftige Versionen sind folgende Erweiterungen vorgemerkt:
-
-- [ ] **Universeller Standalone-Thermostat-Modus (Direkte Temperatursteuerung)**:
-  - Automatischer Fallback auf `climate.set_temperature` für Thermostate ohne Home Assistant Preset-Unterstützung (z. B. reine Zigbee-/Z-Wave-TRVs ohne Better Thermostat).
-  - Frei konfigurierbare Sollwert-Temperaturen für Presets (`comfort`, `eco`, `sleep`, `away`, `boost`) direkt im Options-Flow, falls kein Better Thermostat vorgeschaltet ist.
-  - Erweiterte Heizerkennung bei modulierenden Ventilen ohne `hvac_action` (z. B. über Ventilöffnung > 0 %).
-
----
-
 ## 📝 Changelog
 
 <!-- CURRENT_CHANGELOG_START -->
-Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v3.3.1** (*Deterministische Start-Reihenfolge & sicherer HA-Boot-Sync*):
-* **Umfassende Start-Reihenfolge via `after_dependencies`**: In `manifest.json` sind nun alle gängigen Thermostat-, Funk-/Geräte-, Wetter- sowie Präsenz- und Kalender-Integrationen (`better_thermostat`, `versatile_thermostat`, `climate`, `mqtt`, `zha`, `zwave_js`, `homematicip_local`, `matter`, `esphome`, `shelly`, `weather`, `person`, `zone`, `workday`, `calendar` u. v. m.) als optionale `after_dependencies` hinterlegt – Home Assistant lädt diese beim Start zuerst und ignoriert nicht installierte Integrationen automatisch.
-* **Erste aktive Schaltung erst nach vollständigem Home-Assistant-Start (`EVENT_HOMEASSISTANT_STARTED`)**: Während der laufenden Boot-Phase (`starting`) werden aktive Thermostat-Schaltbefehle, Toleranz-Wiederherstellung und der initiale Wettervorhersage-Abruf zurückgehalten und unmittelbar nach Abschluss des HA-Starts sauber ausgeführt (im laufenden Betrieb/Reload greifen Änderungen weiterhin sofort; die 90-Sekunden-Karenzzeit für verzögerte Funkgeräte bleibt erhalten).
-* **Anomalie-Wächter & Stabilitäts-Feinschliff**: Der Anomalie-Wächter wartet bei nicht verfügbaren Entitäten (`unavailable`/`unknown`) nun erst **5 Minuten** ab, bevor ein Ausfall-Alarm ausgelöst wird (kurze Funk- oder Reload-Aussetzer erzeugen keinen Fehlalarm mehr). Zudem wurde der minimale Temperaturanstieg für „Keine Erwärmung“ auf **+0,05 °C** verfeinert, der `EVENT_HOMEASSISTANT_STARTED`-Listener threadsicher mit `@callback` dekoriert und sauber ohne `ValueError` bereinigt sowie in der Übersichtskarte **„Manuelle Reihenfolge“** inklusive fokusstabilem Karten-Editor ergänzt.
+Alle Änderungen findest du im [CHANGELOG.md](CHANGELOG.md). Highlights in **v4.0.0** (*Universelle Thermostat-Steuerung ohne Better Thermostat, strikte Entity-Picker & Minuten-Verzögerungen*):
+* **Vollständig universelle Direkttemperatur-Steuerung (ohne Better Thermostat)**: Sämtliche Abhängigkeiten und Bezüge zu *Better Thermostat* (`better_thermostat` in `manifest.json`, `control_mode`, `climate.set_preset_mode`, `tolerance_entity`, `bt_preset_*_temperatures`, `external_temp_ema`) wurden entfernt. Smart Climate Scheduler steuert nun universell beliebige Home-Assistant-Thermostate (z. B. Zigbee2MQTT, ZHA, Matter, Homematic, Z-Wave, Shelly TRV) direkt über `climate.set_temperature` und `climate.set_hvac_mode` (`heat` / `off`).
+* **Eigene Raum-Presets & synchronisierte Thermostat-Gruppen**: Jeder Raum verwaltet seine komplett eigene Preset-Liste (`custom_presets` mit Name, Zieltemperatur und Farbe) im Options-Flow oder direkt inline in der Lovelace-Karte und regelt beliebig viele verknüpfte `climate.*`-Entitäten synchron als Gruppe.
+* **Rein interne SCS-Hysterese & opportunistisches Mitheizen per Sollwert-Kickstart**: Hysterese (`fallback_tolerance`) und opportunistisches Mitheizen arbeiten komplett autark innerhalb des Smart Climate Scheduler – ohne externe Toleranz-Entität. Bei laufendem Brenner hebt SCS den Sollwert kurzfristig um die konfigurierte Hysterese an und stellt den regulären Zielwert sofort nach Ventilöffnung (`hvac_action=heating`), Brenner-Aus oder Fensteröffnung wieder her.
 <!-- CURRENT_CHANGELOG_END -->
 
 ---

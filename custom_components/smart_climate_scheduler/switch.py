@@ -11,7 +11,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
     CONF_ENABLE_SELF_LEARNING,
     CONF_FALLBACK_TOLERANCE,
@@ -33,19 +32,19 @@ from .const import (
 )
 from .evaluation import evaluate_state, invalidate_eval_cache
 from .helpers import (
-    async_restore_tolerance,
     async_sync_entity_registry_disabled,
     async_write_ha_state_if_enabled,
+    get_climate_entities,
     get_config_entry_slug,
+    get_custom_presets,
     get_device_info,
     get_ha_language,
     get_localized_slug_suffix,
-    get_numeric_entity_value,
     get_preset_temperature,
+    get_raw_window_open,
+    get_room_current_temperature,
     get_target_hvac_mode,
     is_in_startup_grace,
-    is_window_or_door_open,
-    resolve_tolerance_entity,
     safe_float as _safe_float,
 )
 
@@ -183,135 +182,126 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
 
         self.async_write_ha_state()
 
-        # Sofortiges Anwenden des Soll-Presets und der Zwei-Punkt-Regelung
+        # Sofortiges Anwenden der Zieltemperatur und der Zwei-Punkt-Regelung
         apply_fn = domain_data.get("async_apply_schedule")
         if callable(apply_fn):
             await apply_fn()
         else:
-            climate_entity = (
-                self.config_entry.options.get(CONF_CLIMATE_ENTITY) 
-                or self.config_entry.data.get(CONF_CLIMATE_ENTITY, "")
-            ).strip()
-            
-            if self.hass and climate_entity:
-                state_obj = self.hass.states.get(climate_entity)
+            climate_entities = get_climate_entities(self.config_entry)
+            custom_presets = get_custom_presets(self.config_entry)
+            if self.hass and climate_entities:
+                preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
                 entry_name = self.config_entry.title or self.config_entry.entry_id
-                if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
-                    cur_state = state_obj.state if state_obj else "nicht gefunden"
-                    log_fn = _LOGGER.debug if is_in_startup_grace(self.hass) else _LOGGER.warning
-                    log_fn(
-                        "Smart Climate Scheduler Switch [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
-                        entry_name,
-                        climate_entity,
-                        cur_state,
+                cur_t, _ = get_room_current_temperature(self.hass, self.config_entry, climate_entities)
+                raw_win_open, _ = get_raw_window_open(self.hass, self.config_entry, climate_entities)
+
+                hvac_off_on_target = bool(
+                    self.config_entry.options.get(
+                        CONF_HVAC_OFF_ON_TARGET,
+                        self.config_entry.data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET),
                     )
-                else:
-                    preset, _, _, _, _, _, _ = evaluate_state(self.hass, self.config_entry)
-                    if preset and preset not in ("unavailable", "unknown", "None", None):
+                )
+                opportunistic_heating = bool(
+                    self.config_entry.options.get(
+                        CONF_OPPORTUNISTIC_HEATING,
+                        self.config_entry.data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
+                    )
+                )
+                heating_active_sensor = self.config_entry.options.get(
+                    CONF_HEATING_ACTIVE_SENSOR,
+                    self.config_entry.data.get(CONF_HEATING_ACTIVE_SENSOR),
+                )
+                is_heating_active = False
+                if heating_active_sensor:
+                    st = self.hass.states.get(heating_active_sensor)
+                    if st and st.state and st.state.lower() in ("on", "true", "active", "heat", "heating"):
+                        is_heating_active = True
+
+                tol = max(
+                    0.0,
+                    _safe_float(
+                        self.config_entry.options.get(
+                            CONF_FALLBACK_TOLERANCE,
+                            self.config_entry.data.get(CONF_FALLBACK_TOLERANCE),
+                        ),
+                        DEFAULT_FALLBACK_TOLERANCE,
+                        allow_zero_or_negative=True,
+                    ),
+                )
+
+                for cl_id in climate_entities:
+                    state_obj = self.hass.states.get(cl_id)
+                    if not state_obj or state_obj.state in ("unavailable", "unknown", "None", None):
+                        cur_state = state_obj.state if state_obj else "nicht gefunden"
+                        log_fn = _LOGGER.debug if is_in_startup_grace(self.hass) else _LOGGER.warning
+                        log_fn(
+                            "Smart Climate Scheduler Switch [%s]: Thermostat '%s' ist nicht verfügbar (Status: '%s')",
+                            entry_name,
+                            cl_id,
+                            cur_state,
+                        )
+                        continue
+
+                    attrs = state_obj.attributes or {}
+                    tgt_t = get_preset_temperature(
+                        state_obj, preset, config_entry=self.config_entry, custom_presets=custom_presets
+                    )
+
+                    target_mode = get_target_hvac_mode(state_obj)
+                    should_turn_on = False
+                    should_turn_off = False
+                    if hvac_off_on_target and cur_t is not None and tgt_t is not None:
+                        if cur_t >= tgt_t:
+                            if state_obj.state != "off" and attrs.get("hvac_action") != "heating":
+                                should_turn_off = True
+                        elif cur_t < (tgt_t - tol) or (opportunistic_heating and is_heating_active and cur_t < tgt_t):
+                            if state_obj.state == "off" and not raw_win_open:
+                                should_turn_on = True
+                    elif state_obj.state == "off" and not raw_win_open:
+                        should_turn_on = True
+
+                    if should_turn_on:
                         try:
                             await self.hass.services.async_call(
                                 "climate",
-                                "set_preset_mode",
-                                service_data={"preset_mode": preset},
-                                target={"entity_id": climate_entity},
+                                "set_hvac_mode",
+                                service_data={"hvac_mode": target_mode},
+                                target={"entity_id": cl_id},
                                 blocking=False,
                             )
                         except Exception as err:
                             _LOGGER.error(
-                                "Smart Climate Scheduler Switch [%s]: Fehler beim Setzen von Preset '%s' auf '%s': %s",
-                                entry_name,
-                                preset,
-                                climate_entity,
-                                err,
+                                "Smart Climate Scheduler Switch [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
+                                entry_name, target_mode, cl_id, err,
                             )
-                        
-                        # Zwei-Punkt-Regelung anwenden falls aktiviert
-                        hvac_off_on_target = bool(
-                            self.config_entry.options.get(
-                                CONF_HVAC_OFF_ON_TARGET,
-                                self.config_entry.data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET),
-                            )
+                    try:
+                        await self.hass.services.async_call(
+                            "climate",
+                            "set_temperature",
+                            service_data={"temperature": tgt_t},
+                            target={"entity_id": cl_id},
+                            blocking=False,
                         )
-                        opportunistic_heating = bool(
-                            self.config_entry.options.get(
-                                CONF_OPPORTUNISTIC_HEATING,
-                                self.config_entry.data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
-                            )
+                    except Exception as err:
+                        _LOGGER.error(
+                            "Smart Climate Scheduler Switch [%s]: Fehler beim Setzen der Zieltemperatur %.1f auf '%s': %s",
+                            entry_name, tgt_t, cl_id, err,
                         )
-                        heating_active_sensor = self.config_entry.options.get(
-                            CONF_HEATING_ACTIVE_SENSOR,
-                            self.config_entry.data.get(CONF_HEATING_ACTIVE_SENSOR),
-                        )
-                        is_heating_active = False
-                        if heating_active_sensor and self.hass:
-                            st = self.hass.states.get(heating_active_sensor)
-                            if st and st.state and st.state.lower() in ("on", "true", "active", "heat", "heating"):
-                                is_heating_active = True
 
-                        if hvac_off_on_target:
-                            attrs = state_obj.attributes or {}
-                            real_temp = attrs.get("current_temperature")
-                            if real_temp is None:
-                                real_temp = attrs.get("external_temp_ema")
-                            try:
-                                cur_t = float(real_temp) if real_temp is not None else None
-                            except (ValueError, TypeError):
-                                cur_t = None
-                            tgt_t = get_preset_temperature(state_obj, preset)
-                            fallback_tol = _safe_float(
-                                self.config_entry.options.get(
-                                    CONF_FALLBACK_TOLERANCE,
-                                    self.config_entry.data.get(CONF_FALLBACK_TOLERANCE),
-                                ),
-                                DEFAULT_FALLBACK_TOLERANCE,
+                    if should_turn_off:
+                        try:
+                            await self.hass.services.async_call(
+                                "climate",
+                                "set_hvac_mode",
+                                service_data={"hvac_mode": "off"},
+                                target={"entity_id": cl_id},
+                                blocking=False,
                             )
-                            resolved_tol_ent, _ = resolve_tolerance_entity(self.hass, self.config_entry)
-                            tol_ent_val = get_numeric_entity_value(self.hass, resolved_tol_ent)
-                            if tol_ent_val is not None:
-                                tol = max(0.0, tol_ent_val)
-                            else:
-                                tol = max(
-                                    0.0,
-                                    _safe_float(attrs.get("tolerance"), fallback_tol, allow_zero_or_negative=True),
-                                )
-                            
-                            if cur_t is not None and tgt_t is not None:
-                                if cur_t >= tgt_t:
-                                    if state_obj.state != "off" and attrs.get("hvac_action") != "heating":
-                                        try:
-                                            await self.hass.services.async_call(
-                                                "climate",
-                                                "set_hvac_mode",
-                                                service_data={"hvac_mode": "off"},
-                                                target={"entity_id": climate_entity},
-                                                blocking=False,
-                                            )
-                                        except Exception as err:
-                                            _LOGGER.error(
-                                                "Smart Climate Scheduler Switch [%s]: Fehler beim Ausschalten ('off') von '%s': %s",
-                                                entry_name,
-                                                climate_entity,
-                                                err,
-                                            )
-                                elif cur_t < (tgt_t - tol) or (opportunistic_heating and is_heating_active and cur_t < tgt_t):
-                                    if state_obj.state == "off" and not is_window_or_door_open(state_obj):
-                                        target_mode = get_target_hvac_mode(state_obj)
-                                        try:
-                                            await self.hass.services.async_call(
-                                                "climate",
-                                                "set_hvac_mode",
-                                                service_data={"hvac_mode": target_mode},
-                                                target={"entity_id": climate_entity},
-                                                blocking=False,
-                                            )
-                                        except Exception as err:
-                                            _LOGGER.error(
-                                                "Smart Climate Scheduler Switch [%s]: Fehler beim Einschalten ('%s') von '%s': %s",
-                                                entry_name,
-                                                target_mode,
-                                                climate_entity,
-                                                err,
-                                            )
+                        except Exception as err:
+                            _LOGGER.error(
+                                "Smart Climate Scheduler Switch [%s]: Fehler beim Ausschalten ('off') von '%s': %s",
+                                entry_name, cl_id, err,
+                            )
 
     async def async_turn_off(self, **kwargs) -> None:
         """Schaltet die Automatik aus (ohne Reload)."""
@@ -320,9 +310,9 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = False
         domain_data["two_point_target_reached"] = False
-        domain_data["tolerance_kickstart_done"] = False
-        domain_data["tolerance_kickstart_target"] = None
-        await async_restore_tolerance(self.hass, domain_data, reason="automation_disabled")
+        domain_data["opportunistic_kickstart"] = False
+        domain_data["opportunistic_kickstart_done"] = False
+        domain_data["opportunistic_kickstart_target"] = None
         
         # Persistent im Storage speichern (ohne Reload)
         storage = domain_data.get("storage")
@@ -416,9 +406,9 @@ class SmartClimateSchedulerOptionSwitch(SwitchEntity):
                 async_write_ha_state_if_enabled(sensor)
 
         if self._option_key == CONF_OPPORTUNISTIC_HEATING and not target_state:
-            domain_data["tolerance_kickstart_done"] = False
-            domain_data["tolerance_kickstart_target"] = None
-            await async_restore_tolerance(self.hass, domain_data, reason="opportunistic_heating_disabled")
+            domain_data["opportunistic_kickstart"] = False
+            domain_data["opportunistic_kickstart_done"] = False
+            domain_data["opportunistic_kickstart_target"] = None
 
         # Bei Hysterese / Opportunistischem Mitheizen direkt Zeitplan anwenden falls Automatik aktiv
         if self._option_key in (CONF_HVAC_OFF_ON_TARGET, CONF_OPPORTUNISTIC_HEATING):

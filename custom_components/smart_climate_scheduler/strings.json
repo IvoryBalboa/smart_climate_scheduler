@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Initial Setup",
-        "description": "Configure the thermostat, outdoor temperature source (sensor takes precedence over weather entity), burner entity, self-learning toggle, and default rates.",
+        "title": "Smart Climate Scheduler - Initial Setup",
+        "description": "Configure the thermostats, outdoor temperature source (sensor takes precedence over weather entity), burner entity, self-learning toggle, and default rates.",
         "data": {
           "name": "Room Name",
           "climate_entity": "Thermostat / Climate Entity",
+          "climate_entities": "Thermostats / Climate Entities (Room Group)",
+          "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
+          "window_sensors": "Window / Door Sensors (Optional)",
+          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
+          "window_close_delay_minutes": "Window-close delay before resuming (minutes)",
+          "window_pause_enabled": "Pause heating (HVAC Off) when window is open",
           "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
           "outside_weather_entity": "Weather Entity",
           "heating_active_sensor": "Burner / Heating Active Entity",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
-          "fallback_tolerance": "Re-activation tolerance fallback (K)",
+          "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
           "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
-          "tolerance_entity": "Tolerance Entity (Optional - Auto-detected from device if empty)",
           "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
           "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
           "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Room name is required."
+      "name_required": "Room name is required.",
+      "climate_required": "At least one thermostat (climate entity) must be selected."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "General Settings & Thermal Parameters",
         "description": "Adjust outdoor temperature source, learning toggle, and default heating and cooling rates:",
         "data": {
+          "climate_entities": "Thermostats / Climate Entities (Room Group)",
+          "room_temp_sensor": "Room Temperature Sensor (Optional - for SCS thermics & hysteresis only)",
+          "window_sensors": "Window / Door Sensors (Optional)",
+          "window_open_delay_minutes": "Window-open delay before pausing (minutes)",
+          "window_close_delay_minutes": "Window-close delay before resuming (minutes)",
+          "window_pause_enabled": "Pause heating (HVAC Off) when window is open",
           "outside_temp_sensor": "Outdoor Temperature Sensor (Precedence over weather entity)",
           "outside_weather_entity": "Weather Entity for Outdoor Temperature",
           "heating_active_sensor": "Burner / Heating Active Entity",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Enable Early Cooldown",
           "max_minutes_cooldown": "Max Cooldown Time (Minutes)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
-          "fallback_tolerance": "Re-activation tolerance fallback (K)",
+          "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
           "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
-          "tolerance_entity": "Tolerance Entity (Optional - Auto-detected from device if empty)",
           "use_weather_forecast_for_preheat": "Use weather forecast for preheating (hourly window average)",
-          "preheat_ignores_away": "Preheat ahead of scheduled arrival even while away (Overrides away and near presence)",
+          "preheat_ignores_away": "Preheat while away",
           "anomaly_detection_enabled": "Enable anomaly & hardware guard (no warming, unavailable thermostat, frozen sensor)",
           "anomaly_no_heat_minutes": "No-warming anomaly threshold while burner active (minutes, 0 = disabled)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Preheat before slot start",
           "cooldown": "Cooldown before slot end"
         }
+      },
+      "custom_presets": {
+        "title": "Manage Custom Room Presets ({presets_count})",
+        "description": "Configured room presets with custom target temperatures:{presets_list}",
+        "data": {
+          "preset_action": "Select Action"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Add Custom Preset",
+        "description": "Define a name, target temperature, and color:",
+        "data": {
+          "name": "Preset Name",
+          "temperature": "Target Temperature (°C)",
+          "color": "Color"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Select Custom Preset",
+        "description": "Choose a preset to edit or delete:",
+        "data": {
+          "selected_preset": "Select Preset"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Edit Custom Preset",
+        "description": "Update or delete the selected custom preset:",
+        "data": {
+          "action": "Select Action",
+          "name": "Preset Name",
+          "temperature": "Target Temperature (°C)",
+          "color": "Color"
+        }
       }
     },
     "error": {
       "invalid_time_range": "End time must be after start time.",
       "profile_name_empty": "Profile name cannot be empty.",
-      "profile_name_exists": "A profile with this name already exists."
+      "profile_name_exists": "A profile with this name already exists.",
+      "climate_required": "At least one thermostat (climate entity) must be selected.",
+      "preset_name_empty": "Preset name cannot be empty.",
+      "cannot_delete_last_preset": "At least one custom preset must remain."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Manage Schedules & Profiles",
+        "custom_presets": "🌡️ Manage Custom Presets",
         "settings": "⚙️ Settings (Sensors, Learning & Rates)",
         "save": "💾 Save & Exit"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Add Custom Preset",
+        "edit": "✏️ Edit or Delete Preset",
+        "back": "← Back to Main Menu"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Amber (#f59e0b)",
+        "#10b981": "Emerald (#10b981)",
+        "#6366f1": "Indigo (#6366f1)",
+        "#ef4444": "Red (#ef4444)",
+        "#0ea5e9": "Sky Blue (#0ea5e9)",
+        "#ec4899": "Pink (#ec4899)",
+        "#8b5cf6": "Violet (#8b5cf6)",
+        "#64748b": "Slate (#64748b)"
       }
     },
     "schedule_action": {

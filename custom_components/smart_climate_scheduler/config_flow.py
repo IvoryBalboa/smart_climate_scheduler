@@ -23,13 +23,20 @@ from homeassistant.helpers.selector import (
 
 from .actions import _format_preset, get_localized_ui_text
 from .const import (
+    CONF_CLIMATE_ENTITIES,
     CONF_CLIMATE_ENTITY,
     CONF_COOLDOWN_ENABLED,
+    CONF_CUSTOM_PRESETS,
     CONF_DEFAULT_PRESET,
     CONF_MAX_MINUTES_COOLDOWN,
     CONF_MAX_MINUTES_PREHEAT,
     CONF_NEAR_DISTANCE,
     CONF_PREHEAT_ENABLED,
+    CONF_ROOM_TEMP_SENSOR,
+    CONF_WINDOW_CLOSE_DELAY_MINUTES,
+    CONF_WINDOW_OPEN_DELAY_MINUTES,
+    CONF_WINDOW_PAUSE_ENABLED,
+    CONF_WINDOW_SENSORS,
     CONF_ZONE_AWAY_NEAR_ENTITY,
     CONF_ZONE_HOME_ENTITY,
     CONF_ENABLE_SELF_LEARNING,
@@ -41,15 +48,16 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
-    CONF_TOLERANCE_ENTITY,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     CONF_PREHEAT_IGNORES_AWAY,
     CONF_AWAY_PRESET,
     CONF_AWAY_NEAR_PRESET,
     CONF_ANOMALY_DETECTION_ENABLED,
     CONF_ANOMALY_NO_HEAT_MINUTES,
+    CUSTOM_PRESET_PALETTE,
     DAYS,
     DEFAULT_COOLDOWN_ENABLED,
+    DEFAULT_CUSTOM_PRESETS,
     DEFAULT_FALLBACK_PRESET,
     DEFAULT_AWAY_PRESET,
     DEFAULT_AWAY_NEAR_PRESET,
@@ -67,16 +75,51 @@ from .const import (
     DEFAULT_OPPORTUNISTIC_HEATING,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_PREHEAT_IGNORES_AWAY,
+    DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+    DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+    DEFAULT_WINDOW_PAUSE_ENABLED,
     DOMAIN,
+    MAX_TARGET_TEMP,
+    MIN_TARGET_TEMP,
 )
 from .helpers import (
+    get_climate_entities,
+    get_custom_presets,
     get_ha_language,
     get_profiles_and_active,
+    get_window_delays,
+    get_window_sensors,
+    normalize_custom_presets,
     parse_time,
     safe_float as _safe_float,
+    slugify_preset_id,
 )
 
-DEFAULT_PRESETS = ["none", "home", "away", "boost", "comfort", "eco", "sleep", "activity"]
+DEFAULT_PRESETS = [p["id"] for p in DEFAULT_CUSTOM_PRESETS]
+
+
+def _normalize_entity_list(raw: Any) -> list[str]:
+    """Normalizes a single entity ID or list of entity IDs into a deduplicated list."""
+    result: list[str] = []
+    if isinstance(raw, (list, tuple, set)):
+        items = raw
+    elif isinstance(raw, str) and raw.strip():
+        items = [p.strip() for p in raw.split(",")]
+    else:
+        items = []
+    for item in items:
+        if isinstance(item, str):
+            val = item.strip()
+            if val and val not in result:
+                result.append(val)
+    return result
+
+
+def _clamp_window_delay(raw: Any, default: int) -> int:
+    try:
+        return max(0, min(60, int(round(float(raw)))))
+    except (ValueError, TypeError):
+        return default
 
 
 def _get_slot_preset(slot: dict) -> str:
@@ -113,10 +156,15 @@ def _normalize_schedule(raw_schedule: dict | None) -> dict[str, list[dict]]:
     return normalized
 
 
-def _format_slot_item_with_flags(idx: int, slot: dict, lang: str) -> str:
+def _format_slot_item_with_flags(
+    idx: int,
+    slot: dict,
+    lang: str,
+    custom_labels: dict[str, str] | None = None,
+) -> str:
     """Formats a slot line including localized preheat and cooldown status indicators."""
     p = _get_slot_preset(slot)
-    p_label = _format_preset(p, lang)
+    p_label = _format_preset(p, lang, custom_labels=custom_labels)
     f = slot.get("from", "00:00:00")[:5]
     t = slot.get("to", "00:00:00")[:5]
     base_text = get_localized_ui_text(
@@ -147,7 +195,7 @@ def _format_slot_item_with_flags(idx: int, slot: dict, lang: str) -> str:
 class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handles the initial configuration flow for the integration."""
 
-    VERSION = 2
+    VERSION = 4
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -157,12 +205,44 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             name = user_input.get("name", "").strip()
+            climate_entities = _normalize_entity_list(
+                user_input.get(CONF_CLIMATE_ENTITIES) or user_input.get(CONF_CLIMATE_ENTITY)
+            )
             if not name:
                 errors["base"] = "name_required"
+            elif not climate_entities:
+                errors["base"] = "climate_required"
             else:
                 unique_id = name.lower().replace(" ", "_")
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
+
+                user_input[CONF_CLIMATE_ENTITIES] = climate_entities
+                user_input[CONF_CLIMATE_ENTITY] = climate_entities[0]
+                user_input[CONF_CUSTOM_PRESETS] = normalize_custom_presets(
+                    user_input.get(CONF_CUSTOM_PRESETS), fallback_to_default=True
+                )
+
+                raw_room_sensor = user_input.get(CONF_ROOM_TEMP_SENSOR)
+                user_input[CONF_ROOM_TEMP_SENSOR] = (
+                    raw_room_sensor.strip()
+                    if isinstance(raw_room_sensor, str) and raw_room_sensor.strip()
+                    else None
+                )
+                user_input[CONF_WINDOW_SENSORS] = _normalize_entity_list(
+                    user_input.get(CONF_WINDOW_SENSORS)
+                )
+                user_input[CONF_WINDOW_OPEN_DELAY_MINUTES] = _clamp_window_delay(
+                    user_input.get(CONF_WINDOW_OPEN_DELAY_MINUTES),
+                    DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+                )
+                user_input[CONF_WINDOW_CLOSE_DELAY_MINUTES] = _clamp_window_delay(
+                    user_input.get(CONF_WINDOW_CLOSE_DELAY_MINUTES),
+                    DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+                )
+                user_input[CONF_WINDOW_PAUSE_ENABLED] = bool(
+                    user_input.get(CONF_WINDOW_PAUSE_ENABLED, DEFAULT_WINDOW_PAUSE_ENABLED)
+                )
 
                 user_input[CONF_FALLBACK_HEATING_RATE] = _safe_float(
                     user_input.get(CONF_FALLBACK_HEATING_RATE), DEFAULT_FALLBACK_HEATING_RATE
@@ -175,10 +255,6 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 user_input[CONF_OPPORTUNISTIC_HEATING] = bool(
                     user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
-                )
-                raw_tol_ent = user_input.get(CONF_TOLERANCE_ENTITY)
-                user_input[CONF_TOLERANCE_ENTITY] = (
-                    raw_tol_ent.strip() if isinstance(raw_tol_ent, str) and raw_tol_ent.strip() else None
                 )
                 user_input[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
                     user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
@@ -209,11 +285,38 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = vol.Schema(
             {
                 vol.Required("name"): TextSelector(TextSelectorConfig()),
-                vol.Required(CONF_CLIMATE_ENTITY): EntitySelector(
-                    EntitySelectorConfig(domain="climate")
+                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(
+                    EntitySelectorConfig(domain="climate", multiple=True)
                 ),
+                vol.Optional(CONF_ROOM_TEMP_SENSOR): EntitySelector(
+                    EntitySelectorConfig(domain="sensor", device_class="temperature")
+                ),
+                vol.Optional(CONF_WINDOW_SENSORS): EntitySelector(
+                    EntitySelectorConfig(
+                        domain="binary_sensor",
+                        device_class=["window", "door"],
+                        multiple=True,
+                    )
+                ),
+                vol.Optional(
+                    CONF_WINDOW_OPEN_DELAY_MINUTES, default=DEFAULT_WINDOW_OPEN_DELAY_MINUTES
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=60, step=1, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
+                vol.Optional(
+                    CONF_WINDOW_CLOSE_DELAY_MINUTES, default=DEFAULT_WINDOW_CLOSE_DELAY_MINUTES
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=60, step=1, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
+                vol.Optional(
+                    CONF_WINDOW_PAUSE_ENABLED, default=DEFAULT_WINDOW_PAUSE_ENABLED
+                ): BooleanSelector(),
                 vol.Optional(CONF_OUTSIDE_TEMP_SENSOR): EntitySelector(
-                    EntitySelectorConfig(domain="sensor")
+                    EntitySelectorConfig(domain="sensor", device_class="temperature")
                 ),
                 vol.Optional(CONF_OUTSIDE_WEATHER_ENTITY): EntitySelector(
                     EntitySelectorConfig(domain="weather")
@@ -302,9 +405,6 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_OPPORTUNISTIC_HEATING, default=DEFAULT_OPPORTUNISTIC_HEATING
                 ): BooleanSelector(),
-                vol.Optional(CONF_TOLERANCE_ENTITY): EntitySelector(
-                    EntitySelectorConfig(domain="number")
-                ),
                 vol.Optional(
                     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, default=DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT
                 ): BooleanSelector(),
@@ -342,6 +442,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         self.settings_data: dict[str, Any] = {}
         self.selected_day: str = "monday"
         self.selected_slot_index: int | None = None
+        self.selected_custom_preset_id: str | None = None
 
     def _init_data(self) -> None:
         """Loads schedules, profiles, and settings into the temporary buffer."""
@@ -354,8 +455,20 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         if not self.settings_data:
             options = self.config_entry.options
             data = self.config_entry.data
+            climate_entities = get_climate_entities(self.config_entry)
+            open_delay, close_delay, pause_enabled = get_window_delays(self.config_entry)
 
             self.settings_data = {
+                CONF_CLIMATE_ENTITIES: climate_entities,
+                CONF_CLIMATE_ENTITY: climate_entities[0] if climate_entities else "",
+                CONF_CUSTOM_PRESETS: [dict(p) for p in get_custom_presets(self.config_entry)],
+                CONF_ROOM_TEMP_SENSOR: options.get(
+                    CONF_ROOM_TEMP_SENSOR, data.get(CONF_ROOM_TEMP_SENSOR)
+                ),
+                CONF_WINDOW_SENSORS: get_window_sensors(self.config_entry),
+                CONF_WINDOW_OPEN_DELAY_MINUTES: open_delay,
+                CONF_WINDOW_CLOSE_DELAY_MINUTES: close_delay,
+                CONF_WINDOW_PAUSE_ENABLED: pause_enabled,
                 CONF_OUTSIDE_TEMP_SENSOR: options.get(
                     CONF_OUTSIDE_TEMP_SENSOR, data.get(CONF_OUTSIDE_TEMP_SENSOR)
                 ),
@@ -443,21 +556,22 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         data.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET),
                     )
                 ),
-                CONF_FALLBACK_TOLERANCE: _safe_float(
-                    options.get(
-                        CONF_FALLBACK_TOLERANCE,
-                        data.get(CONF_FALLBACK_TOLERANCE),
+                CONF_FALLBACK_TOLERANCE: max(
+                    0.0,
+                    _safe_float(
+                        options.get(
+                            CONF_FALLBACK_TOLERANCE,
+                            data.get(CONF_FALLBACK_TOLERANCE),
+                        ),
+                        DEFAULT_FALLBACK_TOLERANCE,
+                        allow_zero_or_negative=True,
                     ),
-                    DEFAULT_FALLBACK_TOLERANCE,
                 ),
                 CONF_OPPORTUNISTIC_HEATING: bool(
                     options.get(
                         CONF_OPPORTUNISTIC_HEATING,
                         data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
                     )
-                ),
-                CONF_TOLERANCE_ENTITY: options.get(
-                    CONF_TOLERANCE_ENTITY, data.get(CONF_TOLERANCE_ENTITY)
                 ),
                 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT: bool(
                     options.get(
@@ -488,15 +602,66 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
             }
 
+    def _get_custom_presets_list(self) -> list[dict[str, Any]]:
+        raw = self.settings_data.get(CONF_CUSTOM_PRESETS)
+        presets = normalize_custom_presets(raw, fallback_to_default=True)
+        self.settings_data[CONF_CUSTOM_PRESETS] = [dict(p) for p in presets]
+        return presets
+
+    def _custom_labels(self) -> dict[str, str]:
+        return {
+            p["id"]: f"{p['name']} ({p['temperature']:.1f} °C)"
+            for p in self._get_custom_presets_list()
+        }
+
     def _get_supported_presets(self) -> list[str]:
-        climate_entity = self.config_entry.data.get(CONF_CLIMATE_ENTITY)
-        if climate_entity and self.hass:
-            state = self.hass.states.get(climate_entity)
-            if state and "preset_modes" in state.attributes:
-                modes = state.attributes.get("preset_modes")
-                if isinstance(modes, list) and modes:
-                    return modes
-        return DEFAULT_PRESETS
+        return [p["id"] for p in self._get_custom_presets_list()]
+
+    def _build_preset_selector(self, include_none: bool = False) -> SelectSelector:
+        lang = get_ha_language(getattr(self, "hass", None))
+        options: list[dict[str, str]] = []
+        if include_none:
+            options.append({"value": "none", "label": _format_preset("none", lang)})
+        for p in self._get_custom_presets_list():
+            options.append(
+                {
+                    "value": p["id"],
+                    "label": f"{p['name']} ({p['temperature']:.1f} °C)",
+                }
+            )
+        return SelectSelector(SelectSelectorConfig(options=options))
+
+    def _remap_deleted_preset(self, deleted_id: str, replacement_id: str) -> None:
+        if self.current_schedule:
+            for day in DAYS:
+                for slot in self.current_schedule.get(day, []):
+                    if _get_slot_preset(slot) == deleted_id:
+                        slot["preset"] = replacement_id
+        if self.profiles:
+            for prof_sched in self.profiles.values():
+                if isinstance(prof_sched, dict):
+                    for day in DAYS:
+                        for slot in prof_sched.get(day, []):
+                            if isinstance(slot, dict) and _get_slot_preset(slot) == deleted_id:
+                                slot["preset"] = replacement_id
+        for key in (CONF_DEFAULT_PRESET, CONF_AWAY_NEAR_PRESET, CONF_AWAY_PRESET):
+            if self.settings_data.get(key) == deleted_id:
+                self.settings_data[key] = replacement_id
+
+    def _ensure_valid_direct_presets_in_settings(self) -> None:
+        presets = self._get_custom_presets_list()
+        valid_ids = {p["id"] for p in presets}
+        if not valid_ids:
+            return
+        fallback_first = presets[0]["id"]
+        for key, preferred in (
+            (CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET),
+            (CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET),
+            (CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET),
+        ):
+            cur = str(self.settings_data.get(key) or "").strip().lower()
+            if cur not in valid_ids:
+                self.settings_data[key] = preferred if preferred in valid_ids else fallback_first
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -508,11 +673,22 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             action = user_input.get("main_action")
             if action == "settings":
                 return await self.async_step_settings()
+            elif action == "custom_presets":
+                return await self.async_step_custom_presets()
             elif action == "schedules":
                 return await self.async_step_schedule_menu()
             elif action == "save":
                 if self.profiles is not None and self.current_schedule is not None:
                     self.profiles[self.active_profile] = copy.deepcopy(self.current_schedule)
+
+                entities = _normalize_entity_list(self.settings_data.get(CONF_CLIMATE_ENTITIES))
+                if not entities:
+                    entities = get_climate_entities(self.config_entry)
+                self.settings_data[CONF_CLIMATE_ENTITIES] = entities
+                if entities:
+                    self.settings_data[CONF_CLIMATE_ENTITY] = entities[0]
+                self.settings_data[CONF_CUSTOM_PRESETS] = self._get_custom_presets_list()
+                self._ensure_valid_direct_presets_in_settings()
 
                 new_options = {
                     "schedule": self.current_schedule,
@@ -522,6 +698,14 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 }
                 new_data = dict(self.config_entry.data)
                 new_data.update(self.settings_data)
+                for legacy_key in (
+                    "control_mode",
+                    "tolerance_entity",
+                    "window_open_delay_seconds",
+                    "window_close_delay_seconds",
+                ):
+                    new_data.pop(legacy_key, None)
+                    new_options.pop(legacy_key, None)
                 data_changed = new_data != dict(self.config_entry.data)
                 options_changed = new_options != dict(self.config_entry.options)
                 if data_changed:
@@ -543,87 +727,360 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required("main_action", default="schedules"): SelectSelector(
                     SelectSelectorConfig(
                         translation_key="init_action",
-                        options=["schedules", "settings", "save"],
+                        options=["schedules", "custom_presets", "settings", "save"],
                     )
                 )
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
 
+    async def async_step_custom_presets(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Manage room custom presets (0.1 °C steps)."""
+        self._init_data()
+        presets = self._get_custom_presets_list()
+
+        if user_input is not None:
+            action = user_input.get("preset_action")
+            if action == "add":
+                return await self.async_step_add_custom_preset()
+            if action == "edit" and presets:
+                return await self.async_step_select_custom_preset()
+            if action == "back":
+                return await self.async_step_init()
+
+        actions = ["add"]
+        if presets:
+            actions.append("edit")
+        actions.append("back")
+
+        preset_lines = "\n" + "\n".join(
+            f"• {p['name']}: {p['temperature']:.1f} °C ({p['color']})"
+            for p in presets
+        )
+        schema = vol.Schema(
+            {
+                vol.Required("preset_action", default="add"): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="custom_preset_action",
+                        options=actions,
+                    )
+                )
+            }
+        )
+        return self.async_show_form(
+            step_id="custom_presets",
+            data_schema=schema,
+            description_placeholders={
+                "presets_count": str(len(presets)),
+                "presets_list": preset_lines,
+            },
+        )
+
+    async def async_step_add_custom_preset(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Add a new custom preset in 0.1 °C precision."""
+        self._init_data()
+        presets = self._get_custom_presets_list()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            raw_name = str(user_input.get("name", "")).strip()
+            if not raw_name:
+                errors["base"] = "preset_name_empty"
+            else:
+                existing_ids = {p["id"] for p in presets}
+                new_id = slugify_preset_id(raw_name, existing_ids)
+                new_item = normalize_custom_presets(
+                    [
+                        {
+                            "id": new_id,
+                            "name": raw_name,
+                            "temperature": user_input.get("temperature", 20.0),
+                            "color": user_input.get("color", CUSTOM_PRESET_PALETTE[len(presets) % len(CUSTOM_PRESET_PALETTE)]),
+                        }
+                    ],
+                    fallback_to_default=False,
+                )[0]
+                new_item["id"] = new_id
+                presets.append(new_item)
+                self.settings_data[CONF_CUSTOM_PRESETS] = presets
+                return await self.async_step_custom_presets()
+
+        default_color = CUSTOM_PRESET_PALETTE[len(presets) % len(CUSTOM_PRESET_PALETTE)]
+        schema = vol.Schema(
+            {
+                vol.Required("name"): TextSelector(TextSelectorConfig()),
+                vol.Required("temperature", default=20.0): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_TARGET_TEMP,
+                        max=MAX_TARGET_TEMP,
+                        step=0.1,
+                        unit_of_measurement="°C",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required("color", default=default_color): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset_color",
+                        options=CUSTOM_PRESET_PALETTE,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="add_custom_preset",
+            data_schema=schema,
+            errors=errors,
+        )
+
+    async def async_step_select_custom_preset(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Select a custom preset to edit or delete."""
+        self._init_data()
+        presets = self._get_custom_presets_list()
+        if not presets:
+            return await self.async_step_custom_presets()
+
+        if user_input is not None:
+            self.selected_custom_preset_id = user_input.get("selected_preset")
+            return await self.async_step_edit_custom_preset()
+
+        options = [
+            {"value": p["id"], "label": f"{p['name']} ({p['temperature']:.1f} °C)"}
+            for p in presets
+        ]
+        schema = vol.Schema(
+            {
+                vol.Required("selected_preset", default=presets[0]["id"]): SelectSelector(
+                    SelectSelectorConfig(options=options)
+                )
+            }
+        )
+        return self.async_show_form(step_id="select_custom_preset", data_schema=schema)
+
+    async def async_step_edit_custom_preset(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Edit or delete the selected custom preset."""
+        self._init_data()
+        presets = self._get_custom_presets_list()
+        target_idx = next(
+            (i for i, p in enumerate(presets) if p["id"] == self.selected_custom_preset_id),
+            None,
+        )
+        if target_idx is None:
+            return await self.async_step_custom_presets()
+
+        current = presets[target_idx]
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            action = user_input.get("action", "update")
+            if action == "delete":
+                if len(presets) <= 1:
+                    errors["base"] = "cannot_delete_last_preset"
+                else:
+                    deleted = presets.pop(target_idx)
+                    self.settings_data[CONF_CUSTOM_PRESETS] = presets
+                    self._remap_deleted_preset(deleted["id"], presets[0]["id"])
+                    return await self.async_step_custom_presets()
+            else:
+                raw_name = str(user_input.get("name", "")).strip()
+                if not raw_name:
+                    errors["base"] = "preset_name_empty"
+                else:
+                    updated = normalize_custom_presets(
+                        [
+                            {
+                                "id": current["id"],
+                                "name": raw_name,
+                                "temperature": user_input.get("temperature", current["temperature"]),
+                                "color": user_input.get("color", current["color"]),
+                            }
+                        ],
+                        fallback_to_default=False,
+                    )[0]
+                    updated["id"] = current["id"]
+                    presets[target_idx] = updated
+                    self.settings_data[CONF_CUSTOM_PRESETS] = presets
+                    return await self.async_step_custom_presets()
+
+        schema = vol.Schema(
+            {
+                vol.Required("action", default="update"): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="edit_action",
+                        options=["update", "delete"],
+                    )
+                ),
+                vol.Required("name", default=current["name"]): TextSelector(TextSelectorConfig()),
+                vol.Required("temperature", default=float(current["temperature"])): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_TARGET_TEMP,
+                        max=MAX_TARGET_TEMP,
+                        step=0.1,
+                        unit_of_measurement="°C",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required("color", default=current["color"]): SelectSelector(
+                    SelectSelectorConfig(
+                        translation_key="preset_color",
+                        options=CUSTOM_PRESET_PALETTE,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="edit_custom_preset",
+            data_schema=schema,
+            errors=errors,
+        )
+
     async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         """Edit general settings and thermal parameters."""
         self._init_data()
+        errors: dict[str, str] = {}
 
         if user_input is not None:
-            self.settings_data[CONF_OUTSIDE_TEMP_SENSOR] = user_input.get(CONF_OUTSIDE_TEMP_SENSOR)
-            self.settings_data[CONF_OUTSIDE_WEATHER_ENTITY] = user_input.get(CONF_OUTSIDE_WEATHER_ENTITY)
-            self.settings_data[CONF_HEATING_ACTIVE_SENSOR] = user_input.get(CONF_HEATING_ACTIVE_SENSOR)
-            self.settings_data[CONF_ENABLE_SELF_LEARNING] = bool(
-                user_input.get(CONF_ENABLE_SELF_LEARNING, DEFAULT_ENABLE_SELF_LEARNING)
+            has_climate_input = (
+                CONF_CLIMATE_ENTITIES in user_input or CONF_CLIMATE_ENTITY in user_input
             )
-            self.settings_data[CONF_FALLBACK_HEATING_RATE] = _safe_float(
-                user_input.get(CONF_FALLBACK_HEATING_RATE), DEFAULT_FALLBACK_HEATING_RATE
-            )
-            self.settings_data[CONF_FALLBACK_COOLING_RATE] = _safe_float(
-                user_input.get(CONF_FALLBACK_COOLING_RATE), DEFAULT_FALLBACK_COOLING_RATE
-            )
-            self.settings_data[CONF_ZONE_HOME_ENTITY] = user_input.get(CONF_ZONE_HOME_ENTITY, "zone.home")
-            self.settings_data[CONF_ZONE_AWAY_NEAR_ENTITY] = user_input.get(CONF_ZONE_AWAY_NEAR_ENTITY)
-            self.settings_data[CONF_NEAR_DISTANCE] = _safe_float(
-                user_input.get(CONF_NEAR_DISTANCE), DEFAULT_NEAR_DISTANCE
-            )
-            self.settings_data[CONF_DEFAULT_PRESET] = user_input.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)
-            self.settings_data[CONF_AWAY_NEAR_PRESET] = user_input.get(CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET)
-            self.settings_data[CONF_AWAY_PRESET] = user_input.get(CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET)
-            self.settings_data[CONF_PREHEAT_ENABLED] = bool(user_input.get(CONF_PREHEAT_ENABLED, DEFAULT_PREHEAT_ENABLED))
-            self.settings_data[CONF_COOLDOWN_ENABLED] = bool(user_input.get(CONF_COOLDOWN_ENABLED, DEFAULT_COOLDOWN_ENABLED))
-            self.settings_data[CONF_MAX_MINUTES_PREHEAT] = int(
-                _safe_float(user_input.get(CONF_MAX_MINUTES_PREHEAT), DEFAULT_MAX_MINUTES_PREHEAT)
-            )
-            self.settings_data[CONF_MAX_MINUTES_COOLDOWN] = int(
-                _safe_float(user_input.get(CONF_MAX_MINUTES_COOLDOWN), DEFAULT_MAX_MINUTES_COOLDOWN)
-            )
-            self.settings_data[CONF_HVAC_OFF_ON_TARGET] = bool(
-                user_input.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET)
-            )
-            self.settings_data[CONF_FALLBACK_TOLERANCE] = _safe_float(
-                user_input.get(CONF_FALLBACK_TOLERANCE), DEFAULT_FALLBACK_TOLERANCE
-            )
-            self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
-                user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
-            )
-            raw_tol_ent = user_input.get(CONF_TOLERANCE_ENTITY)
-            self.settings_data[CONF_TOLERANCE_ENTITY] = (
-                raw_tol_ent.strip() if isinstance(raw_tol_ent, str) and raw_tol_ent.strip() else None
-            )
-            self.settings_data[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
-                user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
-            )
-            self.settings_data[CONF_PREHEAT_IGNORES_AWAY] = bool(
-                user_input.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY)
-            )
-            self.settings_data[CONF_ANOMALY_DETECTION_ENABLED] = bool(
-                user_input.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED)
-            )
-            raw_anom_mins = user_input.get(CONF_ANOMALY_NO_HEAT_MINUTES)
-            if raw_anom_mins is None:
-                anom_mins = DEFAULT_ANOMALY_NO_HEAT_MINUTES
+            if has_climate_input:
+                climate_entities = _normalize_entity_list(
+                    user_input.get(CONF_CLIMATE_ENTITIES) or user_input.get(CONF_CLIMATE_ENTITY)
+                )
             else:
-                try:
-                    anom_mins = max(0, min(240, int(round(float(raw_anom_mins)))))
-                except (ValueError, TypeError):
+                climate_entities = _normalize_entity_list(
+                    self.settings_data.get(CONF_CLIMATE_ENTITIES)
+                    or self.settings_data.get(CONF_CLIMATE_ENTITY)
+                )
+            if has_climate_input and not climate_entities:
+                errors["base"] = "climate_required"
+            else:
+                self.settings_data[CONF_CLIMATE_ENTITIES] = climate_entities
+                if climate_entities:
+                    self.settings_data[CONF_CLIMATE_ENTITY] = climate_entities[0]
+                raw_room_sensor = user_input.get(CONF_ROOM_TEMP_SENSOR)
+                self.settings_data[CONF_ROOM_TEMP_SENSOR] = (
+                    raw_room_sensor.strip()
+                    if isinstance(raw_room_sensor, str) and raw_room_sensor.strip()
+                    else None
+                )
+                self.settings_data[CONF_WINDOW_SENSORS] = _normalize_entity_list(
+                    user_input.get(CONF_WINDOW_SENSORS)
+                )
+                self.settings_data[CONF_WINDOW_OPEN_DELAY_MINUTES] = _clamp_window_delay(
+                    user_input.get(CONF_WINDOW_OPEN_DELAY_MINUTES),
+                    DEFAULT_WINDOW_OPEN_DELAY_MINUTES,
+                )
+                self.settings_data[CONF_WINDOW_CLOSE_DELAY_MINUTES] = _clamp_window_delay(
+                    user_input.get(CONF_WINDOW_CLOSE_DELAY_MINUTES),
+                    DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
+                )
+                self.settings_data[CONF_WINDOW_PAUSE_ENABLED] = bool(
+                    user_input.get(CONF_WINDOW_PAUSE_ENABLED, DEFAULT_WINDOW_PAUSE_ENABLED)
+                )
+                self.settings_data[CONF_OUTSIDE_TEMP_SENSOR] = user_input.get(CONF_OUTSIDE_TEMP_SENSOR)
+                self.settings_data[CONF_OUTSIDE_WEATHER_ENTITY] = user_input.get(CONF_OUTSIDE_WEATHER_ENTITY)
+                self.settings_data[CONF_HEATING_ACTIVE_SENSOR] = user_input.get(CONF_HEATING_ACTIVE_SENSOR)
+                self.settings_data[CONF_ENABLE_SELF_LEARNING] = bool(
+                    user_input.get(CONF_ENABLE_SELF_LEARNING, DEFAULT_ENABLE_SELF_LEARNING)
+                )
+                self.settings_data[CONF_FALLBACK_HEATING_RATE] = _safe_float(
+                    user_input.get(CONF_FALLBACK_HEATING_RATE), DEFAULT_FALLBACK_HEATING_RATE
+                )
+                self.settings_data[CONF_FALLBACK_COOLING_RATE] = _safe_float(
+                    user_input.get(CONF_FALLBACK_COOLING_RATE), DEFAULT_FALLBACK_COOLING_RATE
+                )
+                self.settings_data[CONF_ZONE_HOME_ENTITY] = user_input.get(CONF_ZONE_HOME_ENTITY, "zone.home")
+                self.settings_data[CONF_ZONE_AWAY_NEAR_ENTITY] = user_input.get(CONF_ZONE_AWAY_NEAR_ENTITY)
+                self.settings_data[CONF_NEAR_DISTANCE] = _safe_float(
+                    user_input.get(CONF_NEAR_DISTANCE), DEFAULT_NEAR_DISTANCE
+                )
+                self.settings_data[CONF_DEFAULT_PRESET] = user_input.get(CONF_DEFAULT_PRESET, DEFAULT_FALLBACK_PRESET)
+                self.settings_data[CONF_AWAY_NEAR_PRESET] = user_input.get(CONF_AWAY_NEAR_PRESET, DEFAULT_AWAY_NEAR_PRESET)
+                self.settings_data[CONF_AWAY_PRESET] = user_input.get(CONF_AWAY_PRESET, DEFAULT_AWAY_PRESET)
+                self._ensure_valid_direct_presets_in_settings()
+                self.settings_data[CONF_PREHEAT_ENABLED] = bool(user_input.get(CONF_PREHEAT_ENABLED, DEFAULT_PREHEAT_ENABLED))
+                self.settings_data[CONF_COOLDOWN_ENABLED] = bool(user_input.get(CONF_COOLDOWN_ENABLED, DEFAULT_COOLDOWN_ENABLED))
+                self.settings_data[CONF_MAX_MINUTES_PREHEAT] = int(
+                    _safe_float(user_input.get(CONF_MAX_MINUTES_PREHEAT), DEFAULT_MAX_MINUTES_PREHEAT)
+                )
+                self.settings_data[CONF_MAX_MINUTES_COOLDOWN] = int(
+                    _safe_float(user_input.get(CONF_MAX_MINUTES_COOLDOWN), DEFAULT_MAX_MINUTES_COOLDOWN)
+                )
+                self.settings_data[CONF_HVAC_OFF_ON_TARGET] = bool(
+                    user_input.get(CONF_HVAC_OFF_ON_TARGET, DEFAULT_HVAC_OFF_ON_TARGET)
+                )
+                self.settings_data[CONF_FALLBACK_TOLERANCE] = max(
+                    0.0,
+                    _safe_float(
+                        user_input.get(CONF_FALLBACK_TOLERANCE),
+                        DEFAULT_FALLBACK_TOLERANCE,
+                        allow_zero_or_negative=True,
+                    ),
+                )
+                self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
+                    user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
+                )
+                self.settings_data[CONF_USE_WEATHER_FORECAST_FOR_PREHEAT] = bool(
+                    user_input.get(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT, DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT)
+                )
+                self.settings_data[CONF_PREHEAT_IGNORES_AWAY] = bool(
+                    user_input.get(CONF_PREHEAT_IGNORES_AWAY, DEFAULT_PREHEAT_IGNORES_AWAY)
+                )
+                self.settings_data[CONF_ANOMALY_DETECTION_ENABLED] = bool(
+                    user_input.get(CONF_ANOMALY_DETECTION_ENABLED, DEFAULT_ANOMALY_DETECTION_ENABLED)
+                )
+                raw_anom_mins = user_input.get(CONF_ANOMALY_NO_HEAT_MINUTES)
+                if raw_anom_mins is None:
                     anom_mins = DEFAULT_ANOMALY_NO_HEAT_MINUTES
-            self.settings_data[CONF_ANOMALY_NO_HEAT_MINUTES] = anom_mins
-            return await self.async_step_init()
+                else:
+                    try:
+                        anom_mins = max(0, min(240, int(round(float(raw_anom_mins)))))
+                    except (ValueError, TypeError):
+                        anom_mins = DEFAULT_ANOMALY_NO_HEAT_MINUTES
+                self.settings_data[CONF_ANOMALY_NO_HEAT_MINUTES] = anom_mins
+                return await self.async_step_init()
 
-        supported_presets = self._get_supported_presets()
+        self._ensure_valid_direct_presets_in_settings()
+        preset_selector = self._build_preset_selector(include_none=False)
 
         schema = vol.Schema(
             {
+                vol.Required(CONF_CLIMATE_ENTITIES): EntitySelector(
+                    EntitySelectorConfig(domain="climate", multiple=True)
+                ),
+                vol.Optional(CONF_ROOM_TEMP_SENSOR): EntitySelector(
+                    EntitySelectorConfig(domain="sensor", device_class="temperature")
+                ),
+                vol.Optional(CONF_WINDOW_SENSORS): EntitySelector(
+                    EntitySelectorConfig(
+                        domain="binary_sensor",
+                        device_class=["window", "door"],
+                        multiple=True,
+                    )
+                ),
+                vol.Optional(CONF_WINDOW_OPEN_DELAY_MINUTES): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=60, step=1, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
+                vol.Optional(CONF_WINDOW_CLOSE_DELAY_MINUTES): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0, max=60, step=1, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+                    )
+                ),
+                vol.Optional(CONF_WINDOW_PAUSE_ENABLED): BooleanSelector(),
                 vol.Optional(CONF_OUTSIDE_TEMP_SENSOR): EntitySelector(
-                    EntitySelectorConfig(domain="sensor")
+                    EntitySelectorConfig(domain="sensor", device_class="temperature")
                 ),
                 vol.Optional(CONF_OUTSIDE_WEATHER_ENTITY): EntitySelector(
                     EntitySelectorConfig(domain="weather")
@@ -653,24 +1110,9 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         min=0.0, max=5.0, step=0.05, unit_of_measurement="km", mode=NumberSelectorMode.BOX
                     )
                 ),
-                vol.Optional(CONF_DEFAULT_PRESET): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="preset",
-                        options=supported_presets,
-                    )
-                ),
-                vol.Optional(CONF_AWAY_NEAR_PRESET): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="preset",
-                        options=supported_presets,
-                    )
-                ),
-                vol.Optional(CONF_AWAY_PRESET): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="preset",
-                        options=supported_presets,
-                    )
-                ),
+                vol.Optional(CONF_DEFAULT_PRESET): preset_selector,
+                vol.Optional(CONF_AWAY_NEAR_PRESET): preset_selector,
+                vol.Optional(CONF_AWAY_PRESET): preset_selector,
                 vol.Optional(CONF_PREHEAT_ENABLED): BooleanSelector(),
                 vol.Optional(CONF_PREHEAT_IGNORES_AWAY): BooleanSelector(),
                 vol.Optional(CONF_MAX_MINUTES_PREHEAT): NumberSelector(
@@ -687,13 +1129,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_HVAC_OFF_ON_TARGET): BooleanSelector(),
                 vol.Optional(CONF_FALLBACK_TOLERANCE): NumberSelector(
                     NumberSelectorConfig(
-                        min=0.05, max=2.0, step=0.05, unit_of_measurement="K", mode=NumberSelectorMode.BOX
+                        min=0.0, max=2.0, step=0.05, unit_of_measurement="K", mode=NumberSelectorMode.BOX
                     )
                 ),
                 vol.Optional(CONF_OPPORTUNISTIC_HEATING): BooleanSelector(),
-                vol.Optional(CONF_TOLERANCE_ENTITY): EntitySelector(
-                    EntitySelectorConfig(domain="number")
-                ),
                 vol.Optional(CONF_USE_WEATHER_FORECAST_FOR_PREHEAT): BooleanSelector(),
                 vol.Optional(CONF_ANOMALY_DETECTION_ENABLED): BooleanSelector(),
                 vol.Optional(CONF_ANOMALY_NO_HEAT_MINUTES): NumberSelector(
@@ -707,6 +1146,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="settings",
             data_schema=self.add_suggested_values_to_schema(schema, self.settings_data),
+            errors=errors,
         )
 
     async def async_step_schedule_menu(
@@ -940,9 +1380,10 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         lang = get_ha_language(getattr(self, "hass", None))
+        custom_labels = self._custom_labels()
         if slots:
             slot_lines = [
-                f"• {_format_slot_item_with_flags(idx, s, lang)}"
+                f"• {_format_slot_item_with_flags(idx, s, lang, custom_labels=custom_labels)}"
                 for idx, s in enumerate(slots)
             ]
             slots_list_str = "\n" + "\n".join(slot_lines)
@@ -975,8 +1416,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 return await self.async_step_edit_slot()
 
         lang = get_ha_language(getattr(self, "hass", None))
+        custom_labels = self._custom_labels()
         options = [
-            {"value": f"slot_{idx}", "label": _format_slot_item_with_flags(idx, slot, lang)}
+            {
+                "value": f"slot_{idx}",
+                "label": _format_slot_item_with_flags(idx, slot, lang, custom_labels=custom_labels),
+            }
             for idx, slot in enumerate(slots)
         ]
 
@@ -1059,17 +1504,13 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
 
         supported_presets = self._get_supported_presets()
         default_preset = supported_presets[0] if supported_presets else "none"
+        preset_selector = self._build_preset_selector(include_none=True)
 
         schema = vol.Schema(
             {
                 vol.Required("start_time"): TimeSelector(),
                 vol.Required("end_time"): TimeSelector(),
-                vol.Required("preset", default=default_preset): SelectSelector(
-                    SelectSelectorConfig(
-                        translation_key="preset",
-                        options=supported_presets,
-                    )
-                ),
+                vol.Required("preset", default=default_preset): preset_selector,
                 vol.Optional("preheat", default=True): BooleanSelector(),
                 vol.Optional("cooldown", default=True): BooleanSelector(),
             }
@@ -1123,9 +1564,12 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                 return await self.async_step_slot_overview()
 
         supported_presets = self._get_supported_presets()
-        current_preset = current_slot.get("preset") or (
-            supported_presets[0] if supported_presets else "none"
-        )
+        raw_preset = current_slot.get("preset") or "none"
+        if raw_preset != "none" and raw_preset not in supported_presets:
+            current_preset = supported_presets[0] if supported_presets else "none"
+        else:
+            current_preset = raw_preset or (supported_presets[0] if supported_presets else "none")
+        preset_selector = self._build_preset_selector(include_none=True)
 
         edit_schema_dict: dict[Any, Any] = {
             vol.Required("action", default="update"): SelectSelector(
@@ -1140,12 +1584,7 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(
                 "end_time", default=current_slot.get("to", "00:00:00")
             ): TimeSelector(),
-            vol.Required("preset", default=current_preset): SelectSelector(
-                SelectSelectorConfig(
-                    translation_key="preset",
-                    options=supported_presets,
-                )
-            ),
+            vol.Required("preset", default=current_preset): preset_selector,
             vol.Optional(
                 "preheat", default=bool(current_slot.get("preheat", True))
             ): BooleanSelector(),

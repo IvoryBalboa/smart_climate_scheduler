@@ -2,11 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Climate Scheduler 2.0 - Konfiguracja wstępna",
-        "description": "Skonfiguruj termostat, źródło temperatury zewnętrznej (czujnik ma priorytet nad pogodą), czujnik aktywności ogrzewania, samouczenie oraz domyślne wskaźniki.",
+        "title": "Smart Climate Scheduler - Konfiguracja wstępna",
+        "description": "Skonfiguruj termostaty, źródło temperatury zewnętrznej (czujnik ma priorytet nad pogodą), czujnik aktywności ogrzewania, samouczenie oraz domyślne wskaźniki.",
         "data": {
           "name": "Nazwa pomieszczenia",
           "climate_entity": "Termostat / Encja Climate",
+          "climate_entities": "Termostaty / Encje Climate (Grupa pomieszczenia)",
+          "room_temp_sensor": "Czujnik temperatury pokojowej (Opcjonalnie - tylko dla termiki i histerezy SCS)",
+          "window_sensors": "Czujniki otwarcia okna / drzwi (Opcjonalnie)",
+          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
+          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)",
+          "window_pause_enabled": "Wstrzymaj ogrzewanie (HVAC Off) przy otwartym oknie",
           "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
           "outside_weather_entity": "Encja pogody",
           "heating_active_sensor": "Czujnik pracy palnika / ogrzewania",
@@ -24,9 +30,8 @@
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
-          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
+          "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
           "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
-          "tolerance_entity": "Encja tolerancji (Opcjonalnie - Automatyczne wykrywanie z urządzenia, jeśli puste)",
           "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
           "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
           "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
@@ -34,7 +39,8 @@
       }
     },
     "error": {
-      "name_required": "Nazwa pomieszczenia jest wymagana."
+      "name_required": "Nazwa pomieszczenia jest wymagana.",
+      "climate_required": "Należy wybrać co najmniej jeden termostat (encję climate)."
     }
   },
   "options": {
@@ -50,6 +56,12 @@
         "title": "Ustawienia ogólne i parametry cieplne",
         "description": "Dostosuj źródło temperatury zewnętrznej, samouczenie oraz domyślne prędkości nagrzewania i chłodzenia:",
         "data": {
+          "climate_entities": "Termostaty / Encje Climate (Grupa pomieszczenia)",
+          "room_temp_sensor": "Czujnik temperatury pokojowej (Opcjonalnie - tylko dla termiki i histerezy SCS)",
+          "window_sensors": "Czujniki otwarcia okna / drzwi (Opcjonalnie)",
+          "window_open_delay_minutes": "Opóźnienie otwarcia okna przed pauzą (minuty)",
+          "window_close_delay_minutes": "Opóźnienie zamknięcia okna przed wznowieniem (minuty)",
+          "window_pause_enabled": "Wstrzymaj ogrzewanie (HVAC Off) przy otwartym oknie",
           "outside_temp_sensor": "Czujnik temperatury zewnętrznej (priorytet nad pogodą)",
           "outside_weather_entity": "Encja pogody dla temperatury zewnętrznej",
           "heating_active_sensor": "Czujnik pracy ogrzewania / palnika",
@@ -67,11 +79,10 @@
           "cooldown_enabled": "Włącz wczesne chłodzenie",
           "max_minutes_cooldown": "Maks. czas chłodzenia (minuty)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
-          "fallback_tolerance": "Tolerancja ponownego włączenia / rezerwowa (K)",
+          "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
           "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
-          "tolerance_entity": "Encja tolerancji (Opcjonalnie - Automatyczne wykrywanie z urządzenia, jeśli puste)",
           "use_weather_forecast_for_preheat": "Użyj prognozy pogody do wstępnego nagrzewania (średnia godzinowa)",
-          "preheat_ignores_away": "Wstępne nagrzewanie przed przyjazdem podczas nieobecności (Zastępuje nieobecność i strefę bliską)",
+          "preheat_ignores_away": "Wstępne nagrzewanie mimo nieobecności",
           "anomaly_detection_enabled": "Włącz strażnika anomalii i sprzętu (brak nagrzewania, termostat offline, zamrożony czujnik)",
           "anomaly_no_heat_minutes": "Próg braku nagrzewania przy aktywnym palniku (minuty, 0 = wyłączone)"
         }
@@ -157,12 +168,48 @@
           "preheat": "Nagrzewaj przed startem przedziału",
           "cooldown": "Ochładzaj przed końcem przedziału"
         }
+      },
+      "custom_presets": {
+        "title": "Zarządzaj własnymi trybami ({presets_count})",
+        "description": "Skonfigurowane tryby pomieszczenia z własnymi temperaturami docelowymi:{presets_list}",
+        "data": {
+          "preset_action": "Wybierz akcję"
+        }
+      },
+      "add_custom_preset": {
+        "title": "Dodaj własny tryb",
+        "description": "Podaj nazwę, temperaturę docelową i kolor:",
+        "data": {
+          "name": "Nazwa trybu",
+          "temperature": "Temperatura docelowa (°C)",
+          "color": "Kolor"
+        }
+      },
+      "select_custom_preset": {
+        "title": "Wybierz własny tryb",
+        "description": "Wybierz tryb do edycji lub usunięcia:",
+        "data": {
+          "selected_preset": "Wybierz tryb"
+        }
+      },
+      "edit_custom_preset": {
+        "title": "Edytuj własny tryb",
+        "description": "Zaktualizuj lub usuń wybrany własny tryb:",
+        "data": {
+          "action": "Wybierz akcję",
+          "name": "Nazwa trybu",
+          "temperature": "Temperatura docelowa (°C)",
+          "color": "Kolor"
+        }
       }
     },
     "error": {
       "invalid_time_range": "Czas zakończenia musi być późniejszy niż czas rozpoczęcia.",
       "profile_name_empty": "Nazwa profilu nie może być pusta.",
-      "profile_name_exists": "Profil o tej nazwie już istnieje."
+      "profile_name_exists": "Profil o tej nazwie już istnieje.",
+      "climate_required": "Należy wybrać co najmniej jeden termostat (encję climate).",
+      "preset_name_empty": "Nazwa trybu nie może być pusta.",
+      "cannot_delete_last_preset": "Musi pozostać co najmniej jeden własny tryb."
     }
   },
   "selector": {
@@ -192,8 +239,28 @@
     "init_action": {
       "options": {
         "schedules": "📅 Zarządzaj harmonogramami i profilami",
+        "custom_presets": "🌡️ Zarządzaj własnymi trybami",
         "settings": "⚙️ Ustawienia (Czujniki, Uczenie i Prędkości)",
         "save": "💾 Zapisz i zamknij"
+      }
+    },
+    "custom_preset_action": {
+      "options": {
+        "add": "➕ Dodaj własny tryb",
+        "edit": "✏️ Edytuj lub usuń tryb",
+        "back": "← Powrót do menu głównego"
+      }
+    },
+    "preset_color": {
+      "options": {
+        "#f59e0b": "Bursztynowy (#f59e0b)",
+        "#10b981": "Szmaragdowy (#10b981)",
+        "#6366f1": "Indygo (#6366f1)",
+        "#ef4444": "Czerwony (#ef4444)",
+        "#0ea5e9": "Błękitny (#0ea5e9)",
+        "#ec4899": "Różowy (#ec4899)",
+        "#8b5cf6": "Fioletowy (#8b5cf6)",
+        "#64748b": "Łupkowy (#64748b)"
       }
     },
     "schedule_action": {
