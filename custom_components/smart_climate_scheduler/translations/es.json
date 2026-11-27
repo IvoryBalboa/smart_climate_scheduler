@@ -507,6 +507,32 @@
             "name": "Ventana o puerta abierta"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Demanda de calefacción",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Termostatos calentando"
+          },
+          "heating_count": {
+            "name": "Termostatos activos"
+          },
+          "thermostat_count": {
+            "name": "Termostatos de la habitación"
+          },
+          "current_temperature": {
+            "name": "Temperatura ambiente"
+          },
+          "target_temperature": {
+            "name": "Temperatura objetivo"
+          },
+          "temp_delta": {
+            "name": "Diferencia de temperatura"
+          },
+          "window_open": {
+            "name": "Ventana abierta"
+          }
+        }
       }
     },
     "sensor": {

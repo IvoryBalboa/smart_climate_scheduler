@@ -507,6 +507,32 @@
             "name": "Okno lub drzwi otwarte"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Zapotrzebowanie na ciepło",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Grzejące termostaty"
+          },
+          "heating_count": {
+            "name": "Aktywne termostaty"
+          },
+          "thermostat_count": {
+            "name": "Termostaty w pokoju"
+          },
+          "current_temperature": {
+            "name": "Temperatura w pokoju"
+          },
+          "target_temperature": {
+            "name": "Temperatura docelowa"
+          },
+          "temp_delta": {
+            "name": "Różnica temperatur"
+          },
+          "window_open": {
+            "name": "Okno otwarte"
+          }
+        }
       }
     },
     "sensor": {

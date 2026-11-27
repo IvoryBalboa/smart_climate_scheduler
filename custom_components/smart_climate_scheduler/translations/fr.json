@@ -507,6 +507,32 @@
             "name": "Fenêtre ou porte ouverte"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Demande de chauffage",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Thermostats en chauffe"
+          },
+          "heating_count": {
+            "name": "Thermostats actifs"
+          },
+          "thermostat_count": {
+            "name": "Thermostats de la pièce"
+          },
+          "current_temperature": {
+            "name": "Température ambiante"
+          },
+          "target_temperature": {
+            "name": "Température cible"
+          },
+          "temp_delta": {
+            "name": "Écart de température"
+          },
+          "window_open": {
+            "name": "Fenêtre ouverte"
+          }
+        }
       }
     },
     "sensor": {

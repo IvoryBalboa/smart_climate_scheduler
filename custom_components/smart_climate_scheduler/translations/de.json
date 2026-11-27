@@ -507,6 +507,32 @@
             "name": "Fenster oder Tür offen"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Heizbedarf",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Heizende Thermostate"
+          },
+          "heating_count": {
+            "name": "Aktive Thermostate"
+          },
+          "thermostat_count": {
+            "name": "Raum-Thermostate"
+          },
+          "current_temperature": {
+            "name": "Raumtemperatur"
+          },
+          "target_temperature": {
+            "name": "Zieltemperatur"
+          },
+          "temp_delta": {
+            "name": "Temperaturdifferenz"
+          },
+          "window_open": {
+            "name": "Fenster offen"
+          }
+        }
       }
     },
     "sensor": {

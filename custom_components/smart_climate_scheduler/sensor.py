@@ -1181,18 +1181,6 @@ async def async_setup_entry(
     _reschedule_target_timer()
 
 
-SCHEDULE_PRESET_OPTIONS = [
-    "none",
-    "home",
-    "away",
-    "comfort",
-    "eco",
-    "sleep",
-    "boost",
-    "activity",
-]
-
-
 class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
     """Haupt-Zeitplan-Sensor mit Zustands-Wiederherstellung nach Neustarts."""
 
@@ -1229,15 +1217,17 @@ class SmartClimateSchedulerSensor(RestoreEntity, SensorEntity):
 
     @property
     def options(self) -> list[str]:
-        """Gibt alle zulässigen Zustandsoptionen für die ENUM-Geräteklasse zurück."""
-        opts = list(SCHEDULE_PRESET_OPTIONS)
+        """Gibt ausschließlich 'none' sowie die tatsächlich konfigurierten Raum-Presets als ENUM-Optionen zurück."""
+        opts: list[str] = ["none"]
         for cp in get_custom_presets(self.config_entry):
             cid = str(cp.get("id", "")).strip().lower()
             if cid and cid not in opts:
                 opts.append(cid)
         cur_val = self.native_value
-        if cur_val and str(cur_val).strip().lower() not in opts:
-            opts.append(str(cur_val).strip().lower())
+        if cur_val:
+            cur_clean = str(cur_val).strip().lower()
+            if cur_clean and cur_clean not in opts:
+                opts.append(cur_clean)
         return opts
 
     @property

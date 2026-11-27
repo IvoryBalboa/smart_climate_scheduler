@@ -507,6 +507,32 @@
             "name": "Finestra o porta aperta"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Richiesta di riscaldamento",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Termostati in riscaldamento"
+          },
+          "heating_count": {
+            "name": "Termostati attivi"
+          },
+          "thermostat_count": {
+            "name": "Termostati della stanza"
+          },
+          "current_temperature": {
+            "name": "Temperatura ambiente"
+          },
+          "target_temperature": {
+            "name": "Temperatura target"
+          },
+          "temp_delta": {
+            "name": "Differenza di temperatura"
+          },
+          "window_open": {
+            "name": "Finestra aperta"
+          }
+        }
       }
     },
     "sensor": {

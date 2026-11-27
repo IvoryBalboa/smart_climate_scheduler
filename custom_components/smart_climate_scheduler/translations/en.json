@@ -507,6 +507,32 @@
             "name": "Window or Door Open"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Heating Demand",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Heating Thermostats"
+          },
+          "heating_count": {
+            "name": "Active Thermostats"
+          },
+          "thermostat_count": {
+            "name": "Room Thermostats"
+          },
+          "current_temperature": {
+            "name": "Room Temperature"
+          },
+          "target_temperature": {
+            "name": "Target Temperature"
+          },
+          "temp_delta": {
+            "name": "Temperature Delta"
+          },
+          "window_open": {
+            "name": "Window Open"
+          }
+        }
       }
     },
     "sensor": {

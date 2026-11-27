@@ -417,6 +417,15 @@ ENTITY_SLUG_SUFFIXES: dict[str, dict[str, str]] = {
         "nl": "afwijking",
         "pl": "anomalia",
     },
+    "binary_heating_demand": {
+        "de": "heizbedarf",
+        "en": "heating_demand",
+        "es": "demanda_calefaccion",
+        "fr": "demande_chauffage",
+        "it": "richiesta_riscaldamento",
+        "nl": "warmtevraag",
+        "pl": "zapotrzebowanie_ciepla",
+    },
     # Debug sensor
     "diagnostics": {
         "de": "diagnose",
@@ -455,6 +464,7 @@ ENTITY_SLUG_KEY_ALIASES: dict[str, str] = {
     "binary_vorheizen": "binary_preheat",
     "binary_abkuehlen": "binary_cooldown",
     "binary_anomalie": "binary_anomaly",
+    "binary_heizbedarf": "binary_heating_demand",
     "diagnose": "diagnostics",
     "zeitplan_profil": "schedule_profile",
 }

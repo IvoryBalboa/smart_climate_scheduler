@@ -507,6 +507,32 @@
             "name": "Raam of deur open"
           }
         }
+      },
+      "heating_demand": {
+        "name": "Warmtevraag",
+        "state_attributes": {
+          "heating_thermostats": {
+            "name": "Verwarmende thermostaten"
+          },
+          "heating_count": {
+            "name": "Actieve thermostaten"
+          },
+          "thermostat_count": {
+            "name": "Kamerthermostaten"
+          },
+          "current_temperature": {
+            "name": "Kamertemperatuur"
+          },
+          "target_temperature": {
+            "name": "Doeltemperatuur"
+          },
+          "temp_delta": {
+            "name": "Temperatuurverschil"
+          },
+          "window_open": {
+            "name": "Raam open"
+          }
+        }
       }
     },
     "sensor": {
