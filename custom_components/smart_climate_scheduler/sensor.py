@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
+import time as time_mod
 from datetime import datetime, timedelta
 from typing import Any
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
@@ -36,6 +37,7 @@ from .helpers import (
     async_sync_entity_registry_disabled,
     async_write_ha_state_if_enabled,
     calculate_overall_average,
+    clear_kickstart_timer,
     clear_window_debounce_timer,
     evaluate_window_debounce,
     get_climate_entities,
@@ -60,6 +62,7 @@ from .helpers import (
     normalize_matrix,
     parse_time,
     register_startup_grace_callback,
+    reset_opportunistic_kickstart,
     resolve_entry_entity_id,
     safe_float as _safe_float,
     unregister_startup_grace_callback,
@@ -75,6 +78,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_KICKSTART_BOOST,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_ENABLE_SELF_LEARNING,
     DEFAULT_FALLBACK_HEATING_RATE,
@@ -82,8 +86,12 @@ from .const import (
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_KICKSTART_BOOST,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DOMAIN,
+    KICKSTART_ESCALATION_SECONDS,
+    KICKSTART_MAX_BOOST,
+    KICKSTART_STEP_INCREMENT,
     MAX_TARGET_TEMP,
     MIN_TARGET_TEMP,
 )
@@ -561,6 +569,30 @@ async def async_setup_entry(
         return call_later(delay_sec, _on_window_timer)
 
     config_entry.async_on_unload(lambda: clear_window_debounce_timer(domain_data))
+    config_entry.async_on_unload(lambda: clear_kickstart_timer(domain_data))
+
+    async def _async_kickstart_timer_fired() -> None:
+        invalidate_eval_cache(domain_data)
+        await async_apply_schedule_to_climate()
+        evaluate_and_update_anomaly(hass, config_entry, domain_data)
+        _async_update_all_entities()
+
+    def _schedule_kickstart_escalation_timer(delay_sec: float) -> None:
+        clear_kickstart_timer(domain_data)
+        if delay_sec <= 0:
+            return
+        loop = getattr(hass, "loop", None)
+        call_later = getattr(loop, "call_later", None) if loop else None
+        if not callable(call_later):
+            return
+
+        @ha_callback
+        def _on_kickstart_timer() -> None:
+            domain_data["opportunistic_kickstart_timer_handle"] = None
+            if hasattr(hass, "async_create_task"):
+                hass.async_create_task(_async_kickstart_timer_fired())
+
+        domain_data["opportunistic_kickstart_timer_handle"] = call_later(delay_sec, _on_kickstart_timer)
 
     # Automatik: Universelle Direkttemperatur-Steuerung, Gruppensteuerung, Fenster-Entprellung & Zweipunkt-Regelung
     async def async_apply_schedule_to_climate(event=None):
@@ -585,9 +617,7 @@ async def async_setup_entry(
         )
 
         if not is_auto and not is_manual_heat:
-            domain_data["opportunistic_kickstart"] = False
-            domain_data["opportunistic_kickstart_done"] = False
-            domain_data["opportunistic_kickstart_target"] = None
+            reset_opportunistic_kickstart(domain_data)
             clear_window_debounce_timer(domain_data)
             return
 
@@ -650,9 +680,7 @@ async def async_setup_entry(
             invalidate_eval_cache(domain_data)
 
         if is_manual_heat:
-            domain_data["opportunistic_kickstart"] = False
-            domain_data["opportunistic_kickstart_done"] = False
-            domain_data["opportunistic_kickstart_target"] = None
+            reset_opportunistic_kickstart(domain_data)
 
             manual_raw = domain_data.get("manual_temperature")
             if manual_raw is None:
@@ -770,14 +798,25 @@ async def async_setup_entry(
 
         # Aktive Fenster-Pause (wenn effektiver Zustand nach open_delay_min offen ist & window_pause_enabled)
         if effective_win_open and win_pause_enabled:
-            was_kickstart = bool(domain_data.get("opportunistic_kickstart", False))
-            domain_data["opportunistic_kickstart"] = False
-            domain_data["opportunistic_kickstart_done"] = False
+            dev_states_pre = domain_data.get("opportunistic_kickstart_devices")
+            was_kickstart = bool(
+                domain_data.get("opportunistic_kickstart", False)
+                or (
+                    isinstance(dev_states_pre, dict)
+                    and any(isinstance(v, dict) and v.get("active") for v in dev_states_pre.values())
+                )
+            )
+            active_kick_ids = {
+                cid
+                for cid, v in (dev_states_pre or {}).items()
+                if isinstance(v, dict) and v.get("active")
+            } if isinstance(dev_states_pre, dict) else set()
+            reset_opportunistic_kickstart(domain_data, reset_done=True, clear_target=False)
 
             w_state = domain_data.setdefault("window_state", {})
             saved_modes = w_state.setdefault("saved_hvac_modes", {})
             for cl_id, st_obj in available_devices:
-                if was_kickstart:
+                if was_kickstart and (not active_kick_ids or cl_id in active_kick_ids):
                     attrs = st_obj.attributes or {}
                     cur_set = attrs.get("temperature")
                     needs_restore = True
@@ -831,23 +870,6 @@ async def async_setup_entry(
                         )
             return
 
-        # Zyklus-Schutzmerker zurücksetzen bei Brenner-Aus, Fensteröffnung, Sollwerterhöhung oder Zielerreichung
-        prev_kick_target = domain_data.get("opportunistic_kickstart_target")
-        if prev_kick_target is not None and base_target_temp > prev_kick_target:
-            domain_data["opportunistic_kickstart_done"] = False
-
-        if not opportunistic_heating or not is_heating_active or window_or_door_open:
-            domain_data["opportunistic_kickstart_done"] = False
-            if not opportunistic_heating or not is_heating_active:
-                domain_data["opportunistic_kickstart_target"] = None
-        elif current_temp is not None and current_temp >= base_target_temp:
-            domain_data["opportunistic_kickstart_done"] = False
-
-        any_heating_action = any(
-            (st_obj.attributes or {}).get("hvac_action") == "heating"
-            for _, st_obj in available_devices
-        )
-
         if domain_data.get("is_setting_hvac", False):
             return
 
@@ -865,7 +887,114 @@ async def async_setup_entry(
             allow_zero_or_negative=True,
         )
         tolerance = max(0.0, fallback_tol)
-        boosted_temp = round(min(MAX_TARGET_TEMP, base_target_temp + max(0.1, tolerance)), 1)
+
+        kickstart_boost_cfg = max(
+            0.0,
+            _safe_float(
+                config_entry.options.get(
+                    CONF_KICKSTART_BOOST,
+                    config_entry.data.get(CONF_KICKSTART_BOOST),
+                ),
+                DEFAULT_KICKSTART_BOOST,
+                allow_zero_or_negative=True,
+            ),
+        )
+        initial_boost = round(max(0.1, tolerance, kickstart_boost_cfg), 1)
+        max_boost = max(KICKSTART_MAX_BOOST, initial_boost)
+
+        def _get_valve_boosted_temp(step_idx: int) -> float:
+            boost = min(max_boost, initial_boost + max(0, int(step_idx)) * KICKSTART_STEP_INCREMENT)
+            return round(min(MAX_TARGET_TEMP, base_target_temp + boost), 1)
+
+        now_mono = time_mod.monotonic()
+        dev_states = domain_data.setdefault("opportunistic_kickstart_devices", {})
+        if not isinstance(dev_states, dict):
+            dev_states = {}
+            domain_data["opportunistic_kickstart_devices"] = dev_states
+
+        # Abwärtskompatibilität für Aufrufer/Tests, die nur globale Kickstart-Flags setzen
+        if domain_data.get("opportunistic_kickstart") and not any(
+            isinstance(st, dict) and st.get("active") for st in dev_states.values()
+        ):
+            for cl_id, _ in available_devices:
+                dev_states[cl_id] = {
+                    "active": True,
+                    "done": False,
+                    "step": 0,
+                    "next_escalate_at": now_mono + KICKSTART_ESCALATION_SECONDS,
+                }
+        elif domain_data.get("opportunistic_kickstart_done") and not dev_states:
+            for cl_id, _ in available_devices:
+                dev_states[cl_id] = {
+                    "active": False,
+                    "done": True,
+                    "step": 0,
+                    "next_escalate_at": None,
+                }
+
+        active_cl_ids = {cl_id for cl_id, _ in available_devices}
+        for old_cid in list(dev_states.keys()):
+            if old_cid not in active_cl_ids:
+                dev_states.pop(old_cid, None)
+
+        # Zyklus-Schutzmerker zurücksetzen bei Sollwerterhöhung, Brenner-Aus, Fensteröffnung oder Zielerreichung
+        prev_kick_target = domain_data.get("opportunistic_kickstart_target")
+        if prev_kick_target is not None and base_target_temp > prev_kick_target:
+            for v_state in dev_states.values():
+                if isinstance(v_state, dict):
+                    v_state["done"] = False
+                    if v_state.get("active"):
+                        v_state["step"] = 0
+                        v_state["next_escalate_at"] = now_mono + KICKSTART_ESCALATION_SECONDS
+            domain_data["opportunistic_kickstart_done"] = False
+            domain_data["opportunistic_kickstart_target"] = base_target_temp
+
+        if not opportunistic_heating or not is_heating_active or window_or_door_open:
+            reset_opportunistic_kickstart(
+                domain_data,
+                reset_done=True,
+                clear_target=(not opportunistic_heating or not is_heating_active),
+            )
+            dev_states = domain_data.setdefault("opportunistic_kickstart_devices", {})
+        elif current_temp is not None and current_temp >= base_target_temp:
+            reset_opportunistic_kickstart(domain_data, reset_done=True, clear_target=False)
+            dev_states = domain_data.setdefault("opportunistic_kickstart_devices", {})
+
+        for cl_id, st_obj in available_devices:
+            v_state = dev_states.get(cl_id)
+            if not isinstance(v_state, dict):
+                v_state = {"active": False, "done": False, "step": 0, "next_escalate_at": None}
+                dev_states[cl_id] = v_state
+            cur_act = str((st_obj.attributes or {}).get("hvac_action") or "").strip().lower()
+            if v_state.get("active"):
+                if cur_act == "heating":
+                    v_state["active"] = False
+                    v_state["done"] = True
+                    v_state["step"] = 0
+                    v_state["next_escalate_at"] = None
+                    domain_data["opportunistic_kickstart_target"] = base_target_temp
+                else:
+                    next_esc = v_state.get("next_escalate_at")
+                    if next_esc is not None and now_mono >= float(next_esc):
+                        cur_step = int(v_state.get("step", 0))
+                        cur_boost_t = _get_valve_boosted_temp(cur_step)
+                        next_boost_t = _get_valve_boosted_temp(cur_step + 1)
+                        if next_boost_t > cur_boost_t:
+                            v_state["step"] = cur_step + 1
+                            v_state["next_escalate_at"] = now_mono + KICKSTART_ESCALATION_SECONDS
+                            _LOGGER.info(
+                                "Opportunistischer Kickstart [%s]: Ventil noch '%s' nach %ds -> Erhöhe Anhebung (Stufe %d) auf %.1f °C",
+                                cl_id,
+                                cur_act or "idle",
+                                KICKSTART_ESCALATION_SECONDS,
+                                v_state["step"],
+                                next_boost_t,
+                            )
+                        else:
+                            v_state["active"] = False
+                            v_state["done"] = True
+                            v_state["step"] = 0
+                            v_state["next_escalate_at"] = None
 
         async def _async_sync_direct_temp(cl_id: str, st_obj: Any, desired_t: float) -> None:
             attrs = st_obj.attributes or {}
@@ -927,28 +1056,11 @@ async def async_setup_entry(
                     err,
                 )
 
-        # Aktiven opportunistischen Kickstart abschließen oder abbrechen
-        kickstart_active = bool(domain_data.get("opportunistic_kickstart", False))
-        if kickstart_active:
-            if any_heating_action:
-                domain_data["opportunistic_kickstart"] = False
-                domain_data["opportunistic_kickstart_done"] = True
-                domain_data["opportunistic_kickstart_target"] = base_target_temp
-                kickstart_active = False
-            elif (
-                not opportunistic_heating
-                or not is_heating_active
-                or window_or_door_open
-                or (current_temp is not None and current_temp >= base_target_temp)
-            ):
-                domain_data["opportunistic_kickstart"] = False
-                domain_data["opportunistic_kickstart_done"] = False
-                kickstart_active = False
-
         if hvac_off_on_target and current_temp is not None:
             if current_temp >= base_target_temp:
                 domain_data["two_point_target_reached"] = True
-                domain_data["opportunistic_kickstart"] = False
+                reset_opportunistic_kickstart(domain_data, reset_done=True, clear_target=False)
+                dev_states = domain_data.setdefault("opportunistic_kickstart_devices", {})
                 saved_hvac_modes.clear()
                 domain_data["is_setting_hvac"] = True
                 try:
@@ -968,7 +1080,8 @@ async def async_setup_entry(
                 opportunistic_heating and is_heating_active and current_temp < base_target_temp
             ):
                 if window_or_door_open:
-                    domain_data["opportunistic_kickstart"] = False
+                    reset_opportunistic_kickstart(domain_data, reset_done=True, clear_target=False)
+                    dev_states = domain_data.setdefault("opportunistic_kickstart_devices", {})
                     domain_data["is_setting_hvac"] = True
                     try:
                         for cl_id, st_obj in available_devices:
@@ -988,25 +1101,34 @@ async def async_setup_entry(
                     try:
                         for cl_id, st_obj in available_devices:
                             attrs = st_obj.attributes or {}
-                            cur_act = attrs.get("hvac_action")
+                            cur_act = str(attrs.get("hvac_action") or "").strip().lower()
                             saved_mode = saved_hvac_modes.pop(cl_id, None)
                             target_mode = saved_mode or get_target_hvac_mode(st_obj)
-                            if st_obj.state == "off":
+                            was_off = st_obj.state == "off"
+                            if was_off:
                                 await _async_set_direct_hvac(
                                     cl_id,
                                     target_mode,
                                     f"Ist ({current_temp:.1f} °C) < Schwelle ({base_target_temp - tolerance:.1f} °C)",
                                 )
+                            v_state = dev_states[cl_id]
                             desired_temp = base_target_temp
-                            if kickstart_active:
-                                desired_temp = boosted_temp
+                            if v_state.get("active"):
+                                desired_temp = _get_valve_boosted_temp(v_state.get("step", 0))
                             elif (
-                                is_opp_deadband
-                                and not domain_data.get("opportunistic_kickstart_done", False)
-                                and (st_obj.state == "off" or cur_act == "idle")
+                                opportunistic_heating
+                                and is_heating_active
+                                and current_temp < base_target_temp
+                                and not v_state.get("done", False)
+                                and (
+                                    (is_opp_deadband and (was_off or cur_act in ("idle", "off")))
+                                    or (not was_off and cur_act in ("idle", "off"))
+                                )
                             ):
-                                desired_temp = boosted_temp
-                                domain_data["opportunistic_kickstart"] = True
+                                v_state["active"] = True
+                                v_state["step"] = 0
+                                v_state["next_escalate_at"] = now_mono + KICKSTART_ESCALATION_SECONDS
+                                desired_temp = _get_valve_boosted_temp(0)
                                 domain_data["opportunistic_kickstart_target"] = base_target_temp
                             await _async_sync_direct_temp(cl_id, st_obj, desired_temp)
                     finally:
@@ -1029,30 +1151,65 @@ async def async_setup_entry(
             try:
                 for cl_id, st_obj in available_devices:
                     attrs = st_obj.attributes or {}
-                    cur_act = attrs.get("hvac_action")
+                    cur_act = str(attrs.get("hvac_action") or "").strip().lower()
                     saved_mode = saved_hvac_modes.pop(cl_id, None)
                     target_mode = saved_mode or get_target_hvac_mode(st_obj)
                     if st_obj.state == "off" and not window_or_door_open:
                         await _async_set_direct_hvac(cl_id, target_mode, "Zeitplan aktiv")
 
+                    v_state = dev_states[cl_id]
                     desired_temp = base_target_temp
-                    if kickstart_active:
-                        desired_temp = boosted_temp
+                    if v_state.get("active"):
+                        desired_temp = _get_valve_boosted_temp(v_state.get("step", 0))
                     elif (
                         opportunistic_heating
                         and is_heating_active
                         and not window_or_door_open
                         and current_temp is not None
                         and current_temp < base_target_temp
-                        and cur_act == "idle"
-                        and not domain_data.get("opportunistic_kickstart_done", False)
+                        and cur_act in ("idle", "off")
+                        and not v_state.get("done", False)
                     ):
-                        desired_temp = boosted_temp
-                        domain_data["opportunistic_kickstart"] = True
+                        v_state["active"] = True
+                        v_state["step"] = 0
+                        v_state["next_escalate_at"] = now_mono + KICKSTART_ESCALATION_SECONDS
+                        desired_temp = _get_valve_boosted_temp(0)
                         domain_data["opportunistic_kickstart_target"] = base_target_temp
                     await _async_sync_direct_temp(cl_id, st_obj, desired_temp)
             finally:
                 hass.loop.call_later(2, lambda: domain_data.update({"is_setting_hvac": False}))
+
+        # Raumweite Zusammenfassung & Eskalations-Timer synchronisieren
+        any_active = any(
+            isinstance(dev_states.get(cid), dict) and dev_states[cid].get("active", False)
+            for cid, _ in available_devices
+        )
+        all_done = bool(available_devices) and all(
+            isinstance(dev_states.get(cid), dict) and dev_states[cid].get("done", False)
+            for cid, _ in available_devices
+        )
+        domain_data["opportunistic_kickstart"] = any_active
+        domain_data["opportunistic_kickstart_done"] = (not any_active) and all_done
+        if any_active or any(
+            isinstance(dev_states.get(cid), dict) and dev_states[cid].get("done", False)
+            for cid, _ in available_devices
+        ):
+            domain_data["opportunistic_kickstart_target"] = base_target_temp
+
+        if any_active:
+            next_deadlines = [
+                float(dev_states[cid]["next_escalate_at"])
+                for cid, _ in available_devices
+                if isinstance(dev_states.get(cid), dict)
+                and dev_states[cid].get("active")
+                and dev_states[cid].get("next_escalate_at") is not None
+            ]
+            if next_deadlines:
+                _schedule_kickstart_escalation_timer(max(1.0, min(next_deadlines) - now_mono))
+            else:
+                clear_kickstart_timer(domain_data)
+        else:
+            clear_kickstart_timer(domain_data)
 
     # 3. Gezieltes, punktgenaues Schalten via async_track_point_in_time (kein minütliches Polling)
     _unsub_timer = None

@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
+          "kickstart_boost": "Kickstart Start-Anhebung für Ventile (K, 0 = Hysterese mit automatischer Steigerung)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Standard-Verlustrate / Abkühlrate (K/h)",
           "hvac_off_on_target": "Zweipunkt-Regelung aktivieren (Bei Ist >= Soll Thermostat ausschalten)",
           "fallback_tolerance": "Hysterese / Wiedereinschalt-Toleranz (K)",
-          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)"
+          "opportunistic_heating": "Opportunistisches Mitheizen aktivieren (Bei aktiver Zentralheizung heizen, solange Ist < Soll)",
+          "kickstart_boost": "Kickstart Start-Anhebung für Ventile (K, 0 = Hysterese mit automatischer Steigerung)"
         }
       },
       "settings_presence": {

@@ -1017,6 +1017,52 @@ def clear_window_debounce_timer(domain_data: dict[str, Any] | None) -> None:
                 pass
 
 
+def clear_kickstart_timer(domain_data: dict[str, Any] | None) -> None:
+    """Bricht einen laufenden Kickstart-Eskalations-Timer sauber ab."""
+    if not isinstance(domain_data, dict):
+        return
+    handle = domain_data.pop("opportunistic_kickstart_timer_handle", None)
+    if handle is not None:
+        if callable(handle):
+            try:
+                handle()
+            except Exception:
+                pass
+        elif hasattr(handle, "cancel"):
+            try:
+                handle.cancel()
+            except Exception:
+                pass
+
+
+def reset_opportunistic_kickstart(
+    domain_data: dict[str, Any] | None,
+    *,
+    reset_done: bool = True,
+    clear_target: bool = True,
+) -> None:
+    """Setzt den pro-Ventil-Kickstart-Status sowie den Eskalations-Timer sauber zurück."""
+    if not isinstance(domain_data, dict):
+        return
+    clear_kickstart_timer(domain_data)
+    domain_data["opportunistic_kickstart"] = False
+    dev_states = domain_data.get("opportunistic_kickstart_devices")
+    if reset_done:
+        domain_data["opportunistic_kickstart_done"] = False
+        if isinstance(dev_states, dict):
+            dev_states.clear()
+        else:
+            domain_data["opportunistic_kickstart_devices"] = {}
+    elif isinstance(dev_states, dict):
+        for v_state in dev_states.values():
+            if isinstance(v_state, dict):
+                v_state["active"] = False
+                v_state["step"] = 0
+                v_state["next_escalate_at"] = None
+    if clear_target:
+        domain_data["opportunistic_kickstart_target"] = None
+
+
 def evaluate_window_debounce(
     domain_data: dict[str, Any] | None,
     raw_open: bool,

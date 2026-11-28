@@ -281,6 +281,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "opportunistic_kickstart": False,
         "opportunistic_kickstart_done": False,
         "opportunistic_kickstart_target": None,
+        "opportunistic_kickstart_devices": {},
+        "opportunistic_kickstart_timer_handle": None,
         "anomaly_state": {},
     }
 

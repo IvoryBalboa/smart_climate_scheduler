@@ -41,6 +41,7 @@ from .helpers import (
     get_target_hvac_mode,
     get_window_delays,
     is_climate_entity_enabled,
+    reset_opportunistic_kickstart,
     resolve_preset_key,
 )
 from .timeline import get_next_regular_slot_start
@@ -161,9 +162,7 @@ class SmartClimateSchedulerClimate(ClimateEntity):
         domain_data["automation_enabled"] = bool(enabled)
         if not enabled:
             domain_data["two_point_target_reached"] = False
-            domain_data["opportunistic_kickstart"] = False
-            domain_data["opportunistic_kickstart_done"] = False
-            domain_data["opportunistic_kickstart_target"] = None
+            reset_opportunistic_kickstart(domain_data)
         else:
             domain_data["is_setting_preset"] = False
             domain_data["is_setting_hvac"] = False

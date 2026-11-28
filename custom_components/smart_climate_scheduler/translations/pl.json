@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
+          "kickstart_boost": "Początkowe podbicie kickstart dla zaworów (K, 0 = histereza z automatycznym wzrostem)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Domyślna prędkość chłodzenia (K/h)",
           "hvac_off_on_target": "Włącz regulację dwustawną (Wyłącz termostat gdy temp. rzeczywista >= zadana)",
           "fallback_tolerance": "Histereza / Tolerancja ponownego włączenia (K)",
-          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)"
+          "opportunistic_heating": "Włącz dogrzewanie oportunistyczne (Grzej gdy temp. rzeczywista < zadana przy aktywnym ogrzewaniu centralnym)",
+          "kickstart_boost": "Początkowe podbicie kickstart dla zaworów (K, 0 = histereza z automatycznym wzrostem)"
         }
       },
       "settings_presence": {

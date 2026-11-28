@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
-          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
+          "kickstart_boost": "Relance initiale du kickstart pour vannes (K, 0 = hystérésis avec montée auto)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Taux de refroidissement par défaut (K/h)",
           "hvac_off_on_target": "Activer la régulation tout-ou-rien (Éteindre quand temp. actuelle >= consigne)",
           "fallback_tolerance": "Hystérésis / Tolérance de réactivation (K)",
-          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)"
+          "opportunistic_heating": "Activer le chauffage opportuniste (Chauffer tant que actuel < consigne si chaudière active)",
+          "kickstart_boost": "Relance initiale du kickstart pour vannes (K, 0 = hystérésis avec montée auto)"
         }
       },
       "settings_presence": {

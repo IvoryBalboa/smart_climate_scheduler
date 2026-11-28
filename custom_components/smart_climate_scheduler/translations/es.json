@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
-          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
+          "kickstart_boost": "Impulso inicial de arranque para válvulas (K, 0 = usar histéresis con escalado automático)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Tasa de enfriamiento por defecto (K/h)",
           "hvac_off_on_target": "Activar control por histéresis (Apagar cuando actual >= consigna)",
           "fallback_tolerance": "Histéresis / Tolerancia de reactivación (K)",
-          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)"
+          "opportunistic_heating": "Activar calefacción oportunista (Calentar mientras actual < consigna si caldera activa)",
+          "kickstart_boost": "Impulso inicial de arranque para válvulas (K, 0 = usar histéresis con escalado automático)"
         }
       },
       "settings_presence": {

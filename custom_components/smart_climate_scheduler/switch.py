@@ -45,6 +45,7 @@ from .helpers import (
     get_room_current_temperature,
     get_target_hvac_mode,
     is_in_startup_grace,
+    reset_opportunistic_kickstart,
     safe_float as _safe_float,
 )
 
@@ -319,9 +320,7 @@ class SmartClimateSchedulerSwitch(SwitchEntity):
         domain_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.config_entry.entry_id, {})
         domain_data["automation_enabled"] = False
         domain_data["two_point_target_reached"] = False
-        domain_data["opportunistic_kickstart"] = False
-        domain_data["opportunistic_kickstart_done"] = False
-        domain_data["opportunistic_kickstart_target"] = None
+        reset_opportunistic_kickstart(domain_data)
 
         # Abgeleiteten Climate-Modus aktualisieren ('heat' wenn mind. ein TRV aktiv, sonst 'off')
         climate_entities = get_climate_entities(self.config_entry)
@@ -442,9 +441,7 @@ class SmartClimateSchedulerOptionSwitch(SwitchEntity):
                 async_write_ha_state_if_enabled(sensor)
 
         if self._option_key == CONF_OPPORTUNISTIC_HEATING and not target_state:
-            domain_data["opportunistic_kickstart"] = False
-            domain_data["opportunistic_kickstart_done"] = False
-            domain_data["opportunistic_kickstart_target"] = None
+            reset_opportunistic_kickstart(domain_data)
 
         # Bei Hysterese / Opportunistischem Mitheizen direkt Zeitplan anwenden falls Automatik aktiv
         if self._option_key in (CONF_HVAC_OFF_ON_TARGET, CONF_OPPORTUNISTIC_HEATING):

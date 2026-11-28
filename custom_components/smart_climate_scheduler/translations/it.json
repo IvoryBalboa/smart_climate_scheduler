@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
+          "kickstart_boost": "Spinta iniziale kickstart per valvole (K, 0 = isteresi con aumento automatico)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Tasso di raffreddamento predefinito (K/h)",
           "hvac_off_on_target": "Abilita controllo a due punti (Spegni quando attuale >= target)",
           "fallback_tolerance": "Isteresi / Tolleranza di riattivazione (K)",
-          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)"
+          "opportunistic_heating": "Abilita riscaldamento opportunistico (Riscalda finché attuale < target se riscaldamento attivo)",
+          "kickstart_boost": "Spinta iniziale kickstart per valvole (K, 0 = isteresi con aumento automatico)"
         }
       },
       "settings_presence": {

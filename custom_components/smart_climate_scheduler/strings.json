@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
+          "kickstart_boost": "Co-heating kickstart initial boost (K, 0 = use hysteresis with auto step-up)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Default Cooling / Heat Loss Rate (K/h)",
           "hvac_off_on_target": "Enable two-point hysteresis (Turn thermostat off when actual >= target)",
           "fallback_tolerance": "Hysteresis / Re-activation Tolerance (K)",
-          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)"
+          "opportunistic_heating": "Enable opportunistic co-heating (Heat while actual < target when central heating is active)",
+          "kickstart_boost": "Co-heating kickstart initial boost (K, 0 = use hysteresis with auto step-up)"
         }
       },
       "settings_presence": {

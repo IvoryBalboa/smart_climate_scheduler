@@ -48,6 +48,7 @@ from .const import (
     CONF_HVAC_OFF_ON_TARGET,
     CONF_FALLBACK_TOLERANCE,
     CONF_OPPORTUNISTIC_HEATING,
+    CONF_KICKSTART_BOOST,
     CONF_USE_WEATHER_FORECAST_FOR_PREHEAT,
     CONF_PREHEAT_IGNORES_AWAY,
     CONF_AWAY_PRESET,
@@ -77,6 +78,7 @@ from .const import (
     DEFAULT_HVAC_OFF_ON_TARGET,
     DEFAULT_FALLBACK_TOLERANCE,
     DEFAULT_OPPORTUNISTIC_HEATING,
+    DEFAULT_KICKSTART_BOOST,
     DEFAULT_USE_WEATHER_FORECAST_FOR_PREHEAT,
     DEFAULT_PREHEAT_IGNORES_AWAY,
     DEFAULT_WINDOW_CLOSE_DELAY_MINUTES,
@@ -423,6 +425,20 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._config_data[CONF_OPPORTUNISTIC_HEATING] = bool(
                 user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
             )
+            self._config_data[CONF_KICKSTART_BOOST] = round(
+                max(
+                    0.0,
+                    min(
+                        3.0,
+                        _safe_float(
+                            user_input.get(CONF_KICKSTART_BOOST),
+                            DEFAULT_KICKSTART_BOOST,
+                            allow_zero_or_negative=True,
+                        ),
+                    ),
+                ),
+                1,
+            )
             return await self.async_step_presence()
 
         schema = vol.Schema(
@@ -481,6 +497,13 @@ class SmartClimateSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_OPPORTUNISTIC_HEATING, default=DEFAULT_OPPORTUNISTIC_HEATING
                 ): BooleanSelector(),
+                vol.Optional(
+                    CONF_KICKSTART_BOOST, default=DEFAULT_KICKSTART_BOOST
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0.0, max=3.0, step=0.1, unit_of_measurement="K", mode=NumberSelectorMode.BOX
+                    )
+                ),
             }
         )
 
@@ -745,6 +768,23 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_OPPORTUNISTIC_HEATING,
                         data.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING),
                     )
+                ),
+                CONF_KICKSTART_BOOST: round(
+                    max(
+                        0.0,
+                        min(
+                            3.0,
+                            _safe_float(
+                                options.get(
+                                    CONF_KICKSTART_BOOST,
+                                    data.get(CONF_KICKSTART_BOOST),
+                                ),
+                                DEFAULT_KICKSTART_BOOST,
+                                allow_zero_or_negative=True,
+                            ),
+                        ),
+                    ),
+                    1,
                 ),
                 CONF_USE_WEATHER_FORECAST_FOR_PREHEAT: bool(
                     options.get(
@@ -1364,6 +1404,20 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
             self.settings_data[CONF_OPPORTUNISTIC_HEATING] = bool(
                 user_input.get(CONF_OPPORTUNISTIC_HEATING, DEFAULT_OPPORTUNISTIC_HEATING)
             )
+            self.settings_data[CONF_KICKSTART_BOOST] = round(
+                max(
+                    0.0,
+                    min(
+                        3.0,
+                        _safe_float(
+                            user_input.get(CONF_KICKSTART_BOOST),
+                            DEFAULT_KICKSTART_BOOST,
+                            allow_zero_or_negative=True,
+                        ),
+                    ),
+                ),
+                1,
+            )
             return await self.async_step_settings()
 
         schema = vol.Schema(
@@ -1405,6 +1459,11 @@ class SmartClimateSchedulerOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Optional(CONF_OPPORTUNISTIC_HEATING): BooleanSelector(),
+                vol.Optional(CONF_KICKSTART_BOOST): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0.0, max=3.0, step=0.1, unit_of_measurement="K", mode=NumberSelectorMode.BOX
+                    )
+                ),
             }
         )
         return self.async_show_form(

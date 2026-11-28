@@ -39,7 +39,8 @@
           "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "kickstart_boost": "Kickstart startverhoging voor kranen (K, 0 = hysterese met automatische verhoging)"
         }
       },
       "presence": {
@@ -116,7 +117,8 @@
           "fallback_cooling_rate": "Standaard afkoelsnelheid (K/h)",
           "hvac_off_on_target": "Tweepuntsregeling inschakelen (Thermostaat uitschakelen bij bereiken doeltemperatuur)",
           "fallback_tolerance": "Hysterese / Herinschakeltolerantie (K)",
-          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)"
+          "opportunistic_heating": "Opportunistisch meeverwarmen inschakelen (Verwarmen zolang actueel < doel als centrale verwarming actief is)",
+          "kickstart_boost": "Kickstart startverhoging voor kranen (K, 0 = hysterese met automatische verhoging)"
         }
       },
       "settings_presence": {
